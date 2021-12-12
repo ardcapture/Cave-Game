@@ -417,6 +417,7 @@ class Lights():
 
 # GAME RUN 02
 
+
     def set_route_light_positions(self, path_adjacent):
         d = defaultdict(list)
         for i in path_adjacent:

@@ -1,5 +1,7 @@
 import pygame
 import sys
+import keyboard
+import mouse
 
 GRID_SIZE = 32
 
@@ -12,11 +14,8 @@ WIDTH, HEIGHT = (GRID_SIZE*2) + (GRID_SIZE *
 DIRECTIONS = [(0, 1), (-1, 0), (1, 0), (0, -1)]
 
 
-
-
 class Player_Controller():
     def __init__(self, level, character):
-        self.level = level
         self.character = character
         self.run = True
         self.select_location = (0, 0)
@@ -29,6 +28,7 @@ class Player_Controller():
         self.mousePos = (self.mousePos[0]//GRID_SIZE) * \
             GRID_SIZE, (self.mousePos[1]//GRID_SIZE)*GRID_SIZE
         # print(mousePos)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -56,22 +56,42 @@ class Player_Controller():
                 self.run = False
         return res
 
+    def playerControllerEvents(self, level, character, ai_controller):
+        res = self.events()
+        if res != False:
+            if res in character.set_position_keys:
+                character.set_position(res)
+            # elif res == game.game_keys:
+            #     game.run_debug_state = not game.run_debug_state
+            #     game.lights_state = not game.lights_state ##TODO replace somewhere?
+            elif res == character.current_poistion:
+                print("select")
+            elif res in level.paths or res in level.camp_positions:
+                ai_controller.set_route(character.current_poistion, res, level)
+                # if game.ai_controller_01.route_list[self.route_list_index:] == True:
+                for i in ai_controller.route_list[ai_controller.route_list_index:]:  # TODO need breaking into steps
+                    character.set_position(i)
+                    # game.lights.set_lights(game.lights_state)
+                    self.route_list_index = + 1
+                    print("wooop")
+                    # break
+                    # self.run_draw() ##TODO  replace with something else???
+
 
 class AI_Controller():
-    def __init__(self, level, character, player_controller):
-        self.level = level
+    def __init__(self, character, player_controller):
         self.character = character
         self.player_controller = player_controller
         self.ends_list = []
         self.path_type = {}
         self.path_directions = {}
         self.route_list = []
-        self.set_navigation()
+        self.route_list_index = 0
 
-    def set_navigation(self):
-        self.path_type = dict.fromkeys(self.level.paths, "X")
-        self.path_type.update(dict.fromkeys(self.level.camp_positions, "X"))
-        self.path_directions = dict.fromkeys(self.level.paths, [])
+    def set_navigation(self, level):
+        self.path_type = dict.fromkeys(level.paths, "X")
+        self.path_type.update(dict.fromkeys(level.camp_positions, "X"))
+        self.path_directions = dict.fromkeys(level.paths, [])
         for p in self.path_type.keys():
             path_directions = []
             for d in DIRECTIONS:
@@ -125,11 +145,11 @@ class AI_Controller():
             else:
                 run = False
 
-    def set_route(self, start, end):
+    def set_route(self, start, end, level):
         route_list_A = []
         route_list_B = []
         route_list_A.append(start)
-        if end in self.level.paths or end in self.level.camp_positions:
+        if end in level.paths or end in level.camp_positions:
             route_list_B.append(end)
         else:
             route_list_B.append(start)

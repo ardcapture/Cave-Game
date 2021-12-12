@@ -3,6 +3,8 @@ import os
 
 from pygame.constants import BLEND_RGBA_ADD, BLEND_RGB_ADD, BLEND_RGB_SUB
 
+from C_Model import Level
+
 
 pygame.init()
 pygame.display.set_caption("First Game")
@@ -38,7 +40,7 @@ COLOURS = {"BLACK": (0, 0, 0),
            "BLUE_VERY_LIGHT": (210, 210, 255)}
 
 FONTS = {"monospace 50": pygame.font.SysFont("monospace", 15),
-        "monospace 15": pygame.font.SysFont("monospace", 15)}
+         "monospace 15": pygame.font.SysFont("monospace", 15)}
 
 IMAGES = {"GRASS_IMAGE": return_image('grass.png', imagesPath, (GRID_SIZE, GRID_SIZE)),
           "DIRT_IMAGE": return_image('dirt.png', imagesPath, (GRID_SIZE, GRID_SIZE)),
@@ -76,7 +78,9 @@ class Draw():
         win.blit(image, (x, y), special_flags=BLEND_RGB_SUB)
 
     def draw(self, color, x, y):
+        # surface = pygame.Surface((self.grid_size, self.grid_size)) #TODO ?
         pygame.draw.rect(win, color, (x, y, self.grid_size, self.grid_size))
+        # win.blit(surface, (x, y)) # TODO ?!
 
     def draw_transparent(self, color, x, y):
         surface = pygame.Surface((self.grid_size, self.grid_size))
@@ -118,7 +122,6 @@ class Draw():
         for k, v in lights.light_positions.items():
             self.draw_lights(v, k[0], k[1])
 
-
     def draw_climb_positions_visited(self):
         for p in self.climb_positions_visited:
             if p not in self.water_list:
@@ -130,7 +133,6 @@ class Draw():
 
 
 # FROM LEVEL
-
 
     def draw_paths(self):
         for p in self.level.paths:
@@ -155,11 +157,9 @@ class Draw():
         for p in self.level.water_list:
             self.draw_transparent(COLOURS["BLUE_LIGHT"], p[0], p[1])
 
-    def draw_build_grid(self, build_debug):
-        if build_debug == True:
-            for i in self.grid:
-                # self.draw.draw_tile(dirt_image, i[0], i[1])
-                self.draw(COLOURS["BLACK_VERY_LIGHT"], i[0], i[1])
+    def draw_build_grid(self):
+        for i in self.level.grid:
+            self.draw(COLOURS["BLACK_VERY_LIGHT"], i[0], i[1])
 
     def draw_build_grid_hide(self, build_debug):
         if build_debug == True:
@@ -172,9 +172,10 @@ class Draw():
                     self.draw_tile(IMAGES["DIRT_IMAGE"], g[0], g[1])
                 directions_list.clear()
 
-    def draw_build_wall_break_positions(self, build_debug):
+    def draw_build_wall_break_positions(self, level, build_debug):
+        level02 = level
         if build_debug == True:
-            self.draw(COLOURS["BLACK_VERY_LIGHT"], self.level.wall_break_positions[-1][0], self.level.wall_break_positions[-1][1])
+            self.draw(COLOURS["BLACK_VERY_LIGHT"], level02.wall_break_positions[-1][0], level02.wall_break_positions[-1][1])
             pygame.display.update()
             pygame.time.delay(20)
 
