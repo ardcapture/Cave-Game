@@ -58,6 +58,21 @@ class Level():
         self.water_list = []
         self.camp_positions = []
         self.climb_positions = []
+        self.paths = []
+
+        self.ends_list = []
+        self.path_type = {}
+        self.path_directions = {}
+        self.route_list = []
+        self.route_list_index = 0
+
+        # from character!!
+        self.set_position_keys = ("K_LEFT", "K_RIGHT", "K_UP", "K_DOWN")
+        self.previous_position = ()
+        self.selected = False
+        self.velocity = GRID_SIZE
+        self.climb_positions_visited = []
+        self.water_list = self.water_list
 
     # TODO MOVE TO BUILD CLASS?
     def set_camp_positions(self):
@@ -131,10 +146,11 @@ class Level():
         else:
             self.maze_finish = None
 
-    def set_grid(self):
+    def set_grid_set(self):
         self.grid = [(x, y) for x in range(GRID_SIZE, WIDTH, GRID_SIZE * 2)
                      for y in range(GRID_SIZE * self.top_ofset, HEIGHT - (GRID_SIZE * 2), GRID_SIZE * 2) if (x, y)]
 
+    def set_grid_loop(self):
         for i in range(len(self.grid) // 3):
             random_item_from_list = random.choice(self.grid)
             self.grid.remove(random_item_from_list)
@@ -225,23 +241,90 @@ class Level():
     def set_past_positions(self):
         self.past_positions.append(self.current_poistion)
 
+    # NAV STUFF HERE!
 
-class Character():
-    def __init__(self, level):
-        self.level = level
-        self.set_position_keys = ("K_LEFT", "K_RIGHT", "K_UP", "K_DOWN")
-        self.previous_position = ()
-        self.selected = False
-        self.current_poistion = random.choice(self.level.camp_positions)
-        self.paths = self.level.paths
-        self.camp_positions = self.level.camp_positions
-        self.velocity = GRID_SIZE
-        self.climb_positions = self.level.climb_positions
-        self.climb_positions_visited = []
-        self.water_list = self.level.water_list
+    def set_navigation(self, level):
+        self.path_type = dict.fromkeys(level.paths, "X")
+        self.path_type.update(dict.fromkeys(level.camp_positions, "X"))
+        self.path_directions = dict.fromkeys(level.paths, [])
+        for p in self.path_type.keys():
+            path_directions = []
+            for d in DIRECTIONS:
+                direction = (p[0] + (d[0] * GRID_SIZE),
+                             p[1] + (d[1] * GRID_SIZE))
+                if direction in self.path_type:
+                    path_directions.append(direction)
+            if len(path_directions) == 1:
+                self.path_type[p] = 1
+                self.path_directions[p] = path_directions
+            if len(path_directions) == 2:
+                self.path_type[p] = "P"
+                self.path_directions[p] = path_directions
+            if len(path_directions) > 2:
+                self.path_type[p] = "J"
+                self.path_directions[p] = path_directions
+        for p in [k for k, v in self.path_type.items() if v == 1]:
+            if self.path_type[self.path_directions[p][0]] == "P":
+                self.path_type[self.path_directions[p][0]] = "N"
 
-    def events(self):
-        print("Character event")
+        run = True
+        while run:
+            if any([k for k, v in self.path_type.items() if v == "N"]):
+                for k in [k for k, v in self.path_type.items() if v == "N"]:
+                    for i in self.path_directions[k]:
+                        if isinstance(self.path_type[i], int):
+                            result = self.path_type[i]
+                        if self.path_type[i] == "P":
+                            self.path_type[i] = "N"
+                    self.path_type[k] = result + 1
+            elif any([k for k, v in self.path_type.items() if v == "G"]):
+                for k in [k for k, v in self.path_type.items() if v == "G"]:
+                    result = 0
+                    result_list02 = []
+                    for i in self.path_directions[k]:
+                        if isinstance(self.path_type[i], int):
+                            result_list02.append(self.path_type[i])
+                        if isinstance(self.path_type[i], str):
+                            self.path_type[i] = "N"
+                    self.path_type[k] = sorted(result_list02)[-1] + 1
+            elif any([k for k, v in self.path_type.items() if v == "J"]):
+                for k, v in self.path_type.items():
+                    if v == "J":
+                        result_list = []
+                        for i in self.path_directions[k]:
+                            if isinstance(self.path_type[i], int):
+                                result_list.append(i)
+                                if len(result_list) == (len(self.path_directions[k]) - 1):
+                                    if self.path_type[k] == "J":
+                                        self.path_type[k] = "G"
+            else:
+                run = False
+
+    def set_route(self, start, end, level):
+        route_list_A = []
+        route_list_B = []
+        route_list_A.append(start)
+        if end in level.paths or end in level.camp_positions:
+            route_list_B.append(end)
+        else:
+            route_list_B.append(start)
+        run = True
+        while run:
+            if self.path_type[route_list_A[-1]] <= self.path_type[route_list_B[-1]] or len(route_list_A) == 0:
+                result = max(self.path_directions[route_list_A[-1]], key=self.path_type.get)
+                route_list_A.append(result)
+            if self.path_type[route_list_B[-1]] <= self.path_type[route_list_A[-1]] or len(route_list_B) == 0:
+                result = max(self.path_directions[route_list_B[-1]], key=self.path_type.get)
+                route_list_B.append(result)
+            duplicte = [i for i in route_list_A if i in route_list_B]
+            if duplicte:
+                route_list_A.pop(-1)
+                run = False
+        route_list_B.reverse()
+        route_list_A.extend(route_list_B)
+        self.route_list = route_list_A
+
+    # Charater stuff here:
 
     def set_previous_position(self):
         positionsList = []
@@ -270,19 +353,14 @@ class Character():
         if self.current_poistion in self.climb_positions:
             self.climb_positions_visited.append(self.current_poistion)
 
-    def set_selected(self):
-        pass
-
 
 class Lights():
-    def __init__(self, level, character):
-        self.level = level
-        self.character = character
+    def __init__(self, level):
         self.brightness_list = []
         self.set_brightness(1)
-        self.light_positions = dict.fromkeys(self.level.paths, (0, 0, 0))
-        self.character_light_positions = dict.fromkeys(self.level.paths, (0, 0, 0))
-        self.sun_light_positions = dict.fromkeys(self.level.paths, (0, 0, 0))
+        self.light_positions = dict.fromkeys(level.paths, (0, 0, 0))
+        self.character_light_positions = dict.fromkeys(level.paths, (0, 0, 0))
+        self.sun_light_positions = dict.fromkeys(level.paths, (0, 0, 0))
 
     def set_brightness(self, x):
         self.brightness_list = []
@@ -294,24 +372,18 @@ class Lights():
             self.brightness_list.append(tuple([res] * 3))
         return x
 
-    def set_lights(self, lights_state):
-        self.set_lights_debug(lights_state)
-        self.set_lights_sun()
-        self.set_lights_character()
-        self.set_light_positions()
-
     def set_lights_debug(self, lights_state):
         if lights_state == True:
             brightness = self.brightness_list[1]
 
-    def set_lights_character(self):
+    def set_lights_character(self, model):
         mylist = [GRID_SIZE, -GRID_SIZE]
         for i in mylist:
-            posslightposition = self.character.current_poistion
+            posslightposition = model.current_poistion
             brightness = 0
             run = True
             while run:
-                if posslightposition in self.level.paths:
+                if posslightposition in model.paths:
                     self.character_light_positions[posslightposition] = self.brightness_list[brightness]
                     posslightposition = (
                         posslightposition[0] + i, posslightposition[1])
@@ -320,11 +392,11 @@ class Lights():
                 else:
                     run = False
         for i in mylist:
-            posslightposition = self.character.current_poistion
+            posslightposition = model.current_poistion
             brightness = 0
             run = True
             while run:
-                if posslightposition in self.level.paths:
+                if posslightposition in model.paths:
                     self.character_light_positions[posslightposition] = self.brightness_list[brightness]
                     posslightposition = (
                         posslightposition[0], posslightposition[1] + i)
@@ -333,14 +405,14 @@ class Lights():
                 else:
                     run = False
 
-        self.character_light_positions[self.character.current_poistion] = (0, 0, 0)
+        self.character_light_positions[model.current_poistion] = (0, 0, 0)
 
-    def set_lights_sun(self):
-        posslightposition = self.level.maze_start_position
+    def set_lights_sun(self, model):
+        posslightposition = model.maze_start_position
         brightness = 1
         run = True
         while run:
-            if posslightposition in self.level.paths:
+            if posslightposition in model.paths:
                 self.sun_light_positions[posslightposition] = self.brightness_list[brightness]
                 posslightposition = (
                     posslightposition[0], posslightposition[1] + GRID_SIZE)
@@ -348,11 +420,11 @@ class Lights():
                     brightness += 1
             else:
                 run = False
-        posslightposition = self.level.maze_finish_position
+        posslightposition = model.maze_finish_position
         brightness = 1
         run = True
         while run:
-            if posslightposition in self.level.paths:
+            if posslightposition in model.paths:
                 self.sun_light_positions[posslightposition] = self.brightness_list[brightness]
                 posslightposition = (posslightposition[0] - GRID_SIZE, posslightposition[1])
                 if brightness < len(self.brightness_list) - 1:
@@ -416,7 +488,6 @@ class Lights():
 
 
 # GAME RUN 02
-
 
     def set_route_light_positions(self, path_adjacent):
         d = defaultdict(list)

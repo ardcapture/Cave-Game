@@ -1,4 +1,5 @@
 import pygame
+import random
 
 import B_Controller
 import C_Model
@@ -13,15 +14,19 @@ class Game():
         self.lights_state = False
 
     def build(self, build_debug):
+        
         build = True
         while build:
+            self.Controller = B_Controller.Player_Controller()
             self.level = C_Model.Level()
-            self.draw = D_View.Draw(self.level)
+            self.draw = D_View.Draw()
 
-            self.level.set_grid()
+            self.level.set_grid_set()  #TODO TRYING SOMEHITNG HERE!
+            self.level.set_grid_loop() #TODO TRYING SOMEHITNG HERE!
 
-            self.draw.draw_build_grid()  # TODO MOVE?
+            self.draw.draw_build_grid(self.level)  # TODO MOVE?
 
+            #LOOP
             mazebuild = True
             while mazebuild:
                 self.level.set_current_position()
@@ -44,7 +49,7 @@ class Game():
             self.level.setWater()
             self.level.set_climb()
 
-            self.draw.draw_build_grid_hide(build_debug)  # TODO MOVE?
+            self.draw.draw_build_grid_hide(self.level, build_debug)  # TODO MOVE?
 
             if self.level.maze_finish_position == (0, 0) or self.level.maze_start_position == (0, 0):
                 self.draw.draw_reset()  # TODO MOVE?
@@ -52,21 +57,19 @@ class Game():
             else:
                 build = False
 
-        self.character = C_Model.Character(self.level)
-        self.lights = C_Model.Lights(self.level, self.character)
+        self.level.current_poistion = random.choice(self.level.camp_positions)
 
-        self.player_controller = B_Controller.Player_Controller(self.level, self.character)
-        self.ai_controller_01 = B_Controller.AI_Controller(self.character, self.player_controller)
+        self.lights = C_Model.Lights(self.level)
+        # self.Controller = B_Controller.Player_Controller()
 
-        self.ai_controller_01.set_navigation(self.level)
-        
+        self.level.set_navigation(self.level)
+
         self.lights.set_tileImages()
         self.lights.set_route_light_positions(self.level.path_adjacent)
         self.lights.set_route_light_positions_tiles(self.lights.route_light_positions, debug='FALSE')
 
 
 def main():
-    route_list_index = 0
 
     clock = pygame.time.Clock()
 
@@ -74,29 +77,35 @@ def main():
 
     game.build(build_debug=True)
 
+
+    
+
     # RUN
     while True:
         # CONTROLLER
-        game.player_controller.playerControllerEvents(game.level, game.character, game.ai_controller_01)
+        game.Controller.playerControllerEvents(game.level)
 
         # MODEL (AKA LEVEL)
-        game.character.set_climb_positions_visited()
-        game.character.set_previous_position
-        game.character.set_selected()
-        game.lights.set_lights(game.lights_state)
+        game.level.set_climb_positions_visited()
+        game.level.set_previous_position
+
+        game.lights.set_lights_debug(game.lights_state)
+        game.lights.set_lights_sun(game.level)
+        game.lights.set_lights_character(game.level)
+        game.lights.set_light_positions()
 
         # VIEW (AKA DRAW)
-        game.draw.draw_level(game.lights.route_light_positions_tiles)
-        game.draw.draw_coordinates(game.player_controller.mousePos)
-        game.draw.current_poistion = game.character.current_poistion  # TODO TEMP FIX!!!!!!
+        game.draw.draw_level(game.level, game.lights)
+        game.draw.draw_coordinates(game.Controller.mousePos)
+        game.draw.current_poistion = game.level.current_poistion  # TODO TEMP FIX!!!!!!
 
         game.draw.draw_player()
-        game.draw.draw_water()
+        game.draw.draw_water(game.level)
         game.draw.draw_light_positions(game.lights)
-        game.draw.draw_debug_start_position(game.run_debug_state)
-        game.draw.draw_debug_climb_positions(game.run_debug_state)
-        game.draw.draw_debug_ends(game.ai_controller_01, game.run_debug_state)
-        game.draw.draw_debug_route(game.ai_controller_01, game.run_debug_state)
+        game.draw.draw_debug_start_position(game.level, game.run_debug_state)
+        game.draw.draw_debug_climb_positions(game.level, game.run_debug_state)
+        game.draw.draw_debug_ends(game.level, game.run_debug_state)
+        game.draw.draw_debug_route(game.level, game.run_debug_state)
         game.draw.draw_screen()
 
         clock.tick(60)  # TODO Check what this is doing!!!

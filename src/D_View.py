@@ -54,12 +54,11 @@ player_image = pygame.transform.scale(player_image, (player_image.get_width() * 
 
 
 class Draw():
-    def __init__(self, level):
+    def __init__(self):
         self.width = WIDTH
         self.height = HEIGHT
         self.grid_size = GRID_SIZE
         self.current_poistion = (0, 0)
-        self.level = level
 
     def draw_lights(self, color, x, y):
         surface = pygame.Surface((self.grid_size, self.grid_size))
@@ -106,15 +105,15 @@ class Draw():
         text = self.font.render(words, 1, (COLOURS["RED"]))
         win.blit(text, (10, 10))
 
-    def draw_debug_route(self, ai_contoller, run_debug):
+    def draw_debug_route(self, level, run_debug):
         if run_debug == True:
-            for p in ai_contoller.route_list:
+            for p in level.route_list:
                 self.draw_outline(COLOURS["GREEN"], p[0], p[1])
 
-    def draw_debug_ends(self, ai_contoller, run_debug):
+    def draw_debug_ends(self, level, run_debug):
         self.font = FONTS["monospace 15"]
         if run_debug == True:
-            for k, v in dict.items(ai_contoller.path_type):
+            for k, v in dict.items(level.path_type):
                 text = self.font.render("{0}".format(v), 1, ((COLOURS["GREEN"])))
                 win.blit(text, (k[0] + 1, k[1] + 5))
 
@@ -134,12 +133,12 @@ class Draw():
 
 # FROM LEVEL
 
-    def draw_paths(self):
-        for p in self.level.paths:
-            self.draw(COLOURS["WHITE_4TH_4TH_4TH_4TH"], p[0], p[1])
+    # def draw_paths(self):
+    #     for p in self.level.paths:
+    #         self.draw(COLOURS["WHITE_4TH_4TH_4TH_4TH"], p[0], p[1]) # TODO check if being used
 
-    def draw_level(self, rlp_tiles):
-        for k, v in self.level.tiles.items():
+    def draw_level(self, model, lights):
+        for k, v in model.tiles.items():
             if v == 'S':
                 self.draw((146, 244, 255), k[0], k[1])
             if v == 'G':
@@ -149,24 +148,24 @@ class Draw():
             if v == 'P':
                 self.draw_tile(IMAGES["ROCK_IMAGE"], k[0], k[1])
             if v == 'A':
-                tile01 = pygame.image.load(rlp_tiles[k])
+                tile01 = pygame.image.load(lights.route_light_positions_tiles[k])
                 tile01 = pygame.transform.scale(tile01, (GRID_SIZE, GRID_SIZE))
                 self.draw_tile(tile01, k[0], k[1])
 
-    def draw_water(self):
-        for p in self.level.water_list:
+    def draw_water(self, model):
+        for p in model.water_list:
             self.draw_transparent(COLOURS["BLUE_LIGHT"], p[0], p[1])
 
-    def draw_build_grid(self):
-        for i in self.level.grid:
+    def draw_build_grid(self, model):
+        for i in model.grid:
             self.draw(COLOURS["BLACK_VERY_LIGHT"], i[0], i[1])
 
-    def draw_build_grid_hide(self, build_debug):
+    def draw_build_grid_hide(self, model, build_debug):
         if build_debug == True:
             directions_list = []
-            for g in self.level.grid:
+            for g in model.grid:
                 for d in DIRECTIONS:
-                    if (g[0] + (d[0] * GRID_SIZE), g[1] + (d[1] * GRID_SIZE)) not in self.level.wall_break_positions:
+                    if (g[0] + (d[0] * GRID_SIZE), g[1] + (d[1] * GRID_SIZE)) not in model.wall_break_positions:
                         directions_list.append((d[0], d[1]))
                 if len(directions_list) == 4:
                     self.draw_tile(IMAGES["DIRT_IMAGE"], g[0], g[1])
@@ -179,12 +178,12 @@ class Draw():
             pygame.display.update()
             pygame.time.delay(20)
 
-    def draw_debug_climb_positions(self, run_debug):
+    def draw_debug_climb_positions(self, model, run_debug):
         if run_debug == True:
-            for p in self.level.climb_positions:
+            for p in model.climb_positions:
                 pygame.draw.rect(win, COLOURS["GREEN"], (p[0] + GRID_SIZE * 7/16, p[1], GRID_SIZE/8, GRID_SIZE))
 
-    def draw_debug_start_position(self, debug):
+    def draw_debug_start_position(self, model, debug):
         if debug == True:
-            p = self.level.past_positions[0]
+            p = model.past_positions[0]
             self.draw_outline(COLOURS["RED"], p[0], p[1])
