@@ -8,6 +8,8 @@ from operator import itemgetter
 from itertools import chain, groupby
 from collections import defaultdict
 from blend_modes import darken_only, lighten_only
+from pygame import color
+# from dataclasses import dataclass
 
 
 imagesPath = 'res'
@@ -29,6 +31,7 @@ COLOURS = {"BLACK": (0, 0, 0),
            "WHITE_4TH_4TH_4TH_4TH": (1, 1, 1),
            "RED": (255, 0, 0),
            "GREEN": (0, 255, 0),
+           "BLUE": (0, 0, 255),
            "BLUE_LIGHT": (125, 125, 255),
            "BLUE_VERY_LIGHT": (210, 210, 255)}
 
@@ -44,21 +47,47 @@ T_image = Image.open(os.path.join(imagesPath, 'I_Image_01.png')).resize((GRID_SI
 TR_image = Image.open(os.path.join(imagesPath, 'Corner.png')).resize((GRID_SIZE, GRID_SIZE))
 
 
+# @dataclass
+# class Object:
+#     drawable: bool
+
+
+class object():
+    def __init__(self, drawable, position, dimensions, material, navigable):
+        self.position = position
+        
+        self.drawable = drawable
+        self.dimensions = dimensions
+        self.material = material
+        
+        self.navigable = navigable
+
+
 class Level():
     def __init__(self):
         # self.draw = draw
-        self.top_ofset = 5
+        self.top_offset = 5
         self.path_return = []
+        self.path_return_v02 = []
         self.wall_break_positions = []
+        self.wall_break_positions_v02 = []
         self.past_positions = []
+        self.past_positions_v02 = []
         self.next_position = ()
-        self.current_poistion = ()
+        self.next_position_v02 = ()
+        self.current_position = ()
+        self.current_position_v02 = ()
         self.maze_start_position = (0, 0)
+        self.maze_start_position_v02 = (0, 0)
         self.maze_finish_position = (0, 0)
+        self.maze_finish_position_v02 = (0, 0)
         self.water_list = []
         self.camp_positions = []
+        self.camp_positions_v02 = []
         self.climb_positions = []
         self.paths = []
+        self.paths_v02 = []
+        self.objects = {}
 
         self.ends_list = []
         self.path_type = {}
@@ -86,6 +115,11 @@ class Level():
         mylist.append(self.maze_finish_position)
         self.paths = list(dict.fromkeys(mylist))
 
+    def set_paths_v02_obj_navigable(self):
+        self.paths_v02 = [obj.position for obj in self.objs if obj.navigable != False]
+        # print(self.paths_v02)
+
+    # TODO may remove this
     def set_path_adjacent(self):
         self.path_adjacent = {}
         AROUND = [-1, 0, 1]
@@ -97,17 +131,15 @@ class Level():
                         self.path_adjacent[tile] = "fish"
 
     def set_tileLocations(self):
-        self.sky = [(x, y) for x in range(0, GRID_SIZE*(WIDTH//GRID_SIZE), GRID_SIZE)
-                    for y in range(0, GRID_SIZE*(self.top_ofset-1), GRID_SIZE)]
+        self.camp_positions_v02 = [(x, self.maze_start_position_v02[1] - GRID_SIZE) for x in range(0, WIDTH, GRID_SIZE)]
 
-        self.rock = [(x, y) for x in range(0, GRID_SIZE*(WIDTH//GRID_SIZE), GRID_SIZE)
-                     for y in range(0, GRID_SIZE*(HEIGHT//GRID_SIZE), GRID_SIZE)]
+        self.sky = [(x, y) for x in range(0, GRID_SIZE*(WIDTH//GRID_SIZE), GRID_SIZE) for y in range(0, GRID_SIZE*(self.top_offset-1), GRID_SIZE)]
 
-        self.grass = [(x, y) for x in range(0, GRID_SIZE*(WIDTH//GRID_SIZE), GRID_SIZE)
-                      for y in range(GRID_SIZE*(self.top_ofset-1), GRID_SIZE*(self.top_ofset), GRID_SIZE)]
+        self.rock = [(x, y) for x in range(0, GRID_SIZE*(WIDTH//GRID_SIZE), GRID_SIZE) for y in range(0, GRID_SIZE*(HEIGHT//GRID_SIZE), GRID_SIZE)]
 
-        self.earth = [(x, y) for x in range(0, GRID_SIZE*(WIDTH//GRID_SIZE), GRID_SIZE)
-                      for y in range(GRID_SIZE*(self.top_ofset), GRID_SIZE*(self.top_ofset+1), GRID_SIZE)]
+        self.grass = [(x, y) for x in range(0, GRID_SIZE*(WIDTH//GRID_SIZE), GRID_SIZE) for y in range(GRID_SIZE*(self.top_offset-1), GRID_SIZE*(self.top_offset), GRID_SIZE)]
+
+        self.earth = [(x, y) for x in range(0, GRID_SIZE*(WIDTH//GRID_SIZE), GRID_SIZE) for y in range(GRID_SIZE*(self.top_offset), GRID_SIZE*(self.top_offset+1), GRID_SIZE)]
 
     def set_tiles(self):
         self.tiles = dict.fromkeys(self.rock, 'R')
@@ -116,17 +148,48 @@ class Level():
         self.tiles.update(dict.fromkeys(self.grass, 'G'))
         self.tiles.update(dict.fromkeys(self.paths, 'P'))
 
+    def set_tiles_v02_obj_textures(self):
+        for obj in self.objs:
+            if obj.position in self.rock:
+                obj.texture = 'R'
+            elif obj.position in self.sky:
+                obj.texture = 'S'
+            elif obj.position in self.grass:
+                obj.texture = 'G'
+            elif obj.position in self.rock:
+                obj.texture = 'P'
+
     # TODO MOVE TO BUILD CLASS?
+
     def set_maze_start_position(self):
         poss_maze_start = []
         for p in self.past_positions:
-            if p[1] == GRID_SIZE * self.top_ofset:
+            if p[1] == GRID_SIZE * self.top_offset:
                 if p[0] < ((WIDTH - GRID_SIZE * 2) * (1/3)):
                     poss_maze_start.append(p)
 
         if len(poss_maze_start) > 0:
             poss_maze_start = random.choice(poss_maze_start)
             self.maze_start_position = (poss_maze_start[0], poss_maze_start[1] - GRID_SIZE)
+            # self.draw.draw(COLOURS["BLACK_VERY_LIGHT"], self.maze_start_position[0], self.maze_start_position[1])
+        else:
+            self.maze_start = None
+
+    def set_maze_start_position_v02(self):
+        poss_maze_start = []
+        for p in self.past_positions_v02:
+            if p[1] == GRID_SIZE * self.top_offset:
+                if p[0] < ((WIDTH - GRID_SIZE * 2) * (1/3)):
+                    poss_maze_start.append(p)
+
+        if len(poss_maze_start) > 0:
+            drawable = True
+            dimensions = GRID_SIZE
+            material = COLOURS["RED"]
+            navigable = True
+            poss_maze_start = random.choice(poss_maze_start)
+            self.maze_start_position_v02 = (poss_maze_start[0], poss_maze_start[1] - GRID_SIZE)
+            self.objs.append(object(drawable, self.maze_start_position_v02, dimensions, material, navigable))
             # self.draw.draw(COLOURS["BLACK_VERY_LIGHT"], self.maze_start_position[0], self.maze_start_position[1])
         else:
             self.maze_start = None
@@ -146,21 +209,67 @@ class Level():
         else:
             self.maze_finish = None
 
-    def set_grid_set(self):
-        self.grid = [(x, y) for x in range(GRID_SIZE, WIDTH, GRID_SIZE * 2)
-                     for y in range(GRID_SIZE * self.top_ofset, HEIGHT - (GRID_SIZE * 2), GRID_SIZE * 2) if (x, y)]
+    def set_maze_finish_position_v02(self):
+        drawable = True
+        dimensions = GRID_SIZE
+        material = COLOURS["RED"]
+        navigable = True
+        poss_maze_finish = []
+        for p in self.past_positions_v02:
+            if p[0] == WIDTH - (GRID_SIZE * 2):
+                if p[1] > ((HEIGHT - GRID_SIZE * 2) * (2/3)):
+                    poss_maze_finish.append(p)
 
-    def set_grid_loop(self):
+        if len(poss_maze_finish) > 0:
+            poss_maze_finish = random.choice(poss_maze_finish)
+            self.maze_finish_position_v02 = (poss_maze_finish[0] + GRID_SIZE, poss_maze_finish[1])
+            self.objs.append(object(drawable, self.maze_start_position_v02, dimensions, material, navigable))
+            # self.draw.draw(COLOURS["BLUE_VERY_LIGHT"], self.maze_finish_position[0], self.maze_finish_position[1])
+        else:
+            self.maze_finish_v02 = None
+
+    def set_grid_v01(self):
+        self.grid = [(x, y) for x in range(GRID_SIZE, WIDTH, GRID_SIZE * 2) for y in range(GRID_SIZE * self.top_offset, HEIGHT - (GRID_SIZE * 2), GRID_SIZE * 2) if (x, y)]
+
         for i in range(len(self.grid) // 3):
             random_item_from_list = random.choice(self.grid)
             self.grid.remove(random_item_from_list)
 
+    def set_grid_v02(self):
+        drawable = True
+        self.objs = []
+        dimensions = (GRID_SIZE, GRID_SIZE, GRID_SIZE)
+        material = COLOURS["RED"]
+        navigable = True
+        for x in range(GRID_SIZE, WIDTH, GRID_SIZE * 2):
+            for y in range(GRID_SIZE * self.top_offset, HEIGHT - (GRID_SIZE * 2), GRID_SIZE * 2):
+                self.objs.append(object(drawable, (x, y), dimensions, material, navigable))
+
+        for i in range(len(self.objs) // 3):
+            random_item_from_list = random.choice(self.objs)
+            self.objs.remove(random_item_from_list)
+
+        # for obj in self.objs:
+        #     print(obj.drawable, obj.position, obj.dimensions, obj.material, obj.navagatable)
+
     # TODO MOVE TO BUILD CLASS?
+
     def set_wall_break_positions(self):
-        result = ((self.next_position[0] - self.current_poistion[0]) //
-                  2, (self.next_position[1] - self.current_poistion[1]) // 2)
-        result02 = (self.current_poistion[0] + result[0], self.current_poistion[1] + result[1])
+        result = ((self.next_position[0] - self.current_position[0]) // 2, (self.next_position[1] - self.current_position[1]) // 2)
+        result02 = (self.current_position[0] + result[0], self.current_position[1] + result[1])
         self.wall_break_positions.append(result02)
+
+    def set_wall_break_positions_v02(self):
+        drawable = True
+        dimensions = (GRID_SIZE, GRID_SIZE, GRID_SIZE)
+        material = COLOURS["RED"]
+        navigable = True
+        result = ((self.next_position_v02[0] - self.current_position_v02[0]) // 2, (self.next_position_v02[1] - self.current_position_v02[1]) // 2)
+        result02 = (self.current_position_v02[0] + result[0], self.current_position_v02[1] + result[1])
+        self.objs.append(object(drawable, result02, dimensions, material, navigable))
+        # print(self.objs[-1].position)
+
+        # self.wall_break_positions_v02.append(result02)
 
     def set_climb(self):
         for p in self.paths:
@@ -204,11 +313,18 @@ class Level():
     # TODO MOVE TO BUILD CLASS?? 01
 
     def set_current_position(self):
-        if len(self.current_poistion) == 0:
+        if len(self.current_position) == 0:
             position = random.choice(self.grid)
-            self.current_poistion = position
+            self.current_position = position
         else:
-            self.current_poistion = self.next_position
+            self.current_position = self.next_position
+
+    def set_current_position_v02(self):
+        if len(self.current_position_v02) == 0:
+            position = random.choice([obj.position for obj in self.objs])
+            self.current_position_v02 = position
+        else:
+            self.current_position_v02 = self.next_position_v02
 
     # TODO MOVE TO BUILD CLASS?? 03
     def set_next_position(self):
@@ -216,8 +332,8 @@ class Level():
         poss_directions = []
         poss_position_List = []
         for d in DIRECTIONS:
-            poss_position = (self.current_poistion[0] + (
-                d[0] * GRID_SIZE * 2), self.current_poistion[1] + (d[1] * GRID_SIZE * 2))
+            poss_position = (self.current_position[0] + (
+                d[0] * GRID_SIZE * 2), self.current_position[1] + (d[1] * GRID_SIZE * 2))
             if poss_position in self.grid:
                 if poss_position not in self.past_positions:
                     poss_position_List.append(poss_position)
@@ -227,8 +343,8 @@ class Level():
             randomResult = random.choices(poss_position_List, k=1, weights=bias[:len(poss_position_List)])
             result = randomResult[0]
         if len(poss_position_List) == 0:
-            if self.current_poistion in self.past_positions:
-                index = self.past_positions.index(self.current_poistion)
+            if self.current_position in self.past_positions:
+                index = self.past_positions.index(self.current_position)
                 result = self.past_positions[index - 1]
                 self.path_return.append(result)
             else:
@@ -237,9 +353,37 @@ class Level():
             result = poss_position_List[0]
         self.next_position = result
 
-    # TODO MOVBE TO BUID CLASS? 02
+    def set_next_position_v02(self):
+        random.shuffle(DIRECTIONS)
+        poss_directions = []
+        poss_position_List = []
+        for d in DIRECTIONS:
+            poss_position = (self.current_position_v02[0] + (
+                d[0] * GRID_SIZE * 2), self.current_position_v02[1] + (d[1] * GRID_SIZE * 2))
+            if poss_position in [obj.position for obj in self.objs]:
+                if poss_position not in self.past_positions_v02:
+                    poss_position_List.append(poss_position)
+        if len(poss_position_List) > 1:
+            bias = [100, 100, 1, 1]
+            randomResult = random.choices(poss_position_List, k=1, weights=bias[:len(poss_position_List)])
+            result = randomResult[0]
+        if len(poss_position_List) == 0:
+            if self.current_position_v02 in self.past_positions_v02:
+                index = self.past_positions_v02.index(self.current_position_v02)
+                result = self.past_positions_v02[index - 1]
+                self.path_return_v02.append(result)
+            else:
+                result = self.past_positions_v02[-1]
+        if len(poss_position_List) == 1:
+            result = poss_position_List[0]
+        self.next_position_v02 = result
+
+    # TODO MOVE TO BUILD CLASS? 02
     def set_past_positions(self):
-        self.past_positions.append(self.current_poistion)
+        self.past_positions.append(self.current_position)
+
+    def set_past_positions_v02(self):
+        self.past_positions_v02.append(self.current_position_v02)
 
     # NAV STUFF HERE!
 
@@ -316,8 +460,8 @@ class Level():
             if self.path_type[route_list_B[-1]] <= self.path_type[route_list_A[-1]] or len(route_list_B) == 0:
                 result = max(self.path_directions[route_list_B[-1]], key=self.path_type.get)
                 route_list_B.append(result)
-            duplicte = [i for i in route_list_A if i in route_list_B]
-            if duplicte:
+            duplicate = [i for i in route_list_A if i in route_list_B]
+            if duplicate:
                 route_list_A.pop(-1)
                 run = False
         route_list_B.reverse()
@@ -328,13 +472,13 @@ class Level():
 
     def set_previous_position(self):
         positionsList = []
-        if self.current_poistion != positionsList[1]:
-            positionsList.append(self.current_poistion)
+        if self.current_position != positionsList[1]:
+            positionsList.append(self.current_position)
         if len(positionsList) >= 3:
             positionsList.pop(0)
 
     def set_position(self, event):
-        x, y = self.current_poistion
+        x, y = self.current_position
         if event == "K_LEFT":
             x -= self.velocity
         elif event == "K_RIGHT":
@@ -346,12 +490,12 @@ class Level():
         elif isinstance(event, tuple):
             x, y = event
         if (x, y) in self.paths or (x, y) in self.camp_positions:
-            self.current_poistion = (x, y)
+            self.current_position = (x, y)
             pygame.time.delay(150)
 
     def set_climb_positions_visited(self):
-        if self.current_poistion in self.climb_positions:
-            self.climb_positions_visited.append(self.current_poistion)
+        if self.current_position in self.climb_positions:
+            self.climb_positions_visited.append(self.current_position)
 
 
 class Lights():
@@ -379,7 +523,7 @@ class Lights():
     def set_lights_character(self, model):
         mylist = [GRID_SIZE, -GRID_SIZE]
         for i in mylist:
-            posslightposition = model.current_poistion
+            posslightposition = model.current_position
             brightness = 0
             run = True
             while run:
@@ -392,7 +536,7 @@ class Lights():
                 else:
                     run = False
         for i in mylist:
-            posslightposition = model.current_poistion
+            posslightposition = model.current_position
             brightness = 0
             run = True
             while run:
@@ -405,7 +549,7 @@ class Lights():
                 else:
                     run = False
 
-        self.character_light_positions[model.current_poistion] = (0, 0, 0)
+        self.character_light_positions[model.current_position] = (0, 0, 0)
 
     def set_lights_sun(self, model):
         posslightposition = model.maze_start_position
@@ -452,29 +596,29 @@ class Lights():
         blended_img_raw = Image.fromarray(blended_img)
         return blended_img_raw
 
-    def return_lighting_tile(self, TOP_image, TOPR_image, neighbour):
-        if neighbour == "T":
+    def return_lighting_tile(self, TOP_image, TOPR_image, neighbor):
+        if neighbor == "T":
             res = TOP_image.rotate(0)
-        if neighbour == "TR":
+        if neighbor == "TR":
             res = TOPR_image.rotate(0)
-        elif neighbour == "L":
+        elif neighbor == "L":
             res = TOP_image.rotate(90)
-        elif neighbour == "TL":
+        elif neighbor == "TL":
             res = TOPR_image.rotate(90)
-        elif neighbour == "B":
+        elif neighbor == "B":
             res = TOP_image.rotate(180)
-        elif neighbour == "BL":
+        elif neighbor == "BL":
             res = TOPR_image.rotate(180)
-        elif neighbour == "R":
+        elif neighbor == "R":
             res = TOP_image.rotate(270)
-        elif neighbour == "BR":
+        elif neighbor == "BR":
             res = TOPR_image.rotate(270)
         return res
 
-    def return_blended(self, neighbours01, neighbours02):
-        forgound_image = neighbours01
-        background_image = neighbours02
-        forground_array = self.return_array(forgound_image)
+    def return_blended(self, neighbors01, neighbors02):
+        foreground_image = neighbors01
+        background_image = neighbors02
+        forground_array = self.return_array(foreground_image)
         background_array = self.return_array(background_image)
         res = self.return_darken(forground_array, background_array)
         return res

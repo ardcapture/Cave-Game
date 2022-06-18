@@ -21,7 +21,7 @@ class Player_Controller():
         self.mousePos = (0, 0)
 
     def events(self, character):
-        x, y = character.current_poistion
+        x, y = character.current_position
         res = False
         self.mousePos = pygame.mouse.get_pos()
         self.mousePos = (self.mousePos[0]//GRID_SIZE) * \
@@ -63,10 +63,10 @@ class Player_Controller():
             # elif res == game.game_keys:
             #     game.run_debug_state = not game.run_debug_state
             #     game.lights_state = not game.lights_state ##TODO replace somewhere?
-            elif res == level.current_poistion:
+            elif res == level.current_position:
                 print("select")
             elif res in level.paths or res in level.camp_positions:
-                level.set_route(level.current_poistion, res, level)
+                level.set_route(level.current_position, res, level)
                 # if game.ai_controller_01.route_list[self.route_list_index:] == True:
                 for i in level.route_list[level.route_list_index:]:  # TODO need breaking into steps
                     level.set_position(i)

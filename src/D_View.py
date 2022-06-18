@@ -58,7 +58,7 @@ class Draw():
         self.width = WIDTH
         self.height = HEIGHT
         self.grid_size = GRID_SIZE
-        self.current_poistion = (0, 0)
+        self.current_position = (0, 0)
 
     def draw_lights(self, color, x, y):
         surface = pygame.Surface((self.grid_size, self.grid_size))
@@ -79,6 +79,20 @@ class Draw():
     def draw(self, color, x, y):
         # surface = pygame.Surface((self.grid_size, self.grid_size)) #TODO ?
         pygame.draw.rect(win, color, (x, y, self.grid_size, self.grid_size))
+        # win.blit(surface, (x, y)) # TODO ?!
+
+    def draw_v02(self, model):
+        for obj in model.objs:
+            # self.draw(obj.material, obj.position[0], obj.position[1])
+            pygame.draw.rect(win, obj.material, (obj.position[0], obj.position[1], self.grid_size, self.grid_size))
+
+        surf = pygame.transform.scale(win, WINDOW_SIZE)
+        screen.blit(surf, (0, 0))
+        pygame.display.update()
+        # pygame.time.delay(40)
+
+        # surface = pygame.Surface((self.grid_size, self.grid_size)) #TODO ?
+        # pygame.draw.rect(win, color, (x, y, self.grid_size, self.grid_size))
         # win.blit(surface, (x, y)) # TODO ?!
 
     def draw_transparent(self, color, x, y):
@@ -128,7 +142,7 @@ class Draw():
                     win, COLOURS["RED"], (p[0] + self.grid_size * 7/16, p[1], GRID_SIZE/8, GRID_SIZE))
 
     def draw_player(self):
-        self.draw_tile(player_image, self.current_poistion[0] + ((GRID_SIZE - player_image.get_width())/2), self.current_poistion[1] + (GRID_SIZE - player_image.get_height()))
+        self.draw_tile(player_image, self.current_position[0] + ((GRID_SIZE - player_image.get_width())/2), self.current_position[1] + (GRID_SIZE - player_image.get_height()))
 
 
 # FROM LEVEL
