@@ -1,3 +1,8 @@
+# NOTE trying to convert functions to returning item all variables are arguments
+# working through MAIN
+# 27 JUN 2022
+
+
 import pygame
 import random
 
@@ -32,98 +37,125 @@ def main():
     build = True
     while build:
         Controller = B_Controller.Player_Controller()
-        level = C_Model.Level()
-        draw = D_View.Draw()
+        model = C_Model.Model()
+        view = D_View.View()
 
-        level.set_grid_v01()
-        level.set_grid_v02()
+        # level.grid = level.set_grid_v01(level.top_offset)
+        # level.objs = level.set_grid_v02(level.top_offset)
 
         # draw.draw_build_grid(level)  # TODO MOVE?
-        draw.draw_v02(level)
+
+        model.list_grid = model.set_grid_v01()
+        model.tuple_current_position = random.choice(model.list_grid)
+
+        view.draw_v02(model)
 
         # LOOP
         mazebuild = True
         while mazebuild:
-            level.set_current_position()
-            level.set_current_position_v02()
-            # print("level.current_position_v02: ", level.current_position_v02)
-            level.set_past_positions()
-            level.set_past_positions_v02()
-            level.set_next_position()
-            level.set_next_position_v02()
-            level.set_wall_break_positions()
-            level.set_wall_break_positions_v02()
-            if len(level.past_positions) > 2 and level.current_position == level.past_positions[0]:
-                mazebuild = False
+
+            # ! V01
+
+            model.set_maze(model.list_past_positions, model.tuple_current_position, model.list_grid, model.list_path_return, model.list_wall_break_positions, model.list_next_position)
+
+            mazebuild = model.check_maze_finish(model.list_past_positions, model.tuple_current_position)
+
+            # view.draw_build_wall_break_positions(model, build_debug)  # TODO MOVE?
+
+            # view.draw_screen()  # TODO MOVE?
+
+            # ! V02
+            #! level.past_positions_v02.append(level.current_position_v02)
+            #! level.next_position_v02 = level.set_next_position_v02(level.current_position_v02, level.past_positions_v02, level.path_return_v02)
+            #! level.update_wall_break_positions_v02_obj(level.next_position_v02, level.current_position_v02)
+            #! level.current_position_v02 = level.set_current_position_v02(level.current_position_v02, level.next_position_v02)
+            #! view.draw_v02(model)
+
+            # if len(model.past_positions) > 2 and model.current_position == model.past_positions[0]:
+            #     mazebuild = False
             # if len(level.past_positions_v02) > 2 and level.current_position_v02 == level.past_positions_v02[0]:
             #     mazebuild_v02 = False
 
-            # draw.draw_build_wall_break_positions(level, build_debug)  # TODO MOVE?
+        #! v01
+        model.poss_maze_start = model.set_poss_maze_start(model.list_past_positions)
+        model.tuple_maze_start_position = model.set_maze_start_position(model.poss_maze_start)
+        model.poss_maze_finish = model.set_poss_maze_finish(model.list_past_positions)
+        model.tuple_maze_finish_position = model.set_maze_finish_position(model.poss_maze_finish)
 
-            draw.draw_v02(level)
-            # draw.draw_screen()  # TODO MOVE?
+        #! v02
+        #! model.update_maze_start_position_v02_obj(model.past_positions_v02, model.top_offset)
+        #! model.set_maze_finish_position_v02()
 
-        level.set_maze_start_position()
-        level.set_maze_start_position_v02()
-        level.set_maze_finish_position()
-        level.set_maze_finish_position_v02()
+        #! V01
+        model.camp_positions = model.set_camp_positions_list(model.tuple_maze_start_position)  # not required in v02
+        model.sky = model.set_tileLocations_sky()
+        model.rock = model.set_tileLocations_rock()
+        model.grass = model.set_tileLocations_grass()
+        # level.earth = level.set_tileLocations_earth(level.top_offset) #used in v02 too
+        model.paths = model.set_paths(model.list_past_positions, model.list_wall_break_positions, model.tuple_maze_start_position, model.tuple_maze_finish_position)
 
-        level.set_camp_positions() # not required in v02
-        level.set_tileLocations() #used in v02 too
-        level.set_paths()
-        level.set_paths_v02_obj_navigable()
-        level.set_path_adjacent()  # todo may remove
-        level.set_tiles()
-        level.set_tiles_v02_obj_textures()
+        model.light_positions = dict.fromkeys(model.paths, (0, 0, 0))
+        model.character_light_positions = dict.fromkeys(model.paths, (0, 0, 0))
+        # print( 'model.character_light_positions',  model.character_light_positions)
+        model.sun_light_positions = dict.fromkeys(model.paths, (0, 0, 0))
+
+        model.path_adjacent = model.set_dict_path_adjacent()  # todo may remove
+        model.tiles = model.set_dict_tiles()
         # level.setWater() #todo turn back on in a bit
         # level.set_climb() #todo turn back on in a bit
 
-        draw.draw_build_grid_hide(level, build_debug)  # TODO MOVE?
+        #! V02
+        #! model.camp_positions_v02 = model.set_tileLocations_camp_positions_v02(model.maze_start_position_v02)
+        #! model.paths_v02 = model.set_paths_v02_obj_navigable()
+        #! model.set_tiles_v02_obj_textures()
 
-        if level.maze_finish_position == (0, 0) or level.maze_start_position == (0, 0):
-            draw.draw_reset()  # TODO MOVE?
-            del level
+        view.draw_build_grid_hide(model, build_debug)  # TODO MOVE?
+
+        if model.tuple_maze_finish_position == (0, 0) or model.tuple_maze_start_position == (0, 0):
+            view.draw_reset()  # TODO MOVE?
+            del model
         else:
             build = False
 
-    level.current_position = random.choice(level.camp_positions)
+    model.tuple_current_position = random.choice(model.camp_positions)
 
-    lights = C_Model.Lights(level)
+    # lights = C_Model.Lights(model)
     # self.Controller = B_Controller.Player_Controller()
 
-    level.set_navigation(level)
+    model.set_navigation()
 
-    lights.set_tileImages()
-    lights.set_route_light_positions(level.path_adjacent)
-    lights.set_route_light_positions_tiles(lights.route_light_positions, debug='FALSE')
+    model.set_tileImages()
+
+    model.route_light_positions = model.set_route_light_positions(model.path_adjacent, model.light_positions)
+    model.set_route_light_positions_tiles(debug='FALSE')
 
     # RUN
     while True:
         # CONTROLLER
-        Controller.playerControllerEvents(level)
+        Controller.playerControllerEvents(model)
 
         # MODEL (AKA LEVEL)
-        level.set_climb_positions_visited()
-        level.set_previous_position
+        model.set_climb_positions_visited(model.tuple_current_position, model.list_climb_positions, model.climb_positions_visited)
+        # model.set_previous_position()
 
-        lights.set_lights_debug(lights_state)
-        lights.set_lights_sun(level)
-        lights.set_lights_character(level)
-        lights.set_light_positions()
+        model.set_lights_debug(lights_state, model.brightness_list)
+        model.set_lights_sun(model.tuple_maze_start_position, model.paths, model.sun_light_positions, model.brightness_list, model.tuple_maze_finish_position)
+        model.character_light_positions = model.update_character_light_positions(model.character_light_positions, model.tuple_current_position, model.paths, model.brightness_list)
+        model.light_positions = model.update_light_positions(model.paths, model.sun_light_positions, model.character_light_positions, model.light_positions)
 
         # VIEW (AKA DRAW)
-        draw.draw_level(level, lights)
-        draw.draw_coordinates(Controller.mousePos)
-        draw.current_position = level.current_position  # TODO TEMP FIX!!!!!!
+        view.draw_level(model)
+        view.draw_coordinates(Controller.mousePos)
+        view.current_position = model.tuple_current_position  # TODO TEMP FIX!!!!!!
 
-        draw.draw_player()
-        draw.draw_water(level)
-        draw.draw_light_positions(lights)
-        draw.draw_debug_start_position(level, run_debug_state)
-        draw.draw_debug_climb_positions(level, run_debug_state)
-        draw.draw_debug_ends(level, run_debug_state)
-        draw.draw_debug_route(level, run_debug_state)
-        draw.draw_screen()
+        view.draw_player()
+        # view.draw_water(model)
+        view.draw_light_positions(model)
+        view.draw_debug_start_position(model, run_debug_state)
+        view.draw_debug_climb_positions(model, run_debug_state)
+        view.draw_debug_ends(model, run_debug_state)
+        view.draw_debug_route(model, run_debug_state)
+        view.draw_screen()
 
         clock.tick(60)  # TODO Check what this is doing!!!
 
