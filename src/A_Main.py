@@ -1,13 +1,17 @@
+import logging
 import sys
 import keyboard
 import mouse
-
-
 import pygame
 import random
-
 import C_Model
 import D_View
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.disable()
+
+
+logging.debug("This is the start of the program!**************************************")
 
 
 GRID_SIZE = 32
@@ -34,15 +38,20 @@ state = {
 
 class Game_NEW:
     def __init__(self):
+        logging.debug('Game_NEW > __init__')
 
         self.clock = pygame.time.Clock()
 
     # TODO Game methods **************************:
 
     # TODO initalize (instantiate game's class, and there instances)
+
     def initialize(self):
+
         self.controller = Player_Controller()
+        logging.debug('running game new initialize- after player controller')
         self.map = C_Model.Game_OLD()
+        logging.debug('running game new initialize - after game-old')
         self.view = D_View.View(title="Maze Game", width=35, height=22)
 
         # build = True
@@ -65,7 +74,7 @@ class Game_NEW:
             # self.model.set_previous_position()
 
             self.map.set_lights_debug(lights_state, self.map.brightness_list)
-            self.map.set_lights_sun(self.map.tuple_maze_start_position, self.map.paths, self.map.sun_light_positions, self.map.brightness_list, self.map.tuple_maze_finish_position)
+            self.map.set_lights_sun(self.map.path_start_position, self.map.paths, self.map.sun_light_positions, self.map.brightness_list, self.map.path_finish_position)
             self.map.character_light_positions = self.map.update_character_light_positions(
                 self.map.character_light_positions, self.map.tuple_current_position, self.map.paths, self.map.brightness_list)
             self.map.light_positions = self.map.update_light_positions(self.map.paths, self.map.sun_light_positions, self.map.character_light_positions, self.map.light_positions)
@@ -151,8 +160,9 @@ class Player_Controller():
         elif res not in level.paths or res not in level.camp_positions:
             level.set_route(level.tuple_current_position, res, level)
             # if game.ai_controller_01.route_list[self.route_list_index:] == True:
+            level.route_index = 0
             index = 1
-            for i in level.list_route[level.list_route_index:]:  # TODO need breaking into steps
+            for i in level.route[level.route_index:]:  # TODO need breaking into steps
                 index += 1
                 level.set_position(i)
                 # game.lights.set_lights(game.lights_state)
@@ -163,6 +173,7 @@ class Player_Controller():
 
 
 def main():
+    logging.debug('def main()')
     game_new = Game_NEW()
     game_new.initialize()
     game_new.run()

@@ -1,23 +1,19 @@
-from cgitb import reset
+import logging
 import random
-from re import I
 import pygame
 import os
 import numpy
 
-from PIL import Image, ImageFont, ImageDraw, ImageOps
+from PIL import Image
 from operator import itemgetter
 from itertools import chain, groupby, product
 from collections import defaultdict
-from blend_modes import darken_only, lighten_only
-from pygame import color
+from blend_modes import lighten_only
 
-
-
-
+# logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+# logging.disable()
 
 imagesPath = 'res'
-
 
 DIRECTIONS = [(0, 1), (-1, 0), (1, 0), (0, -1)]
 
@@ -53,42 +49,40 @@ T_image = Image.open(os.path.join(imagesPath, 'I_Image_01.png')).resize((GRID_SI
 TR_image = Image.open(os.path.join(imagesPath, 'Corner.png')).resize((GRID_SIZE, GRID_SIZE))
 
 
-# @dataclass
-# class Object:
-#     drawable: bool
+# class object():
+#     def __init__(self, drawable, position, dimensions, material, navigable):
+#         self.position = position
 
+#         self.drawable = drawable
+#         self.dimensions = dimensions
+#         self.material = material
 
-class object():
-    def __init__(self, drawable, position, dimensions, material, navigable):
-        self.position = position
-
-        self.drawable = drawable
-        self.dimensions = dimensions
-        self.material = material
-
-        self.navigable = navigable
-
-
-# class Game_Map:
-#     pass
+#         self.navigable = navigable
 
 
 class Game_OLD:
     def __init__(self):
+        logging.debug("game old init")
         # self.draw = draw
 
+        # TODO MAP
+
+        # TODO MAP - PATH
         self.list_path_return = []
-        self.list_wall_break_positions = []
-        self.list_past_positions = []
-        self.tuple_maze_start_position = (0, 0)
-        self.tuple_maze_finish_position = (0, 0)
-        self.dict_objects = {}
-        self.list_ends = []
-        self.dict_path_type = {}
-        self.dict_path_directions = {}
-        self.past_positions = []
-        self.list_route = []
-        self.list_route_index = 0
+        self.path_jump_positions = []
+        # self.path_return_positions = []
+        self.path_past_positions = []
+
+        self.path_start_position = (0, 0)
+        self.path_finish_position = (0, 0)
+        self.path_type = {}
+
+        # self.dict_objects = {}
+        # self.list_ends = []
+
+        # TODO NAV
+        self.path_directions = {}
+        self.route = []
 
         # from character!!
         self.set_position_keys = ("K_LEFT", "K_RIGHT", "K_UP", "K_DOWN")
@@ -105,59 +99,39 @@ class Game_OLD:
         self.map_initialize()
         self.lights_initialize()
 
-        # ! V02
-        # self.objs = self.set_grid_v02()
-        # self.current_position_v02 = (random.choice([obj.position for obj in self.objs]))
-        # self.next_position_v02 = ()
-        # self.path_return_v02 = []
-        # self.wall_break_positions_v02 = []
-        # self.past_positions_v02 = []
-        # self.maze_start_position_v02 = (0, 0)
-        # self.maze_finish_position_v02 = (0, 0)
-
     # TODO CLASS MAP ****************************
 
     def map_initialize(self):
-        # while self.initialize_run():
-        # level.grid = level.set_grid_v01(level.top_offset)
-        # level.objs = level.set_grid_v02(level.top_offset)
-
-        # draw.draw_build_grid(level)  # TODO MOVE?
 
         self.list_grid = self.set_grid_v01()
         self.grid = self.grid_remove_random(self.list_grid)
         self.tuple_current_position = random.choice(self.list_grid)
 
-        # self.view.draw_v02(self)
-
-    # def map_update(self):
-
         # LOOP
         self.build_paths()
 
-        #! v01
-        self.poss_maze_start = self.set_poss_maze_start(self.list_past_positions)
-        self.tuple_maze_start_position = self.set_maze_start_position(self.poss_maze_start)
-        self.poss_maze_finish = self.set_poss_maze_finish(self.list_past_positions)
-        self.tuple_maze_finish_position = self.set_maze_finish_position(self.poss_maze_finish)
+        self.poss_maze_start = self.set_poss_maze_start(self.path_past_positions)
+        self.path_start_position = self.set_maze_start_position(self.poss_maze_start)
+        self.poss_maze_finish = self.set_poss_maze_finish(self.path_past_positions)
+        self.path_finish_position = self.set_maze_finish_position(self.poss_maze_finish)
 
-        if self.tuple_maze_finish_position == (0, 0) or self.tuple_maze_start_position == (0, 0):
+        if self.path_finish_position == (0, 0) or self.path_start_position == (0, 0):
             # self.view.draw_reset()  # TODO MOVE?
             self.reset()
             pass
 
-        #! v02
-        #! self.model.update_maze_start_position_v02_obj(self.model.past_positions_v02, self.model.top_offset)
-        #! self.model.set_maze_finish_position_v02()
-
-        #! V01
-
-        self.camp_positions = self.set_camp_positions_list(self.tuple_maze_start_position)  # not required in v02
+        self.camp_positions = self.set_camp_positions_list(self.path_start_position)  # not required in v02
         self.sky = self.set_tileLocations_sky()
         self.rock = self.set_tileLocations_rock()
         self.grass = self.set_tileLocations_grass()
         # level.earth = level.set_tileLocations_earth(level.top_offset) #used in v02 too
-        self.paths = self.set_paths(self.list_past_positions, self.list_wall_break_positions, self.tuple_maze_start_position, self.tuple_maze_finish_position)
+
+        self.paths = self.set_paths(
+            self.path_past_positions,
+            self.path_jump_positions,
+            self.path_start_position,
+            self.path_finish_position,
+        )
 
         self.path_adjacent = self.set_dict_path_adjacent()  # todo may remove
         self.tiles = self.set_dict_tiles(self.rock, self.path_adjacent, self.sky, self.grass, self.paths)
@@ -175,19 +149,6 @@ class Game_OLD:
         # FOR NAV
         self.tuple_current_position = random.choice(self.camp_positions)
 
-        #! V02
-        #! self.model.camp_positions_v02 = self.model.set_tileLocations_camp_positions_v02(self.model.maze_start_position_v02)
-        #! self.model.paths_v02 = self.model.set_paths_v02_obj_navigable()
-        #! self.model.set_tiles_v02_obj_textures()
-
-        # view.draw_build_grid_hide(self.model, build_debug)  # TODO MOVE?
-
-        #     return True
-        # else:
-        #     return False
-
-        # self.tuple_current_position = random.choice(self.camp_positions)
-
     def lights_initialize(self):
         """For lights."""
         self.light_positions = dict.fromkeys(self.paths, (0, 0, 0))
@@ -204,7 +165,7 @@ class Game_OLD:
 
     def update_past_positions(self, past_positions: list, current_position: tuple):
         """For map."""
-        self.list_past_positions = past_positions + [current_position]
+        self.path_past_positions =  past_positions + [current_position]
 
     def set_camp_positions_list(self, maze_start_position):
         """For map."""
@@ -214,12 +175,8 @@ class Game_OLD:
         """For map."""
         return past_positions + wall_break_positions + [maze_start_position, maze_finish_position]
 
-    # def set_paths_v02_obj_navigable(self):
-    #     return [obj.position
-    #             for obj in self.objs
-    #             if obj.navigable]
-
     # VARIOUS
+
     def tile(self, path, x, y):
         return (path[0] + (x * GRID_SIZE), path[1] + (y * GRID_SIZE))
 
@@ -230,10 +187,6 @@ class Game_OLD:
         return {self.tile(path, x, y): "fish"
                 for path, x, y in product(self.paths, AROUND, AROUND)
                 if self.tile(path, x, y) not in self.paths}
-
-    # def set_tileLocations_camp_positions_v02(self, start_pos):
-    #     return [(x, start_pos[1] - GRID_SIZE)
-    #             for x in range(0, WIDTH, GRID_SIZE)]
 
     def set_tileLocations_sky(self):
         """For map."""
@@ -252,11 +205,6 @@ class Game_OLD:
         return [(x, y)
                 for x in range(0, GRID_SIZE*(WIDTH//GRID_SIZE), GRID_SIZE)
                 for y in range(GRID_SIZE*(TOP_OFFSET-1), GRID_SIZE*(TOP_OFFSET), GRID_SIZE)]
-
-    # def set_tileLocations_earth(self):
-    #     return [(x, y)
-    #             for x in range(0, GRID_SIZE*(WIDTH//GRID_SIZE), GRID_SIZE)
-    #             for y in range(GRID_SIZE*(), GRID_SIZE*(TOP_OFFSET+1), GRID_SIZE)]
 
     def set_dict_tiles(self, rock, path_adjacent, sky, grass, paths):
         """For map."""
@@ -284,10 +232,6 @@ class Game_OLD:
         else:
             return (0, 0)
 
-            # self.draw.draw(COLOURS["BLACK_VERY_LIGHT"], self.maze_start_position[0], self.maze_start_position[1])
-        # else:
-        #     self.maze_start = None
-
     def set_poss_maze_finish(self, past_positions):
         """For map."""
         return [p
@@ -306,8 +250,6 @@ class Game_OLD:
             # self.draw.draw(COLOURS["BLUE_VERY_LIGHT"], self.maze_finish_position[0], self.maze_finish_position[1])
         # else:
         #     # self.maze_finish = None
-
-        """For map."""
 
     def grid_remove_random(self, grid):
         """For map."""
@@ -385,26 +327,24 @@ class Game_OLD:
                 if self.get_distance_in_direction(p, 'UP') in paths
                 or self.get_distance_in_direction(p, 'DOWN') in paths]
 
-    # TODO MOVE TO BUILD CLASS?? 01
-
-    # def set_current_position(self, next_position):
-    #     return next_position
-
-    # TODO MOVE TO BUILD CLASS?? 03
-
     def build_paths(self):
         """For Map."""
-        while self.check_maze_finish(self.list_past_positions,
+
+        while self.check_maze_finish(self.path_past_positions,
                                      self.tuple_current_position):
 
             # ! V01
 
-            self.update_past_positions(self.list_past_positions, self.tuple_current_position)
+            logging.debug("build paths")
+            # print('self.path_past_positions: ', self.path_past_positions, '\n',
+            # 'self.tuple_current_position: ', self.tuple_current_position)
 
-            self.set_poss_postions(self.tuple_current_position, self.list_past_positions, self.list_grid)
+            self.update_past_positions(self.path_past_positions, self.tuple_current_position)
+
+            self.set_poss_postions(self.tuple_current_position, self.path_past_positions, self.list_grid)
 
             self.set_next_position(self.tuple_current_position,
-                                   self.list_past_positions,
+                                   self.path_past_positions,
                                    self.list_path_return,
                                    self.poss_position)
 
@@ -412,22 +352,9 @@ class Game_OLD:
 
             self.set_current_wall_break_position(self.tuple_current_position, self.current_wall_break_direction)
 
-            self.update_wall_break_positions(self.list_wall_break_positions, self.current_wall_break_position)
+            self.update_path_jump_positions(self.path_jump_positions, self.current_wall_break_position)
 
-            self.tuple_current_position = self.list_next_position
-
-            # view.draw_build_wall_break_positions(model, build_debug)  # TODO MOVE?
-
-            # view.draw_screen()  # TODO MOVE?
-
-            # ! V02
-            #! level.past_positions_v02.append(level.current_position_v02)
-            #! level.next_position_v02 = level.set_next_position_v02(level.current_position_v02, level.past_positions_v02, level.path_return_v02)
-            #! level.update_wall_break_positions_v02_obj(level.next_position_v02, level.current_position_v02)
-            #! level.current_position_v02 = level.set_current_position_v02(level.current_position_v02, level.next_position_v02)
-            #! view.draw_v02(model)
-            #! if len(level.past_positions_v02) > 2 and level.current_position_v02 == level.past_positions_v02[0]:
-            #!     mazebuild_v02 = False
+            self.tuple_current_position=self.list_next_position
 
     def set_poss_position(self, current_position, direction):
         """For Map - Paths."""
@@ -435,14 +362,14 @@ class Game_OLD:
 
     def set_poss_postions(self, current_position, past_positions, grid):
         """For Map - Paths."""
-        self.poss_position = [self.set_poss_position(current_position, d)
+        self.poss_position=[self.set_poss_position(current_position, d)
                               for d in random.sample(DIRECTIONS, len(DIRECTIONS))
                               if self.set_poss_position(current_position, d) in grid
                               and self.set_poss_position(current_position, d) not in past_positions]
 
-    def update_wall_break_positions(self, list_wall_break_positions: list, current_wall_break_position: tuple):
+    def update_path_jump_positions(self, path_jump_positions: list, current_wall_break_position: tuple):
         """For Map - Paths."""
-        self.list_wall_break_positions = list_wall_break_positions + [current_wall_break_position]
+        self.path_jump_positions = [*path_jump_positions, current_wall_break_position]
 
     def set_next_position(self, current_position, past_positions, path_return, poss_position):
         """For Map - Paths."""
@@ -465,78 +392,76 @@ class Game_OLD:
 
     def set_navigation(self):
         """For Navigation."""
-        self.dict_path_type = dict.fromkeys(self.paths, "X")
-        self.dict_path_type.update(dict.fromkeys(self.camp_positions, "X"))
-        self.dict_path_directions = dict.fromkeys(self.paths, [])
-        for p in self.dict_path_type.keys():
+        self.path_type = dict.fromkeys(self.paths, "X")
+        self.path_type.update(dict.fromkeys(self.camp_positions, "X"))
+        self.path_directions = dict.fromkeys(self.paths, [])
+        for p in self.path_type.keys():
             path_directions = []
             for d in DIRECTIONS:
                 direction = (p[0] + (d[0] * GRID_SIZE),
                              p[1] + (d[1] * GRID_SIZE))
-                if direction in self.dict_path_type:
+                if direction in self.path_type:
                     path_directions.append(direction)
             if len(path_directions) == 1:
-                self.dict_path_type[p] = 1
-                self.dict_path_directions[p] = path_directions
+                self.path_type[p] = 1
+                self.path_directions[p] = path_directions
             elif len(path_directions) == 2:
-                self.dict_path_type[p] = "P"
-                self.dict_path_directions[p] = path_directions
+                self.path_type[p] = "P"
+                self.path_directions[p] = path_directions
             elif len(path_directions) > 2:
-                self.dict_path_type[p] = "J"
-                self.dict_path_directions[p] = path_directions
-        for p in [k for k, v in self.dict_path_type.items() if v == 1]:
-            if self.dict_path_type[self.dict_path_directions[p][0]] == "P":
-                self.dict_path_type[self.dict_path_directions[p][0]] = "N"
+                self.path_type[p] = "J"
+                self.path_directions[p] = path_directions
+        for p in [k for k, v in self.path_type.items() if v == 1]:
+            if self.path_type[self.path_directions[p][0]] == "P":
+                self.path_type[self.path_directions[p][0]] = "N"
 
         run = True
         while run:
-            if any([k for k, v in self.dict_path_type.items() if v == "N"]):
-                for k in [k for k, v in self.dict_path_type.items() if v == "N"]:
-                    for i in self.dict_path_directions[k]:
-                        if isinstance(self.dict_path_type[i], int):
-                            result = self.dict_path_type[i]
-                        if self.dict_path_type[i] == "P":
-                            self.dict_path_type[i] = "N"
-                    self.dict_path_type[k] = result + 1
-            elif any([k for k, v in self.dict_path_type.items() if v == "G"]):
-                for k in [k for k, v in self.dict_path_type.items() if v == "G"]:
+            if any([k for k, v in self.path_type.items() if v == "N"]):
+                for k in [k for k, v in self.path_type.items() if v == "N"]:
+                    for i in self.path_directions[k]:
+                        if isinstance(self.path_type[i], int):
+                            result = self.path_type[i]
+                        if self.path_type[i] == "P":
+                            self.path_type[i] = "N"
+                    self.path_type[k] = result + 1
+            elif any([k for k, v in self.path_type.items() if v == "G"]):
+                for k in [k for k, v in self.path_type.items() if v == "G"]:
                     result = 0
                     result_list02 = []
-                    for i in self.dict_path_directions[k]:
-                        if isinstance(self.dict_path_type[i], int):
-                            result_list02.append(self.dict_path_type[i])
-                        if isinstance(self.dict_path_type[i], str):
-                            self.dict_path_type[i] = "N"
-                    self.dict_path_type[k] = sorted(result_list02)[-1] + 1
-            elif any([k for k, v in self.dict_path_type.items() if v == "J"]):
-                for k, v in self.dict_path_type.items():
+                    for i in self.path_directions[k]:
+                        if isinstance(self.path_type[i], int):
+                            result_list02.append(self.path_type[i])
+                        if isinstance(self.path_type[i], str):
+                            self.path_type[i] = "N"
+                    self.path_type[k] = sorted(result_list02)[-1] + 1
+            elif any([k for k, v in self.path_type.items() if v == "J"]):
+                for k, v in self.path_type.items():
                     if v == "J":
                         result_list = []
-                        for i in self.dict_path_directions[k]:
-                            if isinstance(self.dict_path_type[i], int):
+                        for i in self.path_directions[k]:
+                            if isinstance(self.path_type[i], int):
                                 result_list.append(i)
-                                if len(result_list) == (len(self.dict_path_directions[k]) - 1):
-                                    if self.dict_path_type[k] == "J":
-                                        self.dict_path_type[k] = "G"
+                                if len(result_list) == (len(self.path_directions[k]) - 1):
+                                    if self.path_type[k] == "J":
+                                        self.path_type[k] = "G"
             else:
                 run = False
 
     def set_route(self, start, end, level):
         """For Nav - currently used in controller."""
-        route_list_A = []
-        route_list_B = []
-        route_list_A.append(start)
+        route_list_A = [start]
         if end in level.paths or end in level.camp_positions:
-            route_list_B.append(end)
+            route_list_B = [end]
         else:
-            route_list_B.append(start)
+            route_list_B = [start]
         run = True
         while run:
-            if self.dict_path_type[route_list_A[-1]] <= self.dict_path_type[route_list_B[-1]] or len(route_list_A) == 0:
-                result = max(self.dict_path_directions[route_list_A[-1]], key=self.dict_path_type.get)
+            if self.path_type[route_list_A[-1]] <= self.path_type[route_list_B[-1]] or len(route_list_A) == 0:
+                result = max(self.path_directions[route_list_A[-1]], key=self.path_type.get)
                 route_list_A.append(result)
-            if self.dict_path_type[route_list_B[-1]] <= self.dict_path_type[route_list_A[-1]] or len(route_list_B) == 0:
-                result = max(self.dict_path_directions[route_list_B[-1]], key=self.dict_path_type.get)
+            if self.path_type[route_list_B[-1]] <= self.path_type[route_list_A[-1]] or len(route_list_B) == 0:
+                result = max(self.path_directions[route_list_B[-1]], key=self.path_type.get)
                 route_list_B.append(result)
             duplicate = [i for i in route_list_A if i in route_list_B]
             if duplicate:
@@ -544,16 +469,7 @@ class Game_OLD:
                 run = False
         route_list_B.reverse()
         route_list_A.extend(route_list_B)
-        self.list_route = route_list_A
-
-    # Charater stuff here:
-
-    # def set_previous_position(self):
-    #     positionsList = []
-    #     if self.tuple_current_position != positionsList[1]:
-    #         positionsList.append(self.tuple_current_position)
-    #     if len(positionsList) >= 3:
-    #         positionsList.pop(0)
+        self.route = route_list_A
 
     def set_position(self, event):
         """For Nav - currently used in controller."""
@@ -577,16 +493,6 @@ class Game_OLD:
     def set_climb_positions_visited(self, tuple_current_position, list_climb_positions, climb_positions_visited):
         if tuple_current_position in list_climb_positions:
             climb_positions_visited.append(tuple_current_position)
-
-
-# class Lights():
-    # def __init__(self, level):
-        # self.brightness_list = []
-        # self.set_brightness(1)
-        # self.light_positions = dict.fromkeys(level.paths, (0, 0, 0))
-        # self.character_light_positions = dict.fromkeys(level.paths, (0, 0, 0))
-        # self.sun_light_positions = dict.fromkeys(level.paths, (0, 0, 0))
-
 
     def set_brightness(self, x: int):
         """For lights."""
@@ -781,125 +687,3 @@ class Game_OLD:
                 name = "Tiles\\" + str(k) + ".PNG"
                 res.save(name)
                 self.route_light_positions_tiles[k] = name
-
-    #! V02 *************************************************************************************************************
-
-    # def set_tiles_v02_obj_textures(self):
-    #     # dict - change in place
-    #     for obj in self.objs:
-    #         if obj.position in self.rock:
-    #             obj.texture = 'R'
-    #         elif obj.position in self.sky:
-    #             obj.texture = 'S'
-    #         elif obj.position in self.grass:
-    #             obj.texture = 'G'
-    #         elif obj.position in self.rock:
-    #             obj.texture = 'P'
-
-    #! def update_maze_start_position_v02_obj(self, past_positions_v02, top_offset):
-    #     poss_maze_start = []
-    #     for p in past_positions_v02:
-    #         if p[1] == GRID_SIZE * top_offset:
-    #             if p[0] < ((WIDTH - GRID_SIZE * 2) * (1/3)):
-    #                 poss_maze_start.append(p)
-
-    #     if len(poss_maze_start) > 0:
-    #         drawable = True
-    #         dimensions = GRID_SIZE
-    #         material = COLOURS["RED"]
-    #         navigable = True
-    #         poss_maze_start = random.choice(poss_maze_start)
-    #         self.maze_start_position_v02 = (poss_maze_start[0], poss_maze_start[1] - GRID_SIZE)
-    #         self.objs.append(object(drawable, self.maze_start_position_v02, dimensions, material, navigable))
-    #         # self.draw.draw(COLOURS["BLACK_VERY_LIGHT"], self.maze_start_position[0], self.maze_start_position[1])
-    #     # else:
-    #     #     self.maze_start = None
-
-    #! def set_maze_finish_position_v02(self):
-    #     drawable = True
-    #     dimensions = GRID_SIZE
-    #     material = COLOURS["RED"]
-    #     navigable = True
-    #     poss_maze_finish = []
-    #     for p in self.past_positions_v02:
-    #         if p[0] == WIDTH - (GRID_SIZE * 2):
-    #             if p[1] > ((HEIGHT - GRID_SIZE * 2) * (2/3)):
-    #                 poss_maze_finish.append(p)
-
-    #     if len(poss_maze_finish) > 0:
-    #         poss_maze_finish = random.choice(poss_maze_finish)
-    #         self.maze_finish_position_v02 = (poss_maze_finish[0] + GRID_SIZE, poss_maze_finish[1])
-    #         self.objs.append(object(drawable, self.maze_start_position_v02, dimensions, material, navigable))
-    #         # self.draw.draw(COLOURS["BLUE_VERY_LIGHT"], self.maze_finish_position[0], self.maze_finish_position[1])
-    #     else:
-    #         self.maze_finish_v02 = None
-
-    #! def set_current_position_v02(self, current_position_v02, next_position_v02):
-    #     # if len(current_position_v02) == 0:
-    #     #     position = random.choice([obj.position for obj in self.objs])
-    #     #     return position
-    #     # else:
-    #     return next_position_v02
-
-    #! def set_next_position_v02(self, current_position_v02, past_positions_v02, path_return_v02):
-    #     random.shuffle(DIRECTIONS)
-    #     poss_directions = []
-    #     poss_position_List = []
-    #     for d in DIRECTIONS:
-    #         poss_position = (current_position_v02[0] + (
-    #             d[0] * GRID_SIZE * 2), current_position_v02[1] + (d[1] * GRID_SIZE * 2))
-    #         if poss_position in [obj.position for obj in self.objs]:
-    #             if poss_position not in past_positions_v02:
-    #                 poss_position_List.append(poss_position)
-    #     if len(poss_position_List) > 1:
-    #         bias = [100, 100, 1, 1]
-    #         randomResult = random.choices(poss_position_List, k=1, weights=bias[:len(poss_position_List)])
-    #         result = randomResult[0]
-    #     if len(poss_position_List) == 0:
-    #         if current_position_v02 in past_positions_v02:
-    #             index = past_positions_v02.index(current_position_v02)
-    #             result = past_positions_v02[index - 1]
-    #             path_return_v02.append(result)
-    #         else:
-    #             result = past_positions_v02[-1]
-    #     if len(poss_position_List) == 1:
-    #         result = poss_position_List[0]
-    #     return result
-
-    # TODO MOVE TO BUILD CLASS? 02
-
-    # def set_past_positions_v02(self, temp_past_positions_v02, current_position_v02):
-    #     temp_past_positions_v02.append(current_position_v02)
-    #     return temp_past_positions_v02
-
-    # NAV STUFF HERE!
-
-    # def set_grid_v02(self):
-    #     drawable = True
-    #     temp_objs = []
-    #     dimensions = (GRID_SIZE, GRID_SIZE, GRID_SIZE)
-    #     material = COLOURS["RED"]
-    #     navigable = True
-    #     for x in range(GRID_SIZE, WIDTH, GRID_SIZE * 2):
-    #         for y in range(GRID_SIZE * TOP_OFFSET, HEIGHT - (GRID_SIZE * 2), GRID_SIZE * 2):
-    #             temp_objs.append(object(drawable, (x, y), dimensions, material, navigable))
-
-    #     for i in range(len(temp_objs) // 3):
-    #         random_item_from_list = random.choice(temp_objs)
-    #         temp_objs.remove(random_item_from_list)
-
-    #     return temp_objs
-
-        # for obj in self.objs:
-        #     print(obj.drawable, obj.position, obj.dimensions, obj.material, obj.navagatable)
-
-    # def update_wall_break_positions_v02_obj(self, next_position_v02, current_position_v02):
-    #     drawable = True
-    #     dimensions = (GRID_SIZE, GRID_SIZE, GRID_SIZE)
-    #     material = COLOURS["RED"]
-    #     navigable = True
-    #     result = ((next_position_v02[0] - current_position_v02[0]) // 2, (next_position_v02[1] - current_position_v02[1]) // 2)
-    #     result02 = (current_position_v02[0] + result[0], current_position_v02[1] + result[1])
-    #     self.objs.append(object(drawable, result02, dimensions, material, navigable))
-
-    #! END *************************************************************************************************************
