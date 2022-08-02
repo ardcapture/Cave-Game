@@ -1,0 +1,22 @@
+
+
+def update_build_past_positions(self, past_positions, current_position):
+    res = past_positions + [current_position]
+    return res
+
+
+x = ["a", "b"]
+
+
+
+
+def list_maker(x):
+    return [inner
+            for outer in [x, [res]]
+            for inner in outer]
+
+
+res = list_maker(x)
+
+
+print(f"res {res}")
