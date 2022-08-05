@@ -1,13 +1,9 @@
-import logging
+
 
 import Model
 import View
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-logging.disable()
 
-
-logging.debug("This is the start of the program!**************************************")
 
 
 DIRECTIONS = [(0, 1), (-1, 0), (1, 0), (0, -1)]
@@ -17,7 +13,7 @@ LevelStates = ["01_Title", "02_Settings", "03_Build", "04_Play"]
 game_keys = "K_BACKQUOTE"
 
 
-build_debug = False
+# build_debug = True
 
 
 # TODO may not get used!
@@ -29,9 +25,10 @@ state = {
 }
 
 
-class Controller:
+class Game:
     def __init__(self):
 
+        # Debugs:
         self.run_debug_state = False
 
         # game state controllers:
@@ -49,7 +46,7 @@ class Controller:
     def run(self):
         # RUN
         while True:
-            self.level.run()
+            self.level.update()
             self.view.update(self.level, self.run_debug_state)
 
     # TODO get state / event
@@ -60,7 +57,7 @@ class Controller:
 
 
 def main():
-    game_new = Controller()
+    game_new = Game()
     game_new.run()
 
 
