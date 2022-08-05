@@ -1,4 +1,3 @@
-from ast import arg
 import pygame
 import sys
 import os
@@ -6,7 +5,7 @@ import os
 # import mouse
 
 from pygame.constants import BLEND_RGBA_ADD, BLEND_RGB_ADD, BLEND_RGB_SUB
-from Model import Level, GRID_SIZE
+from Controller import Level, GRID_SIZE
 from dataclasses import dataclass
 
 

@@ -1,18 +1,32 @@
-from multiprocessing.reduction import duplicate
 import random
 import os
 import numpy
+
+import View
 
 from PIL import Image
 from operator import itemgetter
 from itertools import chain, groupby, product
 from collections import defaultdict
-from blend_modes import lighten_only
 
+from blend_modes import lighten_only
 from dataclasses import dataclass
 
-# logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-# logging.disable()
+
+LevelStates = ["01_Title", "02_Settings", "03_Build", "04_Play"]
+game_keys = "K_BACKQUOTE"
+
+
+# build_debug = True
+
+
+# TODO may not get used!
+state = {
+    # "title": title,
+    # "level_build": build,
+    # "level_run": level_run,
+    # "level_pause": level_pause
+}
 
 imagesPath = 'res'
 
@@ -71,6 +85,36 @@ def position_to_grid_position(pos: tuple[int, int]):
 
 def get_list_difference(list01, list02):
     return [x for x in list01 if x not in list02]
+
+
+class Game:
+    def __init__(self):
+
+        # Debugs:
+        self.run_debug_state = False
+
+        # game state controllers:
+
+        self.level = Level(self)
+        # model and views:
+        self.view = View.View(self)
+
+    # TODO _run too?
+
+    def initialize(self):
+        pass
+
+    def run(self):
+        # RUN
+        while True:
+            self.level.update()
+            self.view.update(self.level, self.run_debug_state)
+
+    # TODO get state / event
+    # TODO update (run objecet's update)
+    # TODO end
+    # TODO add object
+    # TODO remove object
 
 
 class Level:
@@ -862,3 +906,12 @@ class Light_Data:
     color: tuple = (0, 0, 0)
     special_flags: str = "BLEND_RGB_ADD"
     position: tuple = None
+
+
+def main():
+    game_new = Game()
+    game_new.run()
+
+
+if __name__ == '__main__':
+    main()
