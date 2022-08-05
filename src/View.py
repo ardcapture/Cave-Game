@@ -84,7 +84,7 @@ class View:
             "BLEND_RGB_ADD": BLEND_RGB_SUB
         }
 
-    def update(self, level, run_debug_state):
+    def update(self, level, run_debug_state, current_position):
 
         # self.events_all = self.event_all()
 
@@ -98,25 +98,23 @@ class View:
         # keyboard
         self.keyboard = self.keyboard.update(self)
 
-        self.set_event_keyboard(self.keyboard)
+        keyboard_set_position = self.set_event_keyboard(self.keyboard)
 
         # mouse
         self.mouse_data_list = self.mouse.update(self)
 
         self.draw_level(self.level)
-        self.current_position = self.level.path.player_path_position  # TODO TEMP FIX!!!!!!
 
         for m in self.mouse_data_list:
-            self.set_mouse(m)
+            mouse_event_run = self.set_mouse(m)
             self.draw_coordinates(self.window.window_surface, (m.mouse_motion), self.pygame_fonts["MONOSPACE"](15))
 
         # self.input.event()
 
         self.draw_water(level)
 
-        self.set_surface_to_window(self.player_image)
+        self.set_surface_to_window(self.player_image, current_position)
 
-    
         self.set_blit_objs(level.light_objs)
 
         self.draw_debug_start_position(level, run_debug_state)
@@ -127,6 +125,8 @@ class View:
         self.clock.tick(60)  # TODO Check what this is doing!!!
 
         pygame.display.update()
+
+        return keyboard_set_position, mouse_event_run
 
     #!!!!! DRAWING OF SELF.SURFACE *****************************************************************
 
@@ -272,12 +272,13 @@ class View:
                 self.set_surface_to_surface(self.pygame_surfaces["DIRT_IMAGE"], self.window.window_surface, g[0], g[1])
             directions_list.clear()
 
-    def set_surface_to_window(self, surface):
+    def set_surface_to_window(self, surface, current_position):
         self.set_surface_to_surface(
-            surface, self.window.window_surface,
+            surface,
+            self.window.window_surface,
             (
-                self.current_position[0] + ((GRID_SCALE - surface.get_width())/2),
-                self.current_position[1] + (GRID_SCALE - surface.get_height())
+                current_position[0] + ((GRID_SCALE - surface.get_width())/2),
+                current_position[1] + (GRID_SCALE - surface.get_height())
             ),
             special_flags=0
         )
@@ -304,14 +305,14 @@ class View:
     def set_event_keyboard(self, keyboard):
         if keyboard.keydown:
             if keyboard.keydown[1] in self.level.set_position_keys:
-                self.level.path.set_position(keyboard.keydown[1])
+                return keyboard.keydown[1]
 
     def set_mouse(self, mouse_data):
         if mouse_data.mouse_button_up:
             position = mouse_data.mouse_button_up["pos"]
             button = mouse_data.mouse_button_up["button"]
             if button:
-                self.level.mouse_event_run(position)
+                return position
 
     def set_window_end(self, event):
         if event:
