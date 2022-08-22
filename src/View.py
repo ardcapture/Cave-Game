@@ -1,6 +1,8 @@
 import pygame
 import sys
 import os
+from event import subscribe
+
 # import keyboard
 # import mouse
 
@@ -83,6 +85,12 @@ class View:
         self.pygame_special_flags = {
             "BLEND_RGB_ADD": BLEND_RGB_SUB
         }
+
+    def setup_view_event_handlers(self):
+        # subscribe("user_registered", handle_user_registered_event)
+        subscribe("update", self.update)
+
+
 
     def update(self, level, run_debug_state, current_position):
 
@@ -273,6 +281,11 @@ class View:
             directions_list.clear()
 
     def set_surface_to_window(self, surface, current_position):
+        if not current_position:
+            return
+
+        print(f"* {self.__class__.__name__}.set_surface_to_window")
+        print(f"- {current_position=}")
         self.set_surface_to_surface(
             surface,
             self.window.window_surface,

@@ -12,6 +12,7 @@ from collections import defaultdict
 
 from blend_modes import lighten_only
 
+from event import post_event
 
 LevelStates = ["01_Title", "02_Settings", "03_Build", "04_Play"]
 game_keys = "K_BACKQUOTE"
@@ -64,8 +65,10 @@ TR_image = Image.open(os.path.join(imagesPath, 'Corner.png')).resize((GRID_SIZE,
 
 
 def debug_instance_variables(self):
+    print(f"* {self.__class__.__name__}.debug_instance_variables")
+
     for k in self.__dict__.keys():
-        print(f"{type(self).__name__}: {k}")
+        print(f"- {type(self).__name__}: {k}")
 
 
 def get_distance_in_direction(position, direction):
@@ -101,6 +104,8 @@ class Game:
         # model and views:
         self.view = View.View(self)
 
+        self.view.setup_view_event_handlers()
+
     # TODO _run/update too?
 
     def update(self):
@@ -111,14 +116,17 @@ class Game:
                 self.level.update_build()
                 state = "run"
             if state == "run":
-                self.player_path_position = self.level.update_run(
+                self.level.update_run(
                     self.keyboard_set_position,
                     self.mouse_event_run
                 )
-                self.keyboard_set_position, self.mouse_event_run = self.view.update(
+
+                self.keyboard_set_position, self.mouse_event_run = post_event(
+                    "update",
                     self.level,
                     self.run_debug_state,
-                    self.player_path_position)
+                    self.level.path_obj.player_path_position
+                )
 
     # TODO get state / event
     # TODO update (run object's update)
@@ -180,6 +188,8 @@ class Level:
                    mouse_event_run
                    ):
 
+        print(f"* {self.__class__.__name__}.update_run")
+
         self.path_climb_positions_visited = self.path.update_run(
             list_climb_positions=self.path_obj.list_climb_positions,
             player_path_position=self.path_obj.player_path_position,
@@ -210,7 +220,7 @@ class Level:
         self.tiles = self.set_dict_tiles(self.rock, self.path_adjacent, self.sky, self.grass, self.path_obj.paths)
 
         if mouse_event_run:
-            self.mouse_event_run(
+            player_path_position = self.mouse_event_run(
                 mouse_event_run,
                 self.path_obj.camp_positions,
                 self.path_obj.player_path_position,
@@ -219,14 +229,16 @@ class Level:
                 self.path_obj.path_directions
             )
 
-        self.k_keyboard_set_position(
+        player_path_position = self.get_player_path_position(
             set_position,
             self.path_obj.paths,
             self.path_obj.camp_positions,
             self.path_obj.player_path_position
         )
 
-        return self.path_obj.player_path_position
+        print(f"- {player_path_position=}")
+
+        self.path_obj.player_path_position = player_path_position
 
     def reset(self):
         print(f"reset")
@@ -263,8 +275,9 @@ class Level:
             index = 1
             for i in route[route_index:]:  # TODO need breaking into steps
                 index += 1
-                self.k_keyboard_set_position(i, paths, camp_positions, player_path_position)
-                print("walk", index, i)
+                player_path_position = self.get_player_path_position(i, paths, camp_positions, player_path_position)
+                print("walk", index, player_path_position)
+        return player_path_position
 
     def set_route(self, start, end, paths, camp_positions, path_type, path_directions):
         """For Nav - currently used in controller."""
@@ -289,7 +302,7 @@ class Level:
         route_list_A.extend(route_list_B)
         return route_list_A
 
-    def k_keyboard_set_position(self, event, paths, camp_positions, player_path_position):
+    def get_player_path_position(self, event, paths, camp_positions, player_path_position):
         x, y = player_path_position
         if event == "K_LEFT":
             x -= self.velocity
@@ -302,7 +315,7 @@ class Level:
         elif isinstance(event, tuple):
             x, y = event
         if (x, y) in paths or (x, y) in camp_positions:
-            player_path_position = (x, y)
+            return (x, y)
 
     #!!!! *******************************************
 
@@ -401,11 +414,13 @@ class Tile():
 
 
 class Surround:
-    def update(self,
-               paths,
-               ):
+    def update(self, paths):
+
+        print(f"* {self.__class__.__name__}.update")
 
         path_adjacent = self.set_dict_path_adjacent(paths)  # todo may remove
+
+        print(f"- path_adjacent: {len(path_adjacent)}")
 
         poss_surround_positions = self.set_poss_path_surround_positions(
             path_adjacent,
@@ -415,6 +430,8 @@ class Surround:
         surround_positions = self.set_path_surround_positions(
             poss_surround_positions,
         )
+
+        print(f"- surround_positions: {len(surround_positions)}")
 
         debug_instance_variables(self)
 
