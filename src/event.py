@@ -1,14 +1,13 @@
-subscribers = dict()
+class Environment:
+    def __init__(self) -> None:
+        self.subscribers = dict()
 
-def subscribe(event_type: str, fn):
-    if not event_type in subscribers:
-        subscribers[event_type] = []
-    subscribers[event_type].append(fn)
+    def connect_objects(self, game, view, level):
+        self.game = game
+        self.view = view
+        self.level = level
 
-def post_event(event_type: str, *args):
-    if not event_type in subscribers:
-        print(f"not event!")
-        return
-    for fn in subscribers[event_type]:
-        print(f"event")
-        return fn(*args)
+    def update(self):
+        while True:
+            self.game.update_check(self)
+            self.view.update_check(self)
