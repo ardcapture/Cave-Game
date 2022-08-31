@@ -1,19 +1,23 @@
 import pygame
 import sys
 import os
+import numpy
+
 from event import subscribe
+from PIL import Image
+from blend_modes import lighten_only
 
 # import keyboard
 # import mouse
 
 from pygame.constants import BLEND_RGBA_ADD, BLEND_RGB_ADD, BLEND_RGB_SUB
-from Controller import Level, GRID_SIZE
+from level import GRID_SIZE
 from dataclasses import dataclass
 
 
 GRID_SCALE = GRID_SIZE
 
-IMAGES_PATH = 'res'
+IMAGES_PATH = "res"
 
 
 DIRECTIONS = [(0, 1), (-1, 0), (1, 0), (0, -1)]
@@ -30,6 +34,27 @@ COLORS = {
     "BLUE_LIGHT": (125, 125, 255),
     "BLUE_VERY_LIGHT": (210, 210, 255),
 }
+
+imagesPath = "res"
+
+
+rock_lighting_tile = Image.open(os.path.join(imagesPath, "rock.png")).resize(
+    (GRID_SIZE, GRID_SIZE)
+)
+BlackSQ = Image.open(os.path.join(imagesPath, "BlackSQ.png")).resize(
+    (GRID_SIZE, GRID_SIZE)
+)
+
+
+
+
+
+T_image = Image.open(os.path.join(imagesPath, "I_Image_01.png")).resize(
+    (GRID_SIZE, GRID_SIZE)
+)
+TR_image = Image.open(os.path.join(imagesPath, "Corner.png")).resize(
+    (GRID_SIZE, GRID_SIZE)
+)
 
 
 class View:
@@ -51,16 +76,18 @@ class View:
         # self.input = View_Input(self.level)
 
         self.player_image = self.get_surface_character(
-            os.path.join(IMAGES_PATH, 'player_tran.png'),
+            os.path.join(IMAGES_PATH, "player_tran.png"),
             (COLORS["WHITE"]),
-            scale=(GRID_SCALE//16)
+            scale=(GRID_SCALE // 16),
         )
 
         self.pygame_fonts = {
             "MONOSPACE": self.get_pygame_fonts,
         }
 
-        self.window = Window(title="Maze Game", width=35, height=22, grid_size=GRID_SCALE)
+        self.window = Window(
+            title="Maze Game", width=35, height=22, grid_size=GRID_SCALE
+        )
         # self.window = Input_Window()
         self.keyboard = Keyboard(self)
         self.mouse = Mouse()
@@ -74,23 +101,25 @@ class View:
         self.run = True  # TODO CHECK WHAT IS USING
 
         self.pygame_surfaces = {
-            "GRASS_IMAGE": self.get_surface_file('grass.png', IMAGES_PATH, self.grid_size_2D),
-            "DIRT_IMAGE": self.get_surface_file('dirt.png', IMAGES_PATH, self.grid_size_2D),
-            "ROCK_IMAGE": self.get_surface_file('rock.png', IMAGES_PATH, self.grid_size_2D),
+            "GRASS_IMAGE": self.get_surface_file(
+                "grass.png", IMAGES_PATH, self.grid_size_2D
+            ),
+            "DIRT_IMAGE": self.get_surface_file(
+                "dirt.png", IMAGES_PATH, self.grid_size_2D
+            ),
+            "ROCK_IMAGE": self.get_surface_file(
+                "rock.png", IMAGES_PATH, self.grid_size_2D
+            ),
             "WINDOW": self.window.window_surface,
             "TEXT": self.get_surface_text,
-            "LIGHT": self.get_surface_lights
+            "LIGHT": self.get_surface_lights,
         }
 
-        self.pygame_special_flags = {
-            "BLEND_RGB_ADD": BLEND_RGB_SUB
-        }
+        self.pygame_special_flags = {"BLEND_RGB_ADD": BLEND_RGB_SUB}
 
     def setup_view_event_handlers(self):
         # subscribe("user_registered", handle_user_registered_event)
         subscribe("update", self.update)
-
-
 
     def update(self, level, run_debug_state, current_position):
 
@@ -115,7 +144,11 @@ class View:
 
         for m in self.mouse_data_list:
             mouse_event_run = self.set_mouse(m)
-            self.draw_coordinates(self.window.window_surface, (m.mouse_motion), self.pygame_fonts["MONOSPACE"](15))
+            self.draw_coordinates(
+                self.window.window_surface,
+                (m.mouse_motion),
+                self.pygame_fonts["MONOSPACE"](15),
+            )
 
         # self.input.event()
 
@@ -187,29 +220,44 @@ class View:
             self.pygame_surfaces[obj.to_surface].blit(
                 self.pygame_surfaces[obj.surface](obj.color),
                 obj.position,
-                special_flags=self.pygame_special_flags["BLEND_RGB_ADD"]
+                special_flags=self.pygame_special_flags["BLEND_RGB_ADD"],
             )
 
     #!!!!!! Create shape and draw?*******************************************************************************
 
     def draw_rect(self, color, pos):
-        pygame.draw.rect(self.window.window_surface, color, (pos, (GRID_SCALE, GRID_SCALE)))
+        pygame.draw.rect(
+            self.window.window_surface, color, (pos, (GRID_SCALE, GRID_SCALE))
+        )
 
     # def draw_circle(self, color, x, y):
     #     pygame.draw.circle(self.surface, color, (x, y), GRID_SCALE / 4)
 
     def draw_outline(self, color, pos):
-        pygame.draw.rect(self.window.window_surface, color, (pos, (GRID_SCALE - 1, GRID_SCALE - 1)), 2)
+        pygame.draw.rect(
+            self.window.window_surface,
+            color,
+            (pos, (GRID_SCALE - 1, GRID_SCALE - 1)),
+            2,
+        )
 
     def draw_climb_positions_visited(self):
         for p in self.climb_positions_visited:
             if p not in self.water_list:
-                pygame.draw.rect(self.window.window_surface, COLORS["RED"], (p[0] + GRID_SCALE * 7/16, p[1], GRID_SCALE/8, GRID_SCALE))
+                pygame.draw.rect(
+                    self.window.window_surface,
+                    COLORS["RED"],
+                    (p[0] + GRID_SCALE * 7 / 16, p[1], GRID_SCALE / 8, GRID_SCALE),
+                )
 
     def draw_debug_climb_positions(self, model, debug):
         if debug:
             for p in model.path.list_climb_positions:
-                pygame.draw.rect(self.window.window_surface, COLORS["GREEN"], (p[0] + GRID_SCALE * 7/16, p[1], GRID_SCALE/8, GRID_SCALE))
+                pygame.draw.rect(
+                    self.window.window_surface,
+                    COLORS["GREEN"],
+                    (p[0] + GRID_SCALE * 7 / 16, p[1], GRID_SCALE / 8, GRID_SCALE),
+                )
 
     #!!!! set draw locations???  ****************************************************************************
 
@@ -221,18 +269,35 @@ class View:
     def draw_level(self, level):
         for k, v in level.tiles.items():
             pos = k[0], k[1]
-            if v == 'S':
+            if v == "S":
                 self.draw_rect((146, 244, 255), pos)
-            if v == 'G':
-                self.set_surface_to_surface(self.pygame_surfaces["GRASS_IMAGE"], self.window.window_surface, pos, special_flags=0)
-            if v == 'E':
-                self.set_surface_to_surface(self.pygame_surfaces["DIRT_IMAGE"], self.window.window_surface, pos, special_flags=0)
-            if v == 'P':
-                self.set_surface_to_surface(self.pygame_surfaces["ROCK_IMAGE"], self.window.window_surface, pos, special_flags=0)
-            if v == 'A':
+            if v == "G":
+                self.set_surface_to_surface(
+                    self.pygame_surfaces["GRASS_IMAGE"],
+                    self.window.window_surface,
+                    pos,
+                    special_flags=0,
+                )
+            if v == "E":
+                self.set_surface_to_surface(
+                    self.pygame_surfaces["DIRT_IMAGE"],
+                    self.window.window_surface,
+                    pos,
+                    special_flags=0,
+                )
+            if v == "P":
+                self.set_surface_to_surface(
+                    self.pygame_surfaces["ROCK_IMAGE"],
+                    self.window.window_surface,
+                    pos,
+                    special_flags=0,
+                )
+            if v == "A":
                 tile01 = pygame.image.load(level.route_light_positions_tiles[k])
                 tile01 = pygame.transform.scale(tile01, (GRID_SCALE, GRID_SCALE))
-                self.set_surface_to_surface(tile01, self.window.window_surface, pos, special_flags=0)
+                self.set_surface_to_surface(
+                    tile01, self.window.window_surface, pos, special_flags=0
+                )
 
     #!!!! WATER:
 
@@ -259,7 +324,8 @@ class View:
             self.draw_outline(COLORS["RED"], (p[0], p[1]))
 
         """_summary_
-        """    # def draw_build_wall_break_positions(self, level, build_debug):
+        """  # def draw_build_wall_break_positions(self, level, build_debug):
+
     #     level02 = level
     #     if build_debug:
     #         self.draw(COLOURS["BLACK_VERY_LIGHT"], level02.list_wall_break_positions[-1][0], level02.list_wall_break_positions[-1][1])
@@ -273,11 +339,19 @@ class View:
         directions_list = []
         for g in model.list_grid:
             for d in DIRECTIONS:
-                if (g[0] + (d[0] * GRID_SCALE), g[1] + (d[1] * GRID_SCALE)) not in model.list_wall_break_positions:
+                if (
+                    g[0] + (d[0] * GRID_SCALE),
+                    g[1] + (d[1] * GRID_SCALE),
+                ) not in model.list_wall_break_positions:
                     directions_list.append((d[0], d[1]))
 
             if len(directions_list) == 4:
-                self.set_surface_to_surface(self.pygame_surfaces["DIRT_IMAGE"], self.window.window_surface, g[0], g[1])
+                self.set_surface_to_surface(
+                    self.pygame_surfaces["DIRT_IMAGE"],
+                    self.window.window_surface,
+                    g[0],
+                    g[1],
+                )
             directions_list.clear()
 
     def set_surface_to_window(self, surface, current_position):
@@ -290,10 +364,10 @@ class View:
             surface,
             self.window.window_surface,
             (
-                current_position[0] + ((GRID_SCALE - surface.get_width())/2),
-                current_position[1] + (GRID_SCALE - surface.get_height())
+                current_position[0] + ((GRID_SCALE - surface.get_width()) / 2),
+                current_position[1] + (GRID_SCALE - surface.get_height()),
             ),
-            special_flags=0
+            special_flags=0,
         )
 
     #!!!! *********************************************************
@@ -309,7 +383,10 @@ class View:
     def get_surface_character(self, file, key, scale):
         player_image = pygame.image.load(file)
         player_image.set_colorkey(key)
-        res = pygame.transform.scale(player_image, (player_image.get_width() * scale, player_image.get_height() * scale))
+        res = pygame.transform.scale(
+            player_image,
+            (player_image.get_width() * scale, player_image.get_height() * scale),
+        )
         return res
 
     def set_window_surface_black(self):
@@ -340,12 +417,18 @@ class View:
 class Window:
     def __init__(self, title: str, width: int, height: int, grid_size: int):
 
-        self.width, self.height = list(map(lambda x: (GRID_SCALE * 2) + (GRID_SCALE * x), [width, height]))
+        self.width, self.height = list(
+            map(lambda x: (GRID_SCALE * 2) + (GRID_SCALE * x), [width, height])
+        )
 
-        self.window_size_scaled = self.get_window_scale(self.width, self.height, scale=1)
+        self.window_size_scaled = self.get_window_scale(
+            self.width, self.height, scale=1
+        )
 
         pygame.display.set_caption(title)
-        self.window_surface = pygame.display.set_mode(size=(self.width * 1, self.height * 1), flags=0, depth=32)
+        self.window_surface = pygame.display.set_mode(
+            size=(self.width * 1, self.height * 1), flags=0, depth=32
+        )
 
         self.events = self.get_events()
 
@@ -365,6 +448,7 @@ class Window:
         return res
 
         # draw window
+
     def set_window(self, surface):
         self.window_surface.blit(surface, (0, 0))
 
@@ -389,7 +473,7 @@ class Keyboard:
             pygame.K_LEFT: "K_LEFT",
             pygame.K_UP: "K_UP",
             pygame.K_RIGHT: "K_RIGHT",
-            pygame.K_BACKQUOTE: "K_BACKQUOTE"
+            pygame.K_BACKQUOTE: "K_BACKQUOTE",
         }
 
     def update(self, parent):
@@ -443,6 +527,104 @@ class Mouse:
                 if any(e.buttons):
                     button = e.buttons.index(1) + 1
                 return {"pos": e.pos, "button": button}
+
+
+class Tile:
+    def update(self, surround_positions):
+
+        tileImages = self.get_surround_images()
+
+        self.route_light_positions_tiles = self.set_path_surround_tiles(
+            tileImages,
+            surround_positions,
+            debug=False,
+        )
+
+        return self.route_light_positions_tiles
+
+    def get_surround_images(self):
+        tileImages = {}
+        image_types = ["T", "R", "B", "L", "TR", "BR", "BL", "TL"]
+        for i in image_types:
+            tileImages[i + "_image"] = self.get_lighting_tile(T_image, TR_image, i)
+        return tileImages
+
+    def set_path_surround_tiles(
+        self, tileImages, path_surround_positions, debug
+    ) -> dict:
+        route_light_positions_tiles = {}
+        for k, v in path_surround_positions.items():
+            if len(v) == 1:
+                res = self.get_lighting_tile(T_image, TR_image, v[-1])
+                res = res.convert("L")
+                if not debug:
+                    res = Image.composite(rock_lighting_tile, BlackSQ, res)
+                name = "Tiles\\" + str(k) + ".PNG"
+                res.save(name)
+                route_light_positions_tiles[k] = name
+            elif len(v) == 2:
+                res = self.return_blended(
+                    tileImages[v[0] + "_image"], tileImages[v[1] + "_image"]
+                )
+                res = res.convert("L")
+                if not debug:
+                    res = Image.composite(rock_lighting_tile, BlackSQ, res)
+                name = "Tiles\\" + str(k) + ".PNG"
+                res.save(name)
+                route_light_positions_tiles[k] = name
+            elif len(v) == 3:
+                image01 = tileImages[v.pop() + "_image"]
+                image02 = tileImages[v.pop() + "_image"]
+                blend01 = self.return_blended(image01, image02)
+                # blend01.show()
+                image03 = tileImages[v.pop() + "_image"]
+                blend02 = self.return_blended(blend01, image03)
+                res = blend02
+                res = res.convert("L")
+                if not debug:
+                    res = Image.composite(rock_lighting_tile, BlackSQ, res)
+                name = "Tiles\\" + str(k) + ".PNG"
+                res.save(name)
+                route_light_positions_tiles[k] = name
+
+        return route_light_positions_tiles
+
+    def get_lighting_tile(self, TOP_image, TOPR_image, neighbor):
+        if neighbor == "T":
+            res = TOP_image.rotate(0)
+        elif neighbor == "TR":
+            res = TOPR_image.rotate(0)
+        elif neighbor == "L":
+            res = TOP_image.rotate(90)
+        elif neighbor == "TL":
+            res = TOPR_image.rotate(90)
+        elif neighbor == "B":
+            res = TOP_image.rotate(180)
+        elif neighbor == "BL":
+            res = TOPR_image.rotate(180)
+        elif neighbor == "R":
+            res = TOP_image.rotate(270)
+        elif neighbor == "BR":
+            res = TOPR_image.rotate(270)
+        return res
+
+    def return_blended(self, foreground_image, background_image):
+        return self.get_darken(
+            self.return_array(foreground_image), self.return_array(background_image)
+        )
+
+    def return_array(self, image):
+        array = numpy.array(image)
+        array = array.astype(float)
+        return array
+
+    def get_darken(self, image_float01, image_float02):
+        opacity = 1.0
+        # blended_img_float = darken_only(image_float01, image_float02, opacity)
+        blended_img_float = lighten_only(image_float01, image_float02, opacity)
+        blended_img = numpy.uint8(blended_img_float)
+        blended_img_raw = Image.fromarray(blended_img)
+        return blended_img_raw
 
 
 @dataclass
