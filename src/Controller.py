@@ -2,10 +2,13 @@ import View
 import event
 
 from level import Level
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 =======
 from blend_modes import lighten_only
+=======
+>>>>>>> 08021f9d4d6403f18337157d644cb68486dee7b4
 
 >>>>>>> parent of cede969 (post event/ pre level)
 
@@ -55,6 +58,7 @@ class Game():
         self.env = env
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         print(f"{self.env=}")
 =======
 
@@ -91,6 +95,9 @@ def get_list_difference(list01, list02):
 class Game:
     def __init__(self):
 >>>>>>> parent of cede969 (post event/ pre level)
+=======
+        print(f"{self.env=}")
+>>>>>>> 08021f9d4d6403f18337157d644cb68486dee7b4
 
         # Debugs:
         self.run_debug_state = False
@@ -101,12 +108,18 @@ class Game:
         self.mouse_event_run = None
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 08021f9d4d6403f18337157d644cb68486dee7b4
         # self.level = level.Level(self)
         # model and views:
 
 
+<<<<<<< HEAD
 =======
 >>>>>>> parent of cede969 (post event/ pre level)
+=======
+>>>>>>> 08021f9d4d6403f18337157d644cb68486dee7b4
     # TODO _run/update too?
 
     def update_check(self, env):
@@ -124,6 +137,9 @@ class Game:
                 state = "run"
             if state == "run":
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 08021f9d4d6403f18337157d644cb68486dee7b4
                 self.env.level.update_run(self.keyboard_set_position, self.mouse_event_run)
 
                 # update view
@@ -134,6 +150,7 @@ class Game:
 
 
 
+<<<<<<< HEAD
 =======
                 self.player_path_position = self.level.update_run(
                     self.keyboard_set_position,
@@ -144,6 +161,8 @@ class Game:
                     self.run_debug_state,
                     self.player_path_position)
 >>>>>>> parent of cede969 (post event/ pre level)
+=======
+>>>>>>> 08021f9d4d6403f18337157d644cb68486dee7b4
 
     # TODO get state / event
     # TODO update (run object's update)
@@ -152,6 +171,7 @@ class Game:
     # TODO remove object
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 class Level:
@@ -997,6 +1017,8 @@ class Lights:
 
 
 >>>>>>> parent of cede969 (post event/ pre level)
+=======
+>>>>>>> 08021f9d4d6403f18337157d644cb68486dee7b4
 def main():
     mainEnv = event.Environment()
 

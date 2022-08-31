@@ -2,6 +2,9 @@ import pygame
 import sys
 import os
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 08021f9d4d6403f18337157d644cb68486dee7b4
 import numpy
 import event
 
@@ -11,8 +14,11 @@ from dataclasses import dataclass
 from blend_modes import lighten_only
 from PIL import Image
 
+<<<<<<< HEAD
 =======
 >>>>>>> parent of cede969 (post event/ pre level)
+=======
+>>>>>>> 08021f9d4d6403f18337157d644cb68486dee7b4
 # import keyboard
 # import mouse
 
@@ -117,6 +123,9 @@ class View:
         self.pygame_special_flags = {"BLEND_RGB_ADD": BLEND_RGB_SUB}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 08021f9d4d6403f18337157d644cb68486dee7b4
     # def setup_view_event_handlers(self):
     #     # subscribe("user_registered", handle_user_registered_event)
     #     attach("update", self.update)
@@ -134,9 +143,12 @@ class View:
         self.route_light_positions_tiles = self.tile.update(
             surround_positions=self.level.surround_positions
         )
+<<<<<<< HEAD
 =======
     def update(self, level, run_debug_state, current_position):
 >>>>>>> parent of cede969 (post event/ pre level)
+=======
+>>>>>>> 08021f9d4d6403f18337157d644cb68486dee7b4
 
         # self.events_all = self.event_all()
 
@@ -370,6 +382,14 @@ class View:
             directions_list.clear()
 
     def set_surface_to_window(self, surface, current_position):
+<<<<<<< HEAD
+=======
+        if not current_position:
+            return
+
+        print(f"* {self.__class__.__name__}.set_surface_to_window")
+        print(f"- {current_position=}")
+>>>>>>> 08021f9d4d6403f18337157d644cb68486dee7b4
         self.set_surface_to_surface(
             surface,
             self.window.window_surface,
