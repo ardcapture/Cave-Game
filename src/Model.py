@@ -2,11 +2,6 @@ from dataclasses import dataclass
 
 
 @dataclass
-class Water_Data:
-    position: tuple
-
-
-@dataclass
 class Light_Data:
     surface: str = "LIGHT"
     to_surface: str = "WINDOW"
@@ -16,13 +11,4 @@ class Light_Data:
     position: tuple = None
 
 
-@dataclass
-class Path_Data:
-    path_start_position: tuple
-    path_finish_position: tuple
-    list_climb_positions: list
-    paths: list
-    camp_positions: list
-    player_path_position: tuple
-    path_type: dict
-    path_directions: dict
+

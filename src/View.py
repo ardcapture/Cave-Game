@@ -2,28 +2,25 @@ import pygame
 import sys
 import os
 import numpy
-
-from event import subscribe
+import blend_modes
 from PIL import Image
-from blend_modes import lighten_only
 
-# import keyboard
-# import mouse
-
-from pygame.constants import BLEND_RGBA_ADD, BLEND_RGB_ADD, BLEND_RGB_SUB
-from level import GRID_SIZE
 from dataclasses import dataclass
+
+from pygame.constants import BLEND_RGB_SUB
+from level import GRID_SIZE
+from event import eventObj
 
 
 GRID_SCALE = GRID_SIZE
 
-IMAGES_PATH = "res"
+IMAGES_PATH: str = "res"
 
 
-DIRECTIONS = [(0, 1), (-1, 0), (1, 0), (0, -1)]
+DIRECTIONS: list[tuple[int, int]] = [(0, 1), (-1, 0), (1, 0), (0, -1)]
 
 
-COLORS = {
+COLORS: dict[str, tuple[int, int, int]] = {
     "BLACK": (0, 0, 0),
     "WHITE": (255, 255, 255),
     "BLACK_VERY_LIGHT": (210, 210, 210),
@@ -35,43 +32,72 @@ COLORS = {
     "BLUE_VERY_LIGHT": (210, 210, 255),
 }
 
-imagesPath = "res"
+
+#! file to image
 
 
-rock_lighting_tile = Image.open(os.path.join(imagesPath, "rock.png")).resize(
-    (GRID_SIZE, GRID_SIZE)
-)
-BlackSQ = Image.open(os.path.join(imagesPath, "BlackSQ.png")).resize(
-    (GRID_SIZE, GRID_SIZE)
-)
-
+files_for_image = {
+    "rock_lighting_tile" : "rock.png"
+}
 
 
 
 
-T_image = Image.open(os.path.join(imagesPath, "I_Image_01.png")).resize(
-    (GRID_SIZE, GRID_SIZE)
-)
-TR_image = Image.open(os.path.join(imagesPath, "Corner.png")).resize(
-    (GRID_SIZE, GRID_SIZE)
-)
+images_path = "res"
+
+def file_to_image():
+    pass
+
+
+
+
+def PIL_Image_to_size_from_file(grid_size: int, images_path: str, file_name: str):
+    return Image.open(os.path.join(images_path, file_name)).resize(
+        (grid_size, grid_size)
+    )
+
+
+rock_lighting_tile = PIL_Image_to_size_from_file(GRID_SIZE, images_path, "rock.png")
+BlackSQ = PIL_Image_to_size_from_file(GRID_SIZE, images_path, "BlackSQ.png")
+T_image = PIL_Image_to_size_from_file(GRID_SIZE, images_path, "I_Image_01.png")
+TR_image = PIL_Image_to_size_from_file(GRID_SIZE, images_path, "Corner.png")
 
 
 class View:
+
+    # pygame
+    pygame.init()
+    clock = pygame.time.Clock()
+
+    # grid
+    grid_size_2D = (GRID_SCALE, GRID_SCALE)
+
+    events = []
+
+    run = True  # TODO CHECK WHAT IS USING
+
+    pygame_special_flags = {"BLEND_RGB_ADD": BLEND_RGB_SUB}
+
+    # Window
+    title = "Maze Game"
+    width = 35
+    height = 22
+    grid_size = GRID_SCALE
+
     def __init__(self, controller):
 
-        self.controller = controller
-        self.level = self.controller.level
+        self.window = Window(
+            title=self.title,
+            width=self.width,
+            height=self.height,
+            grid_size=self.grid_size,
+        )
+
+        self.keyboard = Keyboard()
+        self.mouse = Mouse()
+
+        self.level = controller.level
         # self.lights = self.controller.level.lights
-
-        # pygame
-        pygame.init()
-        self.clock = pygame.time.Clock()
-
-        # grid
-        self.grid_size_2D = (GRID_SCALE, GRID_SCALE)
-
-        self.events = []
 
         # self.input = View_Input(self.level)
 
@@ -85,20 +111,11 @@ class View:
             "MONOSPACE": self.get_pygame_fonts,
         }
 
-        self.window = Window(
-            title="Maze Game", width=35, height=22, grid_size=GRID_SCALE
-        )
-        # self.window = Input_Window()
-        self.keyboard = Keyboard(self)
-        self.mouse = Mouse()
-
         # window
         self.window_surface = self.window.get_scaled_window_surface()
         self.window.set_window(self.window_surface)
 
         # timestep: int = 50
-
-        self.run = True  # TODO CHECK WHAT IS USING
 
         self.pygame_surfaces = {
             "GRASS_IMAGE": self.get_surface_file(
@@ -115,11 +132,9 @@ class View:
             "LIGHT": self.get_surface_lights,
         }
 
-        self.pygame_special_flags = {"BLEND_RGB_ADD": BLEND_RGB_SUB}
-
     def setup_view_event_handlers(self):
         # subscribe("user_registered", handle_user_registered_event)
-        subscribe("update", self.update)
+        eventObj.subscribe("update", self.update)
 
     def update(self, level, run_debug_state, current_position):
 
@@ -465,7 +480,7 @@ class Window:
 
 
 class Keyboard:
-    def __init__(self, parent):
+    def __init__(self):
         pass
 
         self.keyboard_events = {
@@ -621,7 +636,9 @@ class Tile:
     def get_darken(self, image_float01, image_float02):
         opacity = 1.0
         # blended_img_float = darken_only(image_float01, image_float02, opacity)
-        blended_img_float = lighten_only(image_float01, image_float02, opacity)
+        blended_img_float = blend_modes.lighten_only(
+            image_float01, image_float02, opacity
+        )
         blended_img = numpy.uint8(blended_img_float)
         blended_img_raw = Image.fromarray(blended_img)
         return blended_img_raw

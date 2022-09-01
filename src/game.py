@@ -1,11 +1,7 @@
-import View
-import level
+from view import View
+from level import Level
 
-
-from event import post_event
-
-# trying more git stuff
-# is this git branch working test!
+from event import eventObj
 
 
 class Game:
@@ -18,9 +14,9 @@ class Game:
 
         self.keyboard_set_position = None
         self.mouse_event_run = None
-        self.level = level.Level(self)
+        self.level = Level(self)
         # model and views:
-        self.view = View.View(self)
+        self.view = View(self)
 
         self.view.setup_view_event_handlers()
 
@@ -36,7 +32,7 @@ class Game:
             if state == "run":
                 self.level.update_run(self.keyboard_set_position, self.mouse_event_run)
 
-                self.keyboard_set_position, self.mouse_event_run = post_event(
+                self.keyboard_set_position, self.mouse_event_run = eventObj.post_event(
                     "update",
                     self.level,
                     self.run_debug_state,
