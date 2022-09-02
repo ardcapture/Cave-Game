@@ -10,7 +10,7 @@ A = Any
 class Build:
     def update(self, grid_size: int, width: int, top_offset: int, height: int):
 
-        build_path_positions, build_positions = self.set_build_positions(
+        build_path_positions = self.set_build_positions(
             grid_size, width, top_offset, height
         )
 
@@ -64,10 +64,13 @@ class Build:
 
             build_current_position = build_next_position
 
-        return build_positions + build_jump_positions, build_positions
+        return build_positions + build_jump_positions
 
-    def build_grid_remove_random(self, grid):
-        return [grid.remove(random.choice(grid)) for i in range(len(grid) // 3)]
+    def build_grid_remove_random(self, grid: list[tuple[int, int]]):
+        res_grid: list[tuple[int, int]] = grid
+        for _ in range(len(res_grid) // 3):
+            grid.remove(random.choice(res_grid))
+        return res_grid
 
     def set_build_grid(
         self, grid_size: int, width: int, top_offset: int, height: int
@@ -141,7 +144,9 @@ class Build:
         )
 
     def set_build_current_break_position(
-        self, current_position: tuple[int, int], current_wall_break_direction: tuple[int, int]
+        self,
+        current_position: tuple[int, int],
+        current_wall_break_direction: tuple[int, int],
     ) -> tuple[int, int]:
         return (
             current_position[0] + current_wall_break_direction[0],
@@ -149,20 +154,26 @@ class Build:
         )
         # self.list_wall_break_positions.append(result02)
 
-    def check_build_finish(self, past_positions: list[tuple[int, int]], current_position: tuple[int, int]) -> bool:
+    def check_build_finish(
+        self, past_positions: list[tuple[int, int]], current_position: tuple[int, int]
+    ) -> bool:
         if len(past_positions) > 2 and current_position == past_positions[0]:
             return False
         else:
             return True
 
-    def set_poss_position(self, current_position: tuple[int, int], direction: tuple[int, int], grid_size: int) -> tuple[int, int]:
+    def set_poss_position(
+        self,
+        current_position: tuple[int, int],
+        direction: tuple[int, int],
+        grid_size: int,
+    ) -> tuple[int, int]:
         return (
             current_position[0] + (direction[0] * grid_size * 2),
             current_position[1] + (direction[1] * grid_size * 2),
         )
 
-    def set_path_return(self, past_positions: list[tuple[int, int]], current_position: tuple[int, int]) -> tuple[int, int]:
+    def set_path_return(
+        self, past_positions: list[tuple[int, int]], current_position: tuple[int, int]
+    ) -> tuple[int, int]:
         return past_positions[past_positions.index(current_position) - 1]
-
-
-#!!! ********************************

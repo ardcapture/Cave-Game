@@ -46,10 +46,4 @@ class Game:
     # TODO remove object
 
 
-def main():
-    game_new = Game()
-    game_new.update()
 
-
-if __name__ == "__main__":
-    main()
