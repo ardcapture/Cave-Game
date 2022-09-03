@@ -1,28 +1,11 @@
-import random
-import os
-import numpy
-
-
-from operator import itemgetter
-from itertools import chain, groupby, product
-from collections import defaultdict
-
 from surround import Surround
 from water import Water
 from paths import Paths
 from build import Build
 from lights import Lights
-from constants import DIRECTIONS
+
 
 import view
-import Model
-
-
-from utilities import (
-    debug_instance_variables,
-    get_distance_in_direction,
-    get_list_difference,
-)
 
 
 LevelStates = ["01_Title", "02_Settings", "03_Build", "04_Play"]
@@ -44,19 +27,6 @@ state = {
 GRID_SIZE = 32
 WIDTH, HEIGHT = (GRID_SIZE * 2) + (GRID_SIZE * 35), (GRID_SIZE * 2) + (GRID_SIZE * 22)
 TOP_OFFSET = 5
-
-
-COLOURS = {
-    "BLACK": (0, 0, 0),
-    "WHITE": (255, 255, 255),
-    "BLACK_VERY_LIGHT": (210, 210, 210),
-    "WHITE_4TH_4TH_4TH_4TH": (1, 1, 1),
-    "RED": (255, 0, 0),
-    "GREEN": (0, 255, 0),
-    "BLUE": (0, 0, 255),
-    "BLUE_LIGHT": (125, 125, 255),
-    "BLUE_VERY_LIGHT": (210, 210, 255),
-}
 
 
 class Level:
@@ -98,10 +68,10 @@ class Level:
             self.reset()
             pass
 
-        self.tile = view.Tile()
+
         self.lights = Lights(GRID_SIZE)
         self.water = Water()
-        self.surround = Surround()
+
 
     def update_build(self):
 
@@ -109,13 +79,10 @@ class Level:
             GRID_SIZE, HEIGHT, paths=self.path_obj.paths
         )
 
-        self.sky = self.set_tileLocations_sky()
-        self.rock = self.set_tileLocations_rock()
-        self.grass = self.set_tileLocations_grass()
+
 
     def update_run(self, set_position, mouse_event_run):
 
-        print(f"* {self.__class__.__name__}.update_run")
 
         self.path_climb_positions_visited = self.path.update_run(
             climb_positions=self.path_obj.climb_positions,
@@ -133,19 +100,11 @@ class Level:
         )
 
         #!!! two return!!
-        self.surround_positions, self.path_adjacent = self.surround.update(
-            paths=self.path_obj.paths, grid_size=GRID_SIZE
-        )
 
-        self.route_light_positions_tiles = self.tile.update(
-            surround_positions=self.surround_positions
-        )
 
         # debug_instance_variables(self)
 
-        self.tiles = self.set_dict_tiles(
-            self.rock, self.path_adjacent, self.sky, self.grass, self.path_obj.paths
-        )
+
 
         if mouse_event_run:
             player_path_position = self.mouse_event_run(
@@ -164,48 +123,15 @@ class Level:
             self.path_obj.player_path_position,
         )
 
-        print(f"- {player_path_position=}")
 
         self.path_obj.player_path_position = player_path_position
 
     def reset(self):
-        print(f"reset")
         self.__init__(self)
 
-    def set_tileLocations_sky(self):
-        return [
-            (x, y)
-            for x in range(0, GRID_SIZE * (WIDTH // GRID_SIZE), GRID_SIZE)
-            for y in range(0, GRID_SIZE * (TOP_OFFSET - 1), GRID_SIZE)
-        ]
 
-    def set_tileLocations_rock(self):
-        return [
-            (x, y)
-            for x in range(0, GRID_SIZE * (WIDTH // GRID_SIZE), GRID_SIZE)
-            for y in range(0, GRID_SIZE * (HEIGHT // GRID_SIZE), GRID_SIZE)
-        ]
 
-    def set_tileLocations_grass(self):
-        return [
-            (x, y)
-            for x in range(0, GRID_SIZE * (WIDTH // GRID_SIZE), GRID_SIZE)
-            for y in range(
-                GRID_SIZE * (TOP_OFFSET - 1), GRID_SIZE * (TOP_OFFSET), GRID_SIZE
-            )
-        ]
 
-    def set_dict_tiles(self, rock, path_adjacent, sky, grass, paths):
-        temp_tiles = {}
-        for i in [
-            (rock, "R"),
-            (path_adjacent, "A"),
-            (sky, "S"),
-            (grass, "G"),
-            (paths, "P"),
-        ]:
-            temp_tiles.update(dict.fromkeys(*i))
-        return temp_tiles
 
     #!!!! Class navigation?
 
@@ -235,7 +161,6 @@ class Level:
                 player_path_position = self.get_player_path_position(
                     i, paths, camp_positions, player_path_position
                 )
-                print("walk", index, player_path_position)
         return player_path_position
 
     def set_route(self, start, end, paths, camp_positions, path_type, path_directions):

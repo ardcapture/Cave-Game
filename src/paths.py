@@ -45,7 +45,7 @@ class Paths:
             poss_path_finish, grid_size
         )
 
-        if not path_start_position or not path_finish_position:
+        if path_start_position == (-1, -1) or path_finish_position == (-1, -1):
             return None
 
         camp_positions = self.set_camp_positions(path_start_position, grid_size, width)
@@ -116,7 +116,7 @@ class Paths:
             poss_maze_start = random.choice(poss_maze_start)
             return (poss_maze_start[0], poss_maze_start[1] - grid_size)
         else:
-            return (-0, -0)
+            return (-1, -1)
 
     def set_poss_path_finish(
         self,
@@ -139,7 +139,7 @@ class Paths:
             poss_maze_finish = random.choice(poss_maze_finish)
             return (poss_maze_finish[0] + grid_size, poss_maze_finish[1])
         else:
-            return (-0, -0)
+            return (-1, -1)
 
         # TODO check if required
         # self.draw.draw(COLOURS["BLUE_VERY_LIGHT"], self.maze_finish_position[0], self.maze_finish_position[1])
@@ -238,7 +238,6 @@ class Paths:
                 run = False
         # print(f"{path_type=}")
         # print(f"{path_directions_dict=}")
-
 
         return path_type, path_directions_dict
 

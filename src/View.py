@@ -1,66 +1,24 @@
 import pygame
 import sys
 import os
-import numpy
-import blend_modes
-from PIL import Image
+
 
 from dataclasses import dataclass
 
 from pygame.constants import BLEND_RGB_SUB
-from level import GRID_SIZE
+from level import GRID_SIZE, HEIGHT, WIDTH, TOP_OFFSET
 from event import eventObj
+
+from surround import Surround
+from tiles import Tile
+
+from constants import COLORS, DIRECTIONS
 
 
 GRID_SCALE = GRID_SIZE
 
+
 IMAGES_PATH: str = "res"
-
-
-DIRECTIONS: list[tuple[int, int]] = [(0, 1), (-1, 0), (1, 0), (0, -1)]
-
-
-COLORS: dict[str, tuple[int, int, int]] = {
-    "BLACK": (0, 0, 0),
-    "WHITE": (255, 255, 255),
-    "BLACK_VERY_LIGHT": (210, 210, 210),
-    "WHITE_4TH_4TH_4TH_4TH": (1, 1, 1),
-    "RED": (255, 0, 0),
-    "GREEN": (0, 255, 0),
-    "BLUE": (0, 0, 255),
-    "BLUE_LIGHT": (125, 125, 255),
-    "BLUE_VERY_LIGHT": (210, 210, 255),
-}
-
-
-#! file to image
-
-
-files_for_image = {
-    "rock_lighting_tile" : "rock.png"
-}
-
-
-
-
-images_path = "res"
-
-def file_to_image():
-    pass
-
-
-
-
-def PIL_Image_to_size_from_file(grid_size: int, images_path: str, file_name: str):
-    return Image.open(os.path.join(images_path, file_name)).resize(
-        (grid_size, grid_size)
-    )
-
-
-rock_lighting_tile = PIL_Image_to_size_from_file(GRID_SIZE, images_path, "rock.png")
-BlackSQ = PIL_Image_to_size_from_file(GRID_SIZE, images_path, "BlackSQ.png")
-T_image = PIL_Image_to_size_from_file(GRID_SIZE, images_path, "I_Image_01.png")
-TR_image = PIL_Image_to_size_from_file(GRID_SIZE, images_path, "Corner.png")
 
 
 class View:
@@ -95,6 +53,9 @@ class View:
 
         self.keyboard = Keyboard()
         self.mouse = Mouse()
+
+        self.tile = Tile(GRID_SCALE)
+        self.surround = Surround()
 
         self.level = controller.level
         # self.lights = self.controller.level.lights
@@ -137,6 +98,20 @@ class View:
         eventObj.subscribe("update", self.update)
 
     def update(self, level, run_debug_state, current_position):
+
+        self.surround_positions, self.path_adjacent = self.surround.update(
+            paths=self.level.path_obj.paths, grid_size=GRID_SIZE
+        )
+
+        self.route_light_positions_tiles, self.tiles = self.tile.update(
+            surround_positions=self.surround_positions,
+            width=WIDTH,
+            top_offset=TOP_OFFSET,
+            path_adjacent=self.path_adjacent,
+            path_obj=self.level.path_obj,
+            grid_size=GRID_SCALE,
+            height=HEIGHT,
+        )
 
         # self.events_all = self.event_all()
 
@@ -282,7 +257,7 @@ class View:
                 self.draw_outline(COLORS["GREEN"], (p[0], p[1]))
 
     def draw_level(self, level):
-        for k, v in level.tiles.items():
+        for k, v in self.tiles.items():
             pos = k[0], k[1]
             if v == "S":
                 self.draw_rect((146, 244, 255), pos)
@@ -308,7 +283,7 @@ class View:
                     special_flags=0,
                 )
             if v == "A":
-                tile01 = pygame.image.load(level.route_light_positions_tiles[k])
+                tile01 = pygame.image.load(self.route_light_positions_tiles[k])
                 tile01 = pygame.transform.scale(tile01, (GRID_SCALE, GRID_SCALE))
                 self.set_surface_to_surface(
                     tile01, self.window.window_surface, pos, special_flags=0
@@ -373,8 +348,6 @@ class View:
         if not current_position:
             return
 
-        print(f"* {self.__class__.__name__}.set_surface_to_window")
-        print(f"- {current_position=}")
         self.set_surface_to_surface(
             surface,
             self.window.window_surface,
@@ -542,106 +515,6 @@ class Mouse:
                 if any(e.buttons):
                     button = e.buttons.index(1) + 1
                 return {"pos": e.pos, "button": button}
-
-
-class Tile:
-    def update(self, surround_positions):
-
-        tileImages = self.get_surround_images()
-
-        self.route_light_positions_tiles = self.set_path_surround_tiles(
-            tileImages,
-            surround_positions,
-            debug=False,
-        )
-
-        return self.route_light_positions_tiles
-
-    def get_surround_images(self):
-        tileImages = {}
-        image_types = ["T", "R", "B", "L", "TR", "BR", "BL", "TL"]
-        for i in image_types:
-            tileImages[i + "_image"] = self.get_lighting_tile(T_image, TR_image, i)
-        return tileImages
-
-    def set_path_surround_tiles(
-        self, tileImages, path_surround_positions, debug
-    ) -> dict:
-        route_light_positions_tiles = {}
-        for k, v in path_surround_positions.items():
-            if len(v) == 1:
-                res = self.get_lighting_tile(T_image, TR_image, v[-1])
-                res = res.convert("L")
-                if not debug:
-                    res = Image.composite(rock_lighting_tile, BlackSQ, res)
-                name = "Tiles\\" + str(k) + ".PNG"
-                res.save(name)
-                route_light_positions_tiles[k] = name
-            elif len(v) == 2:
-                res = self.return_blended(
-                    tileImages[v[0] + "_image"], tileImages[v[1] + "_image"]
-                )
-                res = res.convert("L")
-                if not debug:
-                    res = Image.composite(rock_lighting_tile, BlackSQ, res)
-                name = "Tiles\\" + str(k) + ".PNG"
-                res.save(name)
-                route_light_positions_tiles[k] = name
-            elif len(v) == 3:
-                image01 = tileImages[v.pop() + "_image"]
-                image02 = tileImages[v.pop() + "_image"]
-                blend01 = self.return_blended(image01, image02)
-                # blend01.show()
-                image03 = tileImages[v.pop() + "_image"]
-                blend02 = self.return_blended(blend01, image03)
-                res = blend02
-                res = res.convert("L")
-                if not debug:
-                    res = Image.composite(rock_lighting_tile, BlackSQ, res)
-                name = "Tiles\\" + str(k) + ".PNG"
-                res.save(name)
-                route_light_positions_tiles[k] = name
-
-        return route_light_positions_tiles
-
-    def get_lighting_tile(self, TOP_image, TOPR_image, neighbor):
-        if neighbor == "T":
-            res = TOP_image.rotate(0)
-        elif neighbor == "TR":
-            res = TOPR_image.rotate(0)
-        elif neighbor == "L":
-            res = TOP_image.rotate(90)
-        elif neighbor == "TL":
-            res = TOPR_image.rotate(90)
-        elif neighbor == "B":
-            res = TOP_image.rotate(180)
-        elif neighbor == "BL":
-            res = TOPR_image.rotate(180)
-        elif neighbor == "R":
-            res = TOP_image.rotate(270)
-        elif neighbor == "BR":
-            res = TOPR_image.rotate(270)
-        return res
-
-    def return_blended(self, foreground_image, background_image):
-        return self.get_darken(
-            self.return_array(foreground_image), self.return_array(background_image)
-        )
-
-    def return_array(self, image):
-        array = numpy.array(image)
-        array = array.astype(float)
-        return array
-
-    def get_darken(self, image_float01, image_float02):
-        opacity = 1.0
-        # blended_img_float = darken_only(image_float01, image_float02, opacity)
-        blended_img_float = blend_modes.lighten_only(
-            image_float01, image_float02, opacity
-        )
-        blended_img = numpy.uint8(blended_img_float)
-        blended_img_raw = Image.fromarray(blended_img)
-        return blended_img_raw
 
 
 @dataclass

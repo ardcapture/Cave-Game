@@ -4,6 +4,11 @@ from level import Level
 from event import eventObj
 
 
+
+def game_func_test():
+    pass
+
+
 class Game:
     def __init__(self):
 
