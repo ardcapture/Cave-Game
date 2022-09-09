@@ -1,15 +1,17 @@
 # builtins
-from os import path
-from typing import Any
+import os
+import typing
 
 # packages
-from PIL.Image import Image, open, composite, fromarray
-from blend_modes import lighten_only
-from numpy import ndarray, array, uint8
+
+from PIL import Image as PIL_Image
+from PIL.Image import Image
+import blend_modes
+import numpy
 
 # local
-from paths import Path_Data
-from constants import IMAGE_TYPES, LIGHTING_TILE_ROTATE
+from level.paths import Path_Data
+import constants
 
 
 files_for_image = {"rock_lighting_tile": "rock.png"}
@@ -18,9 +20,9 @@ files_for_image = {"rock_lighting_tile": "rock.png"}
 images_path = "res"
 
 # todo types to fix
-T_array = Any
+T_array = typing.Any
 
-#! called by view > __init__ - 1 locaton
+#! called by view > __init__ - 1 location
 class Tile:
     def __init__(self, grid_size: int) -> None:
 
@@ -72,8 +74,8 @@ class Tile:
     def PIL_to_size_from_file(
         self, grid_size: int, images_path: str, file_name: str
     ) -> Image:
-        res_join = path.join(images_path, file_name)
-        res_open = open(res_join)
+        res_join = os.path.join(images_path, file_name)
+        res_open = PIL_Image.open(res_join)
         res_resize = res_open.resize((grid_size, grid_size))
         return res_resize
 
@@ -98,7 +100,7 @@ class Tile:
     def get_surround_images(self) -> dict[str, Image]:
         res_select_rotate: dict[str, Image] = {}
 
-        for i in IMAGE_TYPES:
+        for i in constants.IMAGE_TYPES:
             res_select_rotate[i + "_image"] = self.select_rotate(
                 self.T_image, self.TR_image, i
             )
@@ -129,7 +131,7 @@ class Tile:
                 res_image = self.select_rotate(self.T_image, self.TR_image, v[-1])
                 res_image = res_image.convert("L")
                 if not debug:
-                    res_image = composite(
+                    res_image = PIL_Image.composite(
                         self.rock_lighting_tile, self.BlackSQ, res_image
                     )
                 name: str = "Tiles\\" + str(k) + ".PNG"
@@ -141,7 +143,7 @@ class Tile:
                 )
                 res_image = res_image.convert("L")
                 if not debug:
-                    res_image = composite(
+                    res_image = PIL_Image.composite(
                         self.rock_lighting_tile, self.BlackSQ, res_image
                     )
                 name = "Tiles\\" + str(k) + ".PNG"
@@ -157,7 +159,7 @@ class Tile:
                 res_image = blend02
                 res_image = res_image.convert("L")
                 if not debug:
-                    res_image = composite(
+                    res_image = PIL_Image.composite(
                         self.rock_lighting_tile, self.BlackSQ, res_image
                     )
                 name = "Tiles\\" + str(k) + ".PNG"
@@ -207,12 +209,12 @@ class Tile:
 
         image: Image
 
-        if LIGHTING_TILE_ROTATE[neighbor][0] == "TOP_image":
+        if constants.LIGHTING_TILE_ROTATE[neighbor][0] == "TOP_image":
             image = TOP_image
-        elif LIGHTING_TILE_ROTATE[neighbor][0] == "TOP_R_image":
+        elif constants.LIGHTING_TILE_ROTATE[neighbor][0] == "TOP_R_image":
             image = TOP_R_image
 
-        return image.rotate(LIGHTING_TILE_ROTATE[neighbor][1])
+        return image.rotate(constants.LIGHTING_TILE_ROTATE[neighbor][1])
 
     #! called by set_path_surround_tiles - 3 location
     def image_darken(self, foreground_image: Image, background_image: Image) -> Image:
@@ -223,15 +225,15 @@ class Tile:
 
     #! called by image_darken - 2 location
     def tile_array(self, image: Image):
-        res_array = array(image)
-        res_array = res_array.astype(float)
-        return res_array
+        res_array = numpy.array(image)
+        res_astype = res_array.astype(float)
+        return res_astype
 
     #! called by image_darken - 1 location
     def image_lighten(
         self, image_float01: Image, image_float02: Image, opacity: float
     ) -> Image:
 
-        res_lighten_only = lighten_only(image_float01, image_float02, opacity)
-        res_fromarrray = fromarray(uint8(res_lighten_only))
+        res_lighten_only = blend_modes.lighten_only(image_float01, image_float02, opacity)
+        res_fromarrray = PIL_Image.fromarray(numpy.uint8(res_lighten_only))
         return res_fromarrray

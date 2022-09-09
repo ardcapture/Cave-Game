@@ -1,7 +1,8 @@
-from view import View
-from level import Level
+from view.view import View
+from level.level import Level
 
-from event import eventObj
+import event
+
 
 
 
@@ -37,7 +38,7 @@ class Game:
             if state == "run":
                 self.level.update_run(self.keyboard_set_position, self.mouse_event_run)
 
-                self.keyboard_set_position, self.mouse_event_run = eventObj.post_event(
+                self.keyboard_set_position, self.mouse_event_run = event.post_event(
                     "update",
                     self.level,
                     self.run_debug_state,

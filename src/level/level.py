@@ -1,11 +1,10 @@
-from surround import Surround
 from water import Water
-from paths import Paths
-from build import Build
-from lights import Lights
+from level.paths import Paths
+from level.build import Paths_Build
+from level.lights import Lights
 
 
-import view
+import view.view as view
 
 
 LevelStates = ["01_Title", "02_Settings", "03_Build", "04_Play"]
@@ -25,7 +24,8 @@ state = {
 
 
 GRID_SIZE = 32
-WIDTH, HEIGHT = (GRID_SIZE * 2) + (GRID_SIZE * 35), (GRID_SIZE * 2) + (GRID_SIZE * 22)
+WIDTH = (GRID_SIZE * 2) + (GRID_SIZE * 35)
+HEIGHT = (GRID_SIZE * 2) + (GRID_SIZE * 22)
 TOP_OFFSET = 5
 
 
@@ -47,11 +47,9 @@ class Level:
         self.selected = False
         self.velocity = GRID_SIZE
 
-        self.build = Build()
+        self.build = Paths_Build(GRID_SIZE, WIDTH, TOP_OFFSET, HEIGHT)
 
-        self.build_path_positions = self.build.update(
-            GRID_SIZE, WIDTH, TOP_OFFSET, HEIGHT
-        )
+        self.build_path_positions = self.build.update()
 
         self.path = Paths()
 

@@ -1,8 +1,10 @@
 import random
-from dataclasses import dataclass, field
-from typing import Any
-from utilities import debug_instance_variables, get_distance_in_direction
+import utilities
+from dataclasses import dataclass
+
 from constants import DIRECTIONS
+from typing import Any
+
 
 # todo fix these types:
 T_PathObj = Any
@@ -80,6 +82,7 @@ class Paths:
 
         return path_obj
 
+    #! called by level > update_run - 1 location
     def update_run(
         self,
         climb_positions: list[tuple[int, int]],
@@ -91,10 +94,11 @@ class Paths:
             player_path_position, climb_positions, path_climb_positions_visited
         )
 
-        debug_instance_variables(self)
+        utilities.debug_instance_variables(self)
 
         return path_climb_positions_visited
 
+    #! called by update_build - 1 locations
     def set_poss_path_start(
         self,
         past_positions: list[tuple[int, int]],
@@ -102,6 +106,7 @@ class Paths:
         top_offset: int,
         width: int,
     ) -> list[tuple[int, int]]:
+
         return [
             p
             for p in past_positions
@@ -109,15 +114,7 @@ class Paths:
             if p[0] < ((width - grid_size * 2) * (1 / 3))
         ]
 
-    def set_path_start_position(
-        self, poss_maze_start: list[tuple[int, int]], grid_size: int
-    ) -> tuple[int, int]:
-        if len(poss_maze_start) > 0:
-            poss_maze_start = random.choice(poss_maze_start)
-            return (poss_maze_start[0], poss_maze_start[1] - grid_size)
-        else:
-            return (-1, -1)
-
+    #! called by update_build - 1 locations
     def set_poss_path_finish(
         self,
         past_positions: list[tuple[int, int]],
@@ -132,6 +129,17 @@ class Paths:
             if p[1] > ((height - grid_size * 2) * (2 / 3))
         ]
 
+    #! called by update_build - 1 locations
+    def set_path_start_position(
+        self, pos_list: list[tuple[int, int]], grid_size: int
+    ) -> tuple[int, int]:
+        if len(pos_list) > 0:
+            pos_list = random.choice(pos_list)
+            return (pos_list[0], pos_list[1] - grid_size)
+        else:
+            return (-1, -1)
+
+    #! called by update_build - 1 locations
     def set_path_finish_position(
         self, poss_maze_finish: list[tuple[int, int]], grid_size: int
     ) -> tuple[int, int]:
@@ -146,6 +154,7 @@ class Paths:
         # else:
         #     # self.maze_finish = None
 
+    #! called by update_build - 1 locations
     def set_camp_positions(
         self, maze_start_position: tuple[int, int], grid_size: int, width: int
     ) -> list[tuple[int, int]]:
@@ -161,88 +170,95 @@ class Paths:
     ) -> list[tuple[int, int]]:
         return build_positions + [maze_start_position, maze_finish_position]
 
+    #! called by update_build - 1 locations
     def set_climb(
         self, paths: list[tuple[int, int]], grid_size: int
     ) -> list[tuple[int, int]]:
         return [
             p
             for p in paths
-            if get_distance_in_direction(p, "UP", grid_size) in paths
-            or get_distance_in_direction(p, "DOWN", grid_size) in paths
+            if utilities.get_distance_in_direction(p, "UP", grid_size) in paths
+            or utilities.get_distance_in_direction(p, "DOWN", grid_size) in paths
         ]
 
+    #! called by update_build - 1 locations
     def set_navigation(
         self,
         paths: list[tuple[int, int]],
         camp_positions: list[tuple[int, int]],
         grid_size: int,
     ):
-        path_type: dict[tuple[int, int], str] = dict.fromkeys(paths, "X")
-        path_type.update(dict.fromkeys(camp_positions, "X"))
+        #
+        res_tuple_str_dict: dict[tuple[int, int], str] = dict.fromkeys(paths, "X")
+        res_tuple_str_dict.update(dict.fromkeys(camp_positions, "X"))
 
         path_directions_dict: dict[
             tuple[int, int], list[tuple[int, int]]
         ] = dict.fromkeys(paths, [])
-        for p in path_type.keys():
+
+        for p in res_tuple_str_dict.keys():
             path_directions_list: list[tuple[int, int]] = []
+
             for d in DIRECTIONS:
                 direction = (p[0] + (d[0] * grid_size), p[1] + (d[1] * grid_size))
-                if direction in path_type:
+                if direction in res_tuple_str_dict:
                     path_directions_list.append(direction)
+
+            # set path to 1
             if len(path_directions_list) == 1:
-                path_type[p] = 1
+                res_tuple_str_dict[p] = 1
                 path_directions_dict[p] = path_directions_list
+
             elif len(path_directions_list) == 2:
-                path_type[p] = "P"
+                res_tuple_str_dict[p] = "P"
                 path_directions_dict[p] = path_directions_list
             elif len(path_directions_list) > 2:
-                path_type[p] = "J"
+                res_tuple_str_dict[p] = "J"
+
                 path_directions_dict[p] = path_directions_list
-        for p in [k for k, v in path_type.items() if v == 1]:
-            if path_type[path_directions_dict[p][0]] == "P":
-                path_type[path_directions_dict[p][0]] = "N"
+
+        for p in [k for k, v in res_tuple_str_dict.items() if v == 1]:
+            if res_tuple_str_dict[path_directions_dict[p][0]] == "P":
+                res_tuple_str_dict[path_directions_dict[p][0]] = "N"
 
         run = True
         while run:
-            if any([k for k, v in path_type.items() if v == "N"]):
-                for k in [k for k, v in path_type.items() if v == "N"]:
+            if any([k for k, v in res_tuple_str_dict.items() if v == "N"]):
+                for k in [k for k, v in res_tuple_str_dict.items() if v == "N"]:
                     for i in path_directions_dict[k]:
-                        if isinstance(path_type[i], int):
-                            result = path_type[i]
-                        if path_type[i] == "P":
-                            path_type[i] = "N"
-                    path_type[k] = result + 1
-            elif any([k for k, v in path_type.items() if v == "G"]):
-                for k in [k for k, v in path_type.items() if v == "G"]:
+                        if isinstance(res_tuple_str_dict[i], int):
+                            result = res_tuple_str_dict[i]
+                        if res_tuple_str_dict[i] == "P":
+                            res_tuple_str_dict[i] = "N"
+                    res_tuple_str_dict[k] = result + 1
+            elif any([k for k, v in res_tuple_str_dict.items() if v == "G"]):
+                for k in [k for k, v in res_tuple_str_dict.items() if v == "G"]:
                     result = 0
                     result_list02 = []
                     for i in path_directions_dict[k]:
-                        if isinstance(path_type[i], int):
-                            result_list02.append(path_type[i])
-                        if isinstance(path_type[i], str):
-                            path_type[i] = "N"
-                    path_type[k] = sorted(result_list02)[-1] + 1
-            elif any([k for k, v in path_type.items() if v == "J"]):
-                for k, v in path_type.items():
+                        if isinstance(res_tuple_str_dict[i], int):
+                            result_list02.append(res_tuple_str_dict[i])
+                        if isinstance(res_tuple_str_dict[i], str):
+                            res_tuple_str_dict[i] = "N"
+                    res_tuple_str_dict[k] = sorted(result_list02)[-1] + 1
+            elif any([k for k, v in res_tuple_str_dict.items() if v == "J"]):
+                for k, v in res_tuple_str_dict.items():
                     if v == "J":
                         result_list = []
                         for i in path_directions_dict[k]:
-                            if isinstance(path_type[i], int):
+                            if isinstance(res_tuple_str_dict[i], int):
                                 result_list.append(i)
                                 if len(result_list) == (
                                     len(path_directions_dict[k]) - 1
                                 ):
-                                    if path_type[k] == "J":
-                                        path_type[k] = "G"
+                                    if res_tuple_str_dict[k] == "J":
+                                        res_tuple_str_dict[k] = "G"
             else:
                 run = False
-        # print(f"{path_type=}")
-        # print(f"{path_directions_dict=}")
 
-        return path_type, path_directions_dict
+        return res_tuple_str_dict, path_directions_dict
 
-        """For Nav - currently used in game run."""
-
+    #! called by update_run - 1 locations
     def update_player_climb_positions_visited(
         self,
         player_current_position: tuple[int, int],

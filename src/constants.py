@@ -1,4 +1,14 @@
-DIRECTIONS: list[tuple[int, int]] = [(0, 1), (-1, 0), (1, 0), (0, -1)]
+from utilities import Direction
+
+
+
+DOWN: Direction = Direction(x=0, y=1)
+LEFT: Direction = Direction(x=-1, y=0)
+RIGHT: Direction = Direction(x=1, y=0)
+UP: Direction = Direction(x=0, y=-1)
+
+
+DIRECTIONS: list[Direction] = [DOWN, LEFT, RIGHT, UP]
 
 TILE_DIRECTIONS: dict[str, tuple[int, int]] = {
     "T": (0, -1),

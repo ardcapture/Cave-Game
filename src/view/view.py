@@ -1,24 +1,29 @@
-import pygame
 import sys
 import os
 
+import pygame
 
+import event
+from level.surround import Surround
+from view.tiles import Tile
+from view.window import Window
+from view.window import Keyboard
+
+# decorators
 from dataclasses import dataclass
 
+# constants:
+
+
 from pygame.constants import BLEND_RGB_SUB
-from level import GRID_SIZE, HEIGHT, WIDTH, TOP_OFFSET
-from event import eventObj
-
-from surround import Surround
-from tiles import Tile
-
+from level.level import GRID_SIZE, HEIGHT, WIDTH, TOP_OFFSET
 from constants import COLORS, DIRECTIONS
 
 
 GRID_SCALE = GRID_SIZE
-
-
 IMAGES_PATH: str = "res"
+
+# variables
 
 
 class View:
@@ -95,12 +100,12 @@ class View:
 
     def setup_view_event_handlers(self):
         # subscribe("user_registered", handle_user_registered_event)
-        eventObj.subscribe("update", self.update)
+        event.subscribe("update", self.update)
 
     def update(self, level, run_debug_state, current_position):
 
         self.surround_positions, self.path_adjacent = self.surround.update(
-            paths=self.level.path_obj.paths, grid_size=GRID_SIZE
+            paths=self.level.path_obj.paths, grid_size=GRID_SCALE
         )
 
         self.route_light_positions_tiles, self.tiles = self.tile.update(
@@ -283,6 +288,7 @@ class View:
                     special_flags=0,
                 )
             if v == "A":
+                # todo sometimes this key 'k' below is not present causing an error!!!
                 tile01 = pygame.image.load(self.route_light_positions_tiles[k])
                 tile01 = pygame.transform.scale(tile01, (GRID_SCALE, GRID_SCALE))
                 self.set_surface_to_surface(
@@ -402,85 +408,7 @@ class View:
         sys.exit()  # TODO MOVE ELSEWHERE?
 
 
-class Window:
-    def __init__(self, title: str, width: int, height: int, grid_size: int):
 
-        self.width, self.height = list(
-            map(lambda x: (GRID_SCALE * 2) + (GRID_SCALE * x), [width, height])
-        )
-
-        self.window_size_scaled = self.get_window_scale(
-            self.width, self.height, scale=1
-        )
-
-        pygame.display.set_caption(title)
-        self.window_surface = pygame.display.set_mode(
-            size=(self.width * 1, self.height * 1), flags=0, depth=32
-        )
-
-        self.events = self.get_events()
-
-    def update(self, parent):
-        events = parent.events
-
-        self.events = self.get_events()
-        self.window_quit = self.get_window_quit(events)
-
-        return self
-
-    def get_window_scale(self, width, height, scale: int):
-        return (width * scale, height * scale)
-
-    def get_scaled_window_surface(self):
-        res = pygame.transform.scale(self.window_surface, self.window_size_scaled)
-        return res
-
-        # draw window
-
-    def set_window(self, surface):
-        self.window_surface.blit(surface, (0, 0))
-
-    def get_window_quit(self, events):
-        for e in events:
-            if e.type == pygame.QUIT:
-                return True
-
-    def get_events(self):
-        return pygame.event.get()
-
-    def close_window(self):
-        pygame.quit()
-
-
-class Keyboard:
-    def __init__(self):
-        pass
-
-        self.keyboard_events = {
-            pygame.K_DOWN: "K_DOWN",
-            pygame.K_LEFT: "K_LEFT",
-            pygame.K_UP: "K_UP",
-            pygame.K_RIGHT: "K_RIGHT",
-            pygame.K_BACKQUOTE: "K_BACKQUOTE",
-        }
-
-    def update(self, parent):
-        self.events = parent.events
-
-        self.keydown = self._get_keydown(self.events)
-        self.keyup = self._get_keyup(self.events)
-
-        return self
-
-    def _get_keydown(self, events):
-        for event in events:
-            if event.type == pygame.KEYDOWN:
-                return ("KEYDOWN", self.keyboard_events.get(event.key, False))
-
-    def _get_keyup(self, events):
-        for event in events:
-            if event.type == pygame.KEYUP:
-                return ("KEYUP", self.keyboard_events.get(event.key, False))
 
 
 class Mouse:

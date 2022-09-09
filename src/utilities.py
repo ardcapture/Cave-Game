@@ -1,5 +1,13 @@
-from typing import Any
+from typing import Any, NamedTuple
 
+
+class Position(NamedTuple):
+    x: int
+    y: int
+
+class Direction(NamedTuple):
+    x: int
+    y: int
 
 def debug_instance_variables(self: Any) -> None:
     print(f"* {self.__class__.__name__}.debug_instance_variables")

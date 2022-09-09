@@ -1,9 +1,8 @@
 from itertools import product
 from collections import defaultdict
+import utilities
+
 from typing import Any
-
-from utilities import debug_instance_variables
-
 from constants import TILE_DIRECTIONS, AROUND, DUPLICATE_CHECKS
 
 # todo needs fixing
@@ -24,7 +23,7 @@ class Surround:
             poss_surround_positions,
         )
 
-        debug_instance_variables(self)
+        utilities.debug_instance_variables(self)
 
         return surround_positions, path_adjacent
 
