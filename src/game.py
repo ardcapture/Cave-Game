@@ -1,8 +1,6 @@
-from view.view import View
-from level.level import Level
-
 import event
-
+from level.level import Level
+from view.view import View
 
 
 

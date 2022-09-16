@@ -1,9 +1,9 @@
-from itertools import product
 from collections import defaultdict
-import utilities
-
+from itertools import product
 from typing import Any
-from constants import TILE_DIRECTIONS, AROUND, DUPLICATE_CHECKS
+
+import utilities
+from constants import AROUND, DUPLICATE_CHECKS, TILE_DIRECTIONS
 
 # todo needs fixing
 TypeAny = Any

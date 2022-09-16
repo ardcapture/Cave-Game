@@ -1,7 +1,5 @@
 from utilities import Direction
 
-
-
 DOWN: Direction = Direction(x=0, y=1)
 LEFT: Direction = Direction(x=-1, y=0)
 RIGHT: Direction = Direction(x=1, y=0)

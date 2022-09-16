@@ -1,13 +1,10 @@
 import copy
 import random
-
 from itertools import product
-
 from typing import Any
 
-from utilities import Position, Direction
 from constants import DIRECTIONS
-
+from utilities import Direction, Position
 
 # todo type to fix
 A = Any
@@ -15,18 +12,11 @@ A = Any
 
 class Paths_Build:
     def __init__(self, grid_size: int, width: int, top_offset: int, height: int):
+
         self.grid_size = grid_size
-        self.width = width
         self.top_offset = top_offset
         self.height = height
-
-        self.range_x_start = self.grid_size
-        self.range_y_step = self.grid_size * 2
-        self.range_y_stop = self.height - (self.grid_size * 2)
-        self.range_y_start = self.grid_size * self.top_offset
-
-        self.range_x_stop = self.width
-        self.range_x_step = self.grid_size * 2
+        self.width = width
 
         self.list_position_return: list[Position] = []
         self.list_position_jump: list[Position] = []
@@ -53,6 +43,15 @@ class Paths_Build:
         return self.list_positions + self.list_position_jump
 
     def multiply_contents_by_grid_size(self, item: list[Position]):
+        res_item: list[Position] = []
+        for i in item:
+            x = i.x * self.grid_size
+            y = i.y * self.grid_size
+            res_item.append(Position(x, y))
+
+        return res_item
+
+    def divide_contents_by_grid_size(self, item: list[Position]):
         res_item: list[Position] = []
         for i in item:
             x = i.x * self.grid_size
@@ -89,6 +88,9 @@ class Paths_Build:
         else:
             return self.check_next
 
+    def add(self, x: int, y:int ) -> int:
+        return x + y
+
     @property
     def list_position_grid(self) -> list[Position]:
         res_product = product(self.range_x, self.range_y)
@@ -96,11 +98,17 @@ class Paths_Build:
 
     @property
     def range_x(self) -> list[int]:
+        self.range_x_start = self.grid_size
+        self.range_x_stop = self.width
+        self.range_x_step = self.grid_size * 2
         res_range = range(self.range_x_start, self.range_x_stop, self.range_x_step)
         return [x for x in res_range]
 
     @property
     def range_y(self) -> list[int]:
+        self.range_y_start = self.grid_size * self.top_offset
+        self.range_y_stop = self.height - (self.grid_size * 2)
+        self.range_y_step = self.grid_size * 2
         res_range = range(self.range_y_start, self.range_y_stop, self.range_y_step)
         return [y for y in res_range]
 

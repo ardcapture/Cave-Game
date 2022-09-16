@@ -1,11 +1,8 @@
 from water import Water
-from level.paths import Paths
+
 from level.build import Paths_Build
 from level.lights import Lights
-
-
-import view.view as view
-
+from level.paths import Paths
 
 LevelStates = ["01_Title", "02_Settings", "03_Build", "04_Play"]
 game_keys = "K_BACKQUOTE"
