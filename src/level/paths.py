@@ -1,10 +1,9 @@
 import random
-import utilities
 from dataclasses import dataclass
-
-from constants import DIRECTIONS
 from typing import Any
 
+from src import utilities
+from src.constants import DIRECTIONS
 
 # todo fix these types:
 T_PathObj = Any

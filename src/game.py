@@ -1,7 +1,6 @@
-import event
-from level.level import Level
-from view.view import View
-
+from src import event
+from src.level.level import Level
+from src.view.view import View
 
 
 def game_func_test():

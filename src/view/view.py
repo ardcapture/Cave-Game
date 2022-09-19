@@ -1,23 +1,20 @@
-import sys
 import os
-
-import pygame
-
-import event
-from level.surround import Surround
-from view.tiles import Tile
-from view.window import Window
-from view.window import Keyboard
-
+import sys
 # decorators
 from dataclasses import dataclass
+
+import pygame
+from pygame.constants import BLEND_RGB_SUB
+from src import event
+from src.constants import COLORS, DIRECTIONS
+from src.level.level import GRID_SIZE, HEIGHT, TOP_OFFSET, WIDTH
+from src.level.surround import Surround
+from src.view.tiles import Tile
+from src.view.window import Keyboard, Window
 
 # constants:
 
 
-from pygame.constants import BLEND_RGB_SUB
-from level.level import GRID_SIZE, HEIGHT, WIDTH, TOP_OFFSET
-from constants import COLORS, DIRECTIONS
 
 
 GRID_SCALE = GRID_SIZE

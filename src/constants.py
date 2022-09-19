@@ -1,4 +1,4 @@
-from utilities import Direction
+from src.utilities import Direction
 
 DOWN: Direction = Direction(x=0, y=1)
 LEFT: Direction = Direction(x=-1, y=0)
@@ -54,3 +54,6 @@ LIGHTING_TILE_ROTATE: dict[str, tuple[str, int]] = {
     "R": ("TOP_image", 270),
     "BR": ("TOP_R_image", 270),
 }
+
+
+

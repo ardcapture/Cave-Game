@@ -1,10 +1,10 @@
 import random
-from operator import itemgetter
-from itertools import chain, groupby
 from dataclasses import dataclass
+from itertools import chain, groupby
+from operator import itemgetter
 from typing import Any
 
-from constants import DIRECTIONS
+from src.constants import DIRECTIONS
 
 T_object = Any
 

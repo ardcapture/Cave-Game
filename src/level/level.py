@@ -1,8 +1,8 @@
-from water import Water
+from src.water import Water
 
-from level.build import Paths_Build
-from level.lights import Lights
-from level.paths import Paths
+from src.level.build import Paths_Build
+from src.level.lights import Lights
+from src.level.paths import Paths
 
 LevelStates = ["01_Title", "02_Settings", "03_Build", "04_Play"]
 game_keys = "K_BACKQUOTE"

@@ -2,16 +2,12 @@
 import os
 import typing
 
-# packages
-
-from PIL import Image as PIL_Image
-from PIL.Image import Image
 import blend_modes
 import numpy
-
-# local
-from level.paths import Path_Data
-import constants
+from PIL import Image as PIL_Image
+from PIL.Image import Image
+from src import constants
+from src.level.paths import Path_Data
 
 
 files_for_image = {"rock_lighting_tile": "rock.png"}
@@ -234,6 +230,8 @@ class Tile:
         self, image_float01: Image, image_float02: Image, opacity: float
     ) -> Image:
 
-        res_lighten_only = blend_modes.lighten_only(image_float01, image_float02, opacity)
+        res_lighten_only = blend_modes.lighten_only(
+            image_float01, image_float02, opacity
+        )
         res_fromarrray = PIL_Image.fromarray(numpy.uint8(res_lighten_only))
         return res_fromarrray

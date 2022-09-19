@@ -3,8 +3,8 @@ import random
 from itertools import product
 from typing import Any
 
-from constants import DIRECTIONS
-from utilities import Direction, Position
+from src.constants import DIRECTIONS
+from src.utilities import Direction, Position
 
 # todo type to fix
 A = Any

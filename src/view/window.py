@@ -1,5 +1,6 @@
-import pygame
 from collections import defaultdict
+
+import pygame
 
 EventType = pygame.event.Event
 

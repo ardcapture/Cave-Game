@@ -1,7 +1,7 @@
 from typing import Any
 from dataclasses import dataclass
 
-from utilities import (
+from src.utilities import (
     debug_instance_variables,
     get_distance_in_direction,
     get_list_difference,
