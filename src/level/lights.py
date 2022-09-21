@@ -4,7 +4,7 @@ from itertools import chain, groupby
 from operator import itemgetter
 from typing import Any
 
-from src.constants import DIRECTIONS
+from src.utilities import DIRECTIONS
 
 T_object = Any
 
@@ -51,8 +51,6 @@ class Lights:
 
         source = self.set_light_source(paths)
 
-        # print(f"{source=}")
-
         light_positions_adjacent_source = self.get_light_positions_adjacent_source(
             source, paths, grid_size
         )
@@ -60,8 +58,6 @@ class Lights:
         light_positions_adjacent = self.get_light_positions_adjacent(
             light_positions_adjacent_source, paths, grid_size
         )
-
-        # print(f"{light_positions_adjacent=}")
 
         sun_light_positions = self.get_positions_sun(
             path_start_position, paths, brightness_list, path_finish_position, grid_size

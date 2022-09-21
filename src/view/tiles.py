@@ -6,7 +6,7 @@ import blend_modes
 import numpy
 from PIL import Image as PIL_Image
 from PIL.Image import Image
-from src import constants
+from src.utilities import IMAGE_TYPES, LIGHTING_TILE_ROTATE
 from src.level.paths import Path_Data
 
 
@@ -96,7 +96,7 @@ class Tile:
     def get_surround_images(self) -> dict[str, Image]:
         res_select_rotate: dict[str, Image] = {}
 
-        for i in constants.IMAGE_TYPES:
+        for i in IMAGE_TYPES:
             res_select_rotate[i + "_image"] = self.select_rotate(
                 self.T_image, self.TR_image, i
             )
@@ -205,12 +205,12 @@ class Tile:
 
         image: Image
 
-        if constants.LIGHTING_TILE_ROTATE[neighbor][0] == "TOP_image":
+        if LIGHTING_TILE_ROTATE[neighbor][0] == "TOP_image":
             image = TOP_image
-        elif constants.LIGHTING_TILE_ROTATE[neighbor][0] == "TOP_R_image":
+        elif LIGHTING_TILE_ROTATE[neighbor][0] == "TOP_R_image":
             image = TOP_R_image
 
-        return image.rotate(constants.LIGHTING_TILE_ROTATE[neighbor][1])
+        return image.rotate(LIGHTING_TILE_ROTATE[neighbor][1])
 
     #! called by set_path_surround_tiles - 3 location
     def image_darken(self, foreground_image: Image, background_image: Image) -> Image:

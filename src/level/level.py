@@ -1,8 +1,10 @@
 from src.water import Water
 
+
 from src.level.build import Paths_Build
 from src.level.lights import Lights
 from src.level.paths import Paths
+
 
 LevelStates = ["01_Title", "02_Settings", "03_Build", "04_Play"]
 game_keys = "K_BACKQUOTE"
@@ -18,33 +20,26 @@ state = {
     # "level_run": level_run,
     # "level_pause": level_pause
 }
-
-
 GRID_SIZE = 32
-WIDTH = (GRID_SIZE * 2) + (GRID_SIZE * 35)
-HEIGHT = (GRID_SIZE * 2) + (GRID_SIZE * 22)
-TOP_OFFSET = 5
+WIDTH_GS = (GRID_SIZE * 2) + (GRID_SIZE * 35)
+HEIGHT_GS = (GRID_SIZE * 2) + (GRID_SIZE * 22)
+# TOP_OFFSET = 5
 
 
 class Level:
-    def __init__(self, controller):
+    def __init__(self):
 
         self.objs = []
-
-        # Debugs:
+        self.top_offset =  5
 
         self.path_climb_positions_visited = []
         self.lights_state = False
 
-        self.parent = controller
-
-        # from character!!
-        self.set_position_keys = ("K_LEFT", "K_RIGHT", "K_UP", "K_DOWN")
         self.previous_position = ()
         self.selected = False
         self.velocity = GRID_SIZE
 
-        self.build = Paths_Build(GRID_SIZE, WIDTH, TOP_OFFSET, HEIGHT)
+        self.build = Paths_Build(GRID_SIZE, WIDTH_GS, self.top_offset, HEIGHT_GS)
 
         self.build_path_positions = self.build.update()
 
@@ -53,31 +48,25 @@ class Level:
         self.path_obj = self.path.update_build(
             build_path_positions=self.build_path_positions,
             grid_size=GRID_SIZE,
-            top_offset=TOP_OFFSET,
-            width=WIDTH,
-            height=HEIGHT,
+            top_offset=self.top_offset,
+            width=WIDTH_GS,
+            height=HEIGHT_GS,
         )
 
         if not self.path_obj:
-            # self.view.draw_reset()  # TODO MOVE?
             self.reset()
             pass
-
 
         self.lights = Lights(GRID_SIZE)
         self.water = Water()
 
-
     def update_build(self):
 
         self.water_datas = self.water.update(
-            GRID_SIZE, HEIGHT, paths=self.path_obj.paths
+            GRID_SIZE, HEIGHT_GS, paths=self.path_obj.paths
         )
 
-
-
     def update_run(self, set_position, mouse_event_run):
-
 
         self.path_climb_positions_visited = self.path.update_run(
             climb_positions=self.path_obj.climb_positions,
@@ -93,13 +82,6 @@ class Level:
             grid_size=GRID_SIZE,
             lights_state=self.lights_state,
         )
-
-        #!!! two return!!
-
-
-        # debug_instance_variables(self)
-
-
 
         if mouse_event_run:
             player_path_position = self.mouse_event_run(
@@ -118,15 +100,12 @@ class Level:
             self.path_obj.player_path_position,
         )
 
-
         self.path_obj.player_path_position = player_path_position
 
-    def reset(self):
-        self.__init__(self)
-
-
-
-
+    def reset(
+        self,
+    ):
+        self.__init__()
 
     #!!!! Class navigation?
 

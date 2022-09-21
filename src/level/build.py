@@ -3,20 +3,22 @@ import random
 from itertools import product
 from typing import Any
 
-from src.constants import DIRECTIONS
+from src.utilities import DIRECTIONS
 from src.utilities import Direction, Position
+
+import pprint
 
 # todo type to fix
 A = Any
 
 
 class Paths_Build:
-    def __init__(self, grid_size: int, width: int, top_offset: int, height: int):
+    def __init__(self, grid_size: int, width_GS: int, top_offset: int, height_GS: int):
 
         self.grid_size = grid_size
         self.top_offset = top_offset
-        self.height = height
-        self.width = width
+        self.height_GS = height_GS
+        self.width_GS = width_GS
 
         self.list_position_return: list[Position] = []
         self.list_position_jump: list[Position] = []
@@ -37,28 +39,7 @@ class Paths_Build:
 
             self.position_current = self.position_next
 
-        # res01 = self.multiply_contents_by_grid_size(self.list_positions)
-        # res02 = self.multiply_contents_by_grid_size(self.list_position_jump)
-
         return self.list_positions + self.list_position_jump
-
-    def multiply_contents_by_grid_size(self, item: list[Position]):
-        res_item: list[Position] = []
-        for i in item:
-            x = i.x * self.grid_size
-            y = i.y * self.grid_size
-            res_item.append(Position(x, y))
-
-        return res_item
-
-    def divide_contents_by_grid_size(self, item: list[Position]):
-        res_item: list[Position] = []
-        for i in item:
-            x = i.x * self.grid_size
-            y = i.y * self.grid_size
-            res_item.append(Position(x, y))
-
-        return res_item
 
     #! uses random
     def set_list_position_reduced(self) -> list[Position]:
@@ -70,10 +51,13 @@ class Paths_Build:
 
     #! takes variable
     def get_position_poss(self, direction: Direction) -> Position:
-        return Position(
-            self.position_current.x + (direction.x * self.grid_size * 2),
-            self.position_current.y + (direction.y * self.grid_size * 2),
+        res_add_x = direction.x * self.grid_size * 2
+        res_add_y = direction.y * self.grid_size * 2
+        res = Position(
+            self.position_current.x + (res_add_x),
+            self.position_current.y + (res_add_y),
         )
+        return res
 
     # TODO extract path_return variable??
     #! infante loop if as property!!??
@@ -88,8 +72,22 @@ class Paths_Build:
         else:
             return self.check_next
 
-    def add(self, x: int, y:int ) -> int:
-        return x + y
+    # def add(self, x: int, y: int) -> int:
+    #     return x + y
+
+    # def check_authorization(f):
+    #     def wrapper(*args):
+    #         print args[0].wid
+    #         return f(*args)
+    #     return wrapper
+
+    # class Client(object):
+    #     def __init__(self, url):
+    #         self.url = url
+
+    #     @check_authorization
+    #     def get(self):
+    #         print 'get'
 
     @property
     def list_position_grid(self) -> list[Position]:
@@ -99,7 +97,7 @@ class Paths_Build:
     @property
     def range_x(self) -> list[int]:
         self.range_x_start = self.grid_size
-        self.range_x_stop = self.width
+        self.range_x_stop = self.width_GS
         self.range_x_step = self.grid_size * 2
         res_range = range(self.range_x_start, self.range_x_stop, self.range_x_step)
         return [x for x in res_range]
@@ -107,7 +105,7 @@ class Paths_Build:
     @property
     def range_y(self) -> list[int]:
         self.range_y_start = self.grid_size * self.top_offset
-        self.range_y_stop = self.height - (self.grid_size * 2)
+        self.range_y_stop = self.height_GS - (self.grid_size * 2)
         self.range_y_step = self.grid_size * 2
         res_range = range(self.range_y_start, self.range_y_stop, self.range_y_step)
         return [y for y in res_range]

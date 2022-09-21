@@ -1,29 +1,26 @@
 import os
 import sys
-# decorators
-from dataclasses import dataclass
 
 import pygame
 from pygame.constants import BLEND_RGB_SUB
-from src import event
-from src.constants import COLORS, DIRECTIONS
-from src.level.level import GRID_SIZE, HEIGHT, TOP_OFFSET, WIDTH
-from src.level.surround import Surround
-from src.view.tiles import Tile
-from src.view.window import Keyboard, Window
+from src.level import Level, Surround
+from src.level.level import GRID_SIZE, HEIGHT_GS, WIDTH_GS
+from src.utilities import DIRECTIONS, Colors, Position
+from src.view import Mouse, Tile, Window
+from src.view.keyboard import Keyboard
 
-# constants:
-
-
-
+Type_Surface = pygame.Surface
 
 GRID_SCALE = GRID_SIZE
-IMAGES_PATH: str = "res"
-
-# variables
 
 
 class View:
+
+    IMAGES_PATH: str = "res"
+    player_file = "player_tran.png"
+    filename_player = os.path.join(IMAGES_PATH, player_file)
+    player_key = Colors.WHITE
+    player_scale = GRID_SCALE // 16
 
     # pygame
     pygame.init()
@@ -32,7 +29,7 @@ class View:
     # grid
     grid_size_2D = (GRID_SCALE, GRID_SCALE)
 
-    events = []
+    window_events = []
 
     run = True  # TODO CHECK WHAT IS USING
 
@@ -44,105 +41,102 @@ class View:
     height = 22
     grid_size = GRID_SCALE
 
-    def __init__(self, controller):
+    def __init__(self):
 
         self.window = Window(
+            self,
             title=self.title,
-            width=self.width,
-            height=self.height,
+            view_width=self.width,
+            view_height=self.height,
             grid_size=self.grid_size,
         )
 
-        self.keyboard = Keyboard()
+        # self.keyboard = Keyboard()
         self.mouse = Mouse()
+        self.keyboard = Keyboard()
 
         self.tile = Tile(GRID_SCALE)
         self.surround = Surround()
 
-        self.level = controller.level
-        # self.lights = self.controller.level.lights
-
-        # self.input = View_Input(self.level)
-
-        self.player_image = self.get_surface_character(
-            os.path.join(IMAGES_PATH, "player_tran.png"),
-            (COLORS["WHITE"]),
-            scale=(GRID_SCALE // 16),
-        )
+        self.player_init()
 
         self.pygame_fonts = {
             "MONOSPACE": self.get_pygame_fonts,
         }
 
-        # window
-        self.window_surface = self.window.get_scaled_window_surface()
-        self.window.set_window(self.window_surface)
-
         # timestep: int = 50
 
         self.pygame_surfaces = {
             "GRASS_IMAGE": self.get_surface_file(
-                "grass.png", IMAGES_PATH, self.grid_size_2D
+                "grass.png", self.IMAGES_PATH, self.grid_size_2D
             ),
             "DIRT_IMAGE": self.get_surface_file(
-                "dirt.png", IMAGES_PATH, self.grid_size_2D
+                "dirt.png", self.IMAGES_PATH, self.grid_size_2D
             ),
             "ROCK_IMAGE": self.get_surface_file(
-                "rock.png", IMAGES_PATH, self.grid_size_2D
+                "rock.png", self.IMAGES_PATH, self.grid_size_2D
             ),
             "WINDOW": self.window.window_surface,
             "TEXT": self.get_surface_text,
             "LIGHT": self.get_surface_lights,
         }
 
-    def setup_view_event_handlers(self):
-        # subscribe("user_registered", handle_user_registered_event)
-        event.subscribe("update", self.update)
+        self.set_window()
 
-    def update(self, level, run_debug_state, current_position):
+    #! DRAW
+    def set_window(self):
+        self.window.window_surface.blit(self.window.scaled_window_surface, (0, 0))
+
+    # def setup_view_event_handlers(self):
+    #     # subscribe("user_registered", handle_user_registered_event)
+    #     event.subscribe("update", self.update)
+
+    # TODO convert return to dataclass
+    def update(self, level: Level, run_debug_state: bool, current_position: Position):
 
         self.surround_positions, self.path_adjacent = self.surround.update(
-            paths=self.level.path_obj.paths, grid_size=GRID_SCALE
+            paths=level.path_obj.paths, grid_size=GRID_SCALE
         )
 
         self.route_light_positions_tiles, self.tiles = self.tile.update(
             surround_positions=self.surround_positions,
-            width=WIDTH,
-            top_offset=TOP_OFFSET,
+            width=WIDTH_GS,
+            top_offset=level.top_offset,
             path_adjacent=self.path_adjacent,
-            path_obj=self.level.path_obj,
+            path_obj=level.path_obj,
             grid_size=GRID_SCALE,
-            height=HEIGHT,
+            height=HEIGHT_GS,
         )
 
-        # self.events_all = self.event_all()
+        #! circle with window!
+        self.window_events = self.window.get_events()
+        self.window.update(self.window_events)
 
-        # window:
-        self.window = self.window.update(self)
-
-        self.events = self.window.events
-
-        self.set_window_end(self.window.window_quit)
+        self.set_window_end()
 
         # keyboard
-        self.keyboard = self.keyboard.update(self)
 
-        keyboard_set_position = self.set_event_keyboard(self.keyboard)
+        keyboard_set_position = self.keyboard.update(self)
 
         # mouse
-        self.mouse_data_list = self.mouse.update(self)
+        self.mouse.update(self)
 
-        self.draw_level(self.level)
+        self.draw_level(level)
+        # print(f"{len(self.mouse_data_list)=}")
 
-        for m in self.mouse_data_list:
-            mouse_event_run = self.set_mouse(m)
-            self.draw_coordinates(
-                self.window.window_surface,
-                (m.mouse_motion),
-                self.pygame_fonts["MONOSPACE"](15),
-            )
+        # for m in self.mouse_data_list:
 
-        # self.input.event()
+        surface = self.window.window_surface
+        mouse_motion = self.mouse.mouse_motion
+        pygame_font = self.pygame_fonts["MONOSPACE"](15)
+
+        self.draw_coordinates(
+            surface,
+            mouse_motion,
+            pygame_font,
+        )
+
+        #!return result 01
 
         self.draw_water(level)
 
@@ -159,7 +153,7 @@ class View:
 
         pygame.display.update()
 
-        return keyboard_set_position, mouse_event_run
+        return keyboard_set_position, self.mouse.mouse_event_run
 
     #!!!!! DRAWING OF SELF.SURFACE *****************************************************************
 
@@ -168,21 +162,14 @@ class View:
         pygame.draw.rect(surface, brightness, surface.get_rect())
         return surface
 
-    # def set_lights(self, color, pos):
-    #     surface_lights = pygame.Surface(self.grid_size_2D)
-    #     pygame.draw.rect(surface_lights, color, surface_lights.get_rect())
-    #     object_light = Draw_Object(surface_lights, pos, special_flags=BLEND_RGB_ADD)
-    #     self.light_objs.append(object_light)
-    #     # self.draw_object(object_light)
-
     def get_pygame_fonts(self, size):
         return pygame.font.SysFont("monospace", size)
 
-    def draw_coordinates(self, surface, mouse_motion, pygame_font):
+    def draw_coordinates(self, surface: Type_Surface, mouse_motion, pygame_font):
         if not mouse_motion:
             return
 
-        surface_font = pygame_font.render(str(mouse_motion["pos"]), 1, (COLORS["RED"]))
+        surface_font = pygame_font.render(str(mouse_motion.pos), 1, (Colors.RED))
         surface.blit(surface_font, (10, 10))
 
     def draw_debug_ends(self, level, run_debug):
@@ -204,9 +191,6 @@ class View:
     def set_surface_to_surface(self, surface, to_surface, pos, special_flags):
         to_surface.blit(surface, pos, special_flags=special_flags)
 
-    # def blit_object(self, obj):
-    #     self.window.window_surface.blit(obj.surface, obj.pos, special_flags=obj.special_flags)
-
     def set_blit_objs(self, lights):
         for obj in lights:
             self.pygame_surfaces[obj.to_surface].blit(
@@ -221,9 +205,6 @@ class View:
         pygame.draw.rect(
             self.window.window_surface, color, (pos, (GRID_SCALE, GRID_SCALE))
         )
-
-    # def draw_circle(self, color, x, y):
-    #     pygame.draw.circle(self.surface, color, (x, y), GRID_SCALE / 4)
 
     def draw_outline(self, color, pos):
         pygame.draw.rect(
@@ -296,7 +277,7 @@ class View:
 
     def draw_water(self, model):
         for p in model.water_datas:
-            self.draw_transparent(COLORS["BLUE_LIGHT"], p.position)
+            self.draw_transparent(Colors.BLUE_LIGHT, p.position)
 
     def draw_transparent(self, color, pos):
         surface_water = pygame.Surface(self.grid_size_2D)
@@ -315,15 +296,6 @@ class View:
         if debug:
             p = model.path.build_positions[0]
             self.draw_outline(COLORS["RED"], (p[0], p[1]))
-
-        """_summary_
-        """  # def draw_build_wall_break_positions(self, level, build_debug):
-
-    #     level02 = level
-    #     if build_debug:
-    #         self.draw(COLOURS["BLACK_VERY_LIGHT"], level02.list_wall_break_positions[-1][0], level02.list_wall_break_positions[-1][1])
-    #         pygame.display.update()
-    #         pygame.time.delay(20)
 
     def draw_build_grid_hide(self, model, build_debug):
         if not build_debug:
@@ -371,79 +343,33 @@ class View:
         res = pygame.transform.scale(res, scale)
         return res
 
-    def get_surface_character(self, file, key, scale):
-        player_image = pygame.image.load(file)
-        player_image.set_colorkey(key)
-        res = pygame.transform.scale(
-            player_image,
-            (player_image.get_width() * scale, player_image.get_height() * scale),
-        )
-        return res
+    @property
+    def surface_load_player(self):
+        filename = self.filename_player
+        return pygame.image.load(filename)
 
-    def set_window_surface_black(self):
-        self.window_surface.fill(COLORS["BLACK"])
+    @property
+    def player_image(self):
 
-    def set_event_keyboard(self, keyboard):
-        if keyboard.keydown:
-            if keyboard.keydown[1] in self.level.set_position_keys:
-                return keyboard.keydown[1]
+        res_get_width = self.surface_load_player.get_width() * self.player_scale
+        res_get_height = self.surface_load_player.get_height() * self.player_scale
 
-    def set_mouse(self, mouse_data):
-        if mouse_data.mouse_button_up:
-            position = mouse_data.mouse_button_up["pos"]
-            button = mouse_data.mouse_button_up["button"]
-            if button:
-                return position
+        size = (res_get_width, res_get_height)
 
-    def set_window_end(self, event):
-        if event:
+        surface_scale = pygame.transform.scale(self.surface_load_player, size)
+
+        return surface_scale
+
+    def player_init(self):
+        self.surface_load_player.set_colorkey(self.player_key)
+
+    #! needs to be run?!
+    def set_window_end(self):
+        if self.window.window_quit:
             self.set_end()
 
+    #! needs to be run?!
     def set_end(self):
         self.run = False
         self.window.close_window()
         sys.exit()  # TODO MOVE ELSEWHERE?
-
-
-
-
-
-class Mouse:
-    def __init__(self):
-        pass
-
-    def update(self, parent):
-        events = parent.events
-
-        mouse_data = Mouse_Data(
-            mouse_button_up=self._get_mouse_button_up(events),
-            mouse_button_down=self._get_mouse_button_down(events),
-            mouse_motion=self._get_mouse_motion(events),
-        )
-
-        return [mouse_data]
-
-    def _get_mouse_button_up(self, events):
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONUP:
-                return {"pos": event.pos, "button": event.button}
-
-    def _get_mouse_button_down(self, events):
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                return {"pos": event.pos, "button": event.button}
-
-    def _get_mouse_motion(self, events):
-        for e in events:
-            if e.type == pygame.MOUSEMOTION:
-                button = False
-                if any(e.buttons):
-                    button = e.buttons.index(1) + 1
-                return {"pos": e.pos, "button": button}
-
-
-@dataclass
-class Mouse_Data:
-    mouse_button_up: dict
-    mouse_button_down: dict
-    mouse_motion: dict

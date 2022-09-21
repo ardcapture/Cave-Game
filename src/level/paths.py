@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from src import utilities
-from src.constants import DIRECTIONS
+from src.utilities import DIRECTIONS
 
 # todo fix these types:
 T_PathObj = Any

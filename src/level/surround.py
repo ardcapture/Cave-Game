@@ -3,7 +3,7 @@ from itertools import product
 from typing import Any
 
 from src import utilities
-from src.constants import AROUND, DUPLICATE_CHECKS, TILE_DIRECTIONS
+from src.utilities import AROUND, DUPLICATE_CHECKS, TILE_DIRECTIONS
 
 # todo needs fixing
 TypeAny = Any
