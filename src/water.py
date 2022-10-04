@@ -1,87 +1,78 @@
-from typing import Any
+import copy
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from src.utilities import (
-    debug_instance_variables,
-    get_distance_in_direction,
-    get_list_difference,
-)
+import numpy as np
 
-# todo - sort these types
-T_Water = Any
+from src import utilities
+from src.utilities import Position
 
-
-@dataclass
-class Water_Data:
-    position: tuple[int, int]
+if TYPE_CHECKING:
+    from src.level import Level
+    from src.level.path import Path
 
 
 class Water:
-    def update(
-        self, grid_size: int, height: int, paths: list[tuple[int, int]] = []
-    ) -> list[T_Water]:
 
-        water_above_rock = self._get_water_above_rock(paths, grid_size)
-        water_collect_positions = self._get_water_collect_positions(
-            paths, water_above_rock, grid_size
+    water: list[Position] = []
+
+    def update(self, level: "Level", path: "Path"):
+
+        self.water_add_above_rock(path, level)
+
+        self.water_collect_positions = self.get_water_collect_positions(path, level)
+
+        self.water_waterline_positions = self.get_water_waterline_positions(path, level)
+
+    def water_add_above_rock(self, path: "Path", level: "Level") -> None:
+
+        for p in path.paths:
+            res_pos = utilities.get_distance_in_direction(p, "DOWN", level.GRID_SIZE)
+            if res_pos not in path.paths:
+                self.water.append(Position(p.x, p.y))
+
+    def get_position_either_side(self, position: Position, level: "Level"):
+
+        position_left = utilities.get_distance_in_direction(
+            position, "LEFT", level.GRID_SIZE
         )
-        water_waterline_positions = self._get_water_waterline_positions(
-            paths, grid_size, height
-        )
-        water_positions = self._get_water_positions(
-            water_collect_positions, water_waterline_positions
+        position_right = utilities.get_distance_in_direction(
+            position, "RIGHT", level.GRID_SIZE
         )
 
-        debug_instance_variables(self)
+        return [position_left, position_right]
 
-        return [Water_Data(position=w) for w in water_positions]
-
-    def _get_water_above_rock(
-        self, paths: list[tuple[int, int]], grid_size: int
-    ) -> list[tuple[int, int]]:
-        return [
-            (p[0], p[1])
-            for p in paths
-            if get_distance_in_direction(p, "DOWN", grid_size) not in paths
-        ]
-
-    def _get_position_either_side(self, position: tuple[int, int], grid_size: int):
-        return [
-            get_distance_in_direction(position, "RIGHT", grid_size),
-            get_distance_in_direction(position, "LEFT", grid_size),
-        ]
-
-    def _get_water_collect_positions(
+    def get_water_collect_positions(
         self,
-        paths: list[tuple[int, int]],
-        water_above_rock: list[tuple[int, int]],
-        grid_size: int,
-    ) -> list[tuple[int, int]]:
+        path: "Path",
+        level: "Level",
+    ) -> list[Position]:
 
-        start = len(water_above_rock)
-        for index, p in enumerate(water_above_rock):
-            if any(
-                item in self._get_position_either_side(p, grid_size)
-                for item in get_list_difference(paths, water_above_rock)
-            ):
-                water_above_rock.pop(index)
-        end = len(water_above_rock)
+        run = True
+        while run:
 
-        if start != end:
-            self._get_water_collect_positions(paths, water_above_rock, grid_size)
+            start = len(self.water)
+            for index, p in enumerate(self.water):
+                if any(
+                    item in self.get_position_either_side(p, level)
+                    for item in utilities.get_list_difference(path.paths, self.water)
+                ):
+                    self.water.pop(index)
+            end = len(self.water)
 
-        return water_above_rock
+            run = start != end
 
-    def _get_water_waterline_positions(
-        self, paths: list[tuple[int, int]], grid_size: int, height: int
-    ) -> list[tuple[int, int]]:
-        return [p for p in paths if p[1] > ((height - grid_size * 2) * (2 / 3))]
+        return self.water
 
-    def _get_water_positions(
-        self,
-        water_collect_positions: list[tuple[int, int]],
-        water_waterline_positions: list[tuple[int, int]],
-    ):
-        return [
-            x for x in water_waterline_positions if x not in water_collect_positions
-        ] + water_collect_positions
+    def get_water_waterline_positions(
+        self, path: "Path", level: "Level"
+    ) -> list[Position]:
+
+        return [position for position in path.paths if position.y > level.water_line]
+
+    @property
+    def water_positions(self):
+
+        res_set = set(self.water_collect_positions + self.water_waterline_positions)
+        res_list = list(res_set)
+        return res_list

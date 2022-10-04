@@ -1,13 +1,16 @@
-# builtins
 import os
-import typing
+from typing import TYPE_CHECKING
 
 import blend_modes
 import numpy
 from PIL import Image as PIL_Image
 from PIL.Image import Image
-from src.utilities import IMAGE_TYPES, LIGHTING_TILE_ROTATE
-from src.level.paths import Path_Data
+from src.utilities import IMAGE_TYPES, LIGHTING_TILE_ROTATE, Position
+
+
+if TYPE_CHECKING:
+    from src.view.view import View
+    from src.view.view import Level
 
 
 files_for_image = {"rock_lighting_tile": "rock.png"}
@@ -15,12 +18,12 @@ files_for_image = {"rock_lighting_tile": "rock.png"}
 
 images_path = "res"
 
-# todo types to fix
-T_array = typing.Any
 
 #! called by view > __init__ - 1 location
 class Tile:
     def __init__(self, grid_size: int) -> None:
+
+        self.path_surround_tiles_debug = False
 
         # todo repeats - 4 variables
         self.rock_lighting_tile: Image = self.PIL_to_size_from_file(
@@ -37,35 +40,6 @@ class Tile:
             grid_size, images_path, "Corner.png"
         )
 
-    #! called by view > update - 1 location
-    def update(
-        self,
-        surround_positions: dict[tuple[int, int], list[str]],
-        width: int,
-        top_offset: int,
-        path_adjacent: list[tuple[int, int]],
-        path_obj: Path_Data,
-        grid_size: int,
-        height: int,
-    ):
-
-        self.path_adjacent = path_adjacent
-        self.paths = path_obj.paths
-
-        self.create_tile_locations(width, height, top_offset, grid_size)
-
-        tileImages = self.get_surround_images()
-
-        self.route_light_positions_tiles = self.set_path_surround_tiles(
-            tileImages,
-            surround_positions,
-            debug=False,
-        )
-
-        tiles = self.create_dict_tiles()
-
-        return self.route_light_positions_tiles, tiles
-
     #! called by init - 4 location
     def PIL_to_size_from_file(
         self, grid_size: int, images_path: str, file_name: str
@@ -76,24 +50,24 @@ class Tile:
         return res_resize
 
     #! called by update - 1 location
-    def create_dict_tiles(self) -> dict[tuple[int, int], str]:
+    def create_dict_tiles(self, view: "View", path) -> dict[Position, str]:
         TILE_LETTERS = [
             (self.rock, "R"),
-            (self.path_adjacent, "A"),
+            (view.path_adjacent, "A"),
             (self.sky, "S"),
             (self.grass, "G"),
-            (self.paths, "P"),
+            (path.paths, "P"),
         ]
 
-        res_update: dict[tuple[int, int], str] = {}
+        res_update: dict[Position, str] = {}
         for i in TILE_LETTERS:
             res_fromkeys = dict.fromkeys(*i)
             res_update.update(res_fromkeys)
 
         return res_update
 
-    #! called by update - 1 location
-    def get_surround_images(self) -> dict[str, Image]:
+    @property
+    def tileImages(self) -> dict[str, Image]:
         res_select_rotate: dict[str, Image] = {}
 
         for i in IMAGE_TYPES:
@@ -104,29 +78,24 @@ class Tile:
         return res_select_rotate
 
     #! called by update - 1 location
-    def create_tile_locations(
-        self, width: int, height: int, top_offset: int, grid_size: int
-    ) -> None:
+    def create_tile_locations(self, level: "Level") -> None:
         types = ["sky", "rock", "grass"]
         for t in types:
-            self.create_tile_location(t, width, height, top_offset, grid_size)
+            self.create_tile_location(
+                t, level.WIDTH_GS, level.HEIGHT_GS, level.top_offset, level.GRID_SIZE
+            )
 
     #! called by update - 1 location
-    def set_path_surround_tiles(
-        self,
-        tileImages: dict[str, Image],
-        path_surround_positions: dict[tuple[int, int], list[str]],
-        debug: bool,
-    ) -> dict[tuple[int, int], str]:
+    def set_path_surround_tiles(self, view: "View"):
 
         # res_image: Image.Image = Image.Image()
-        route_light_positions_tiles: dict[tuple[int, int], str] = {}
+        route_light_positions_tiles: dict[Position, str] = {}
 
-        for k, v in path_surround_positions.items():
+        for k, v in view.surround.surround_positions.items():
             if len(v) == 1:
                 res_image = self.select_rotate(self.T_image, self.TR_image, v[-1])
                 res_image = res_image.convert("L")
-                if not debug:
+                if not self.path_surround_tiles_debug:
                     res_image = PIL_Image.composite(
                         self.rock_lighting_tile, self.BlackSQ, res_image
                     )
@@ -135,10 +104,10 @@ class Tile:
                 route_light_positions_tiles[k] = name
             elif len(v) == 2:
                 res_image = self.image_darken(
-                    tileImages[v[0] + "_image"], tileImages[v[1] + "_image"]
+                    self.tileImages[v[0] + "_image"], self.tileImages[v[1] + "_image"]
                 )
                 res_image = res_image.convert("L")
-                if not debug:
+                if not self.path_surround_tiles_debug:
                     res_image = PIL_Image.composite(
                         self.rock_lighting_tile, self.BlackSQ, res_image
                     )
@@ -146,15 +115,15 @@ class Tile:
                 res_image.save(name)
                 route_light_positions_tiles[k] = name
             elif len(v) == 3:
-                image01 = tileImages[v.pop() + "_image"]
-                image02 = tileImages[v.pop() + "_image"]
+                image01 = self.tileImages[v.pop() + "_image"]
+                image02 = self.tileImages[v.pop() + "_image"]
                 blend01 = self.image_darken(image01, image02)
                 # blend01.show()
-                image03 = tileImages[v.pop() + "_image"]
+                image03 = self.tileImages[v.pop() + "_image"]
                 blend02 = self.image_darken(blend01, image03)
                 res_image = blend02
                 res_image = res_image.convert("L")
-                if not debug:
+                if not self.path_surround_tiles_debug:
                     res_image = PIL_Image.composite(
                         self.rock_lighting_tile, self.BlackSQ, res_image
                     )

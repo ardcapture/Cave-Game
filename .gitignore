@@ -155,3 +155,44 @@ x - reference/4 - observer pattern/lib/__pycache__/stringtools.cpython-39.pyc
 x - reference/4 - observer pattern/api/__init__.py
 x - reference/4 - observer pattern/api/plan.py
 x - reference/4 - observer pattern/api/user.py
+x - reference/ref_decorator.py
+x - reference/ref_01.py
+x - reference/ref_another_class.py
+x - reference/ref_bits_01.py
+x - reference/ref_class_loop.py
+x - reference/ref_class_var.py
+x - reference/ref_classes.py
+x - reference/ref_comp_02.py
+x - reference/ref_Comp.py
+x - reference/ref_compare_01.py
+x - reference/ref_compare_02.py
+x - reference/ref_defaultdict.py
+x - reference/ref_dictionary.py
+x - reference/ref_divide_by_zero.py
+x - reference/ref_exec.py
+x - reference/ref_generator.py
+x - reference/ref_images_merge.py
+x - reference/ref_keyboard_mouse.py
+x - reference/ref_kwargs.py
+x - reference/ref_lambda_type.py
+x - reference/ref_list_builder.py
+x - reference/ref_list_to_tuple.py
+x - reference/ref_list.py
+x - reference/ref_loop_functions_copy.py
+x - reference/ref_loop_functions.py
+x - reference/ref_namedtuple.py
+x - reference/ref_next.py
+x - reference/ref_pygame.py
+x - reference/ref_ref.py
+x - reference/ref_run_fuctions.py
+x - reference/ref_slice_variable.py
+x - reference/ref_snap.py
+x - reference/ref_spl_create.py
+x - reference/ref_sql_pandas.py
+x - reference/ref_sql.py
+x - reference/ref_text_recusion.py
+x - reference/ref_tile_light_01.py
+x - reference/ref_tile_light_02.py
+x - reference/ref_trace.py
+x - reference/ref_transparency.py
+x - reference/ref_unpack.py

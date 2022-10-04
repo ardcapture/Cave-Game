@@ -1,13 +1,14 @@
 import pygame
 from pygame.event import Event
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.view.view import View
+
 
 class Window:
-    def __init__(
-        self, parent, title: str, view_width: int, view_height: int, grid_size: int
-    ):
-
-        self.parent = parent
+    def __init__(self, title: str, view_width: int, view_height: int, grid_size: int):
 
         self.view_width = view_width
         self.view_height = view_height
@@ -21,10 +22,17 @@ class Window:
         pygame.display.set_caption(title)
 
         self.window_surface = self.get_window_surface()
+        self.window_quit = False
 
-    #! circle with View!
-    def update(self, window_events):
-        self.events: list[Event] = window_events
+    def get_window_quit(self, view: "View"):
+        for e in view.window_events:
+            if e.type == pygame.QUIT:
+                return True
+
+    @property
+    def win_event(self) -> list[Event]:
+        res_get = pygame.event.get()
+        return res_get
 
     #! breaks when used as property!
     def get_window_surface(self):
@@ -43,17 +51,6 @@ class Window:
         return res
 
         # draw window
-
-    @property
-    def window_quit(self):
-        for e in self.events:
-            if e.type == pygame.QUIT:
-                return True
-
-    @staticmethod
-    def get_events() -> list[Event]:
-        res_get = pygame.event.get()
-        return res_get
 
     @staticmethod
     def close_window():

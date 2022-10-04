@@ -6,15 +6,13 @@ class Position(NamedTuple):
     x: int
     y: int
 
+    def left(self):
+        pass
+
 
 class Direction(NamedTuple):
     x: int
     y: int
-
-
-class MouseEvent(NamedTuple):
-    pos: tuple[int, int]
-    button: bool
 
 
 class Color(NamedTuple):
@@ -36,26 +34,46 @@ class Colors:
     BLUE_VERY_LIGHT = Color(210, 210, 255)
 
 
-DOWN = Direction(x=0, y=1)
+LEFT_UP = Direction(x=-1, y=-1)
 LEFT = Direction(x=-1, y=0)
-RIGHT = Direction(x=1, y=0)
+LEFT_DOWN = Direction(x=-1, y=1)
+
 UP = Direction(x=0, y=-1)
+DOWN = Direction(x=0, y=1)
+
+RIGHT_UP = Direction(x=1, y=-1)
+RIGHT = Direction(x=1, y=0)
+RIGHT_DOWN = Direction(x=1, y=1)
 
 
-DIRECTIONS: list[Direction] = [DOWN, LEFT, RIGHT, UP]
+DIRECTIONS_FOUR: list[Direction] = [
+    DOWN,
+    LEFT,
+    RIGHT,
+    UP,
+]
+DIRECTIONS_EIGHT: list[Direction] = [
+    LEFT_UP,
+    LEFT,
+    LEFT_DOWN,
+    UP,
+    DOWN,
+    RIGHT_UP,
+    RIGHT,
+    RIGHT_DOWN,
+]
 
-TILE_DIRECTIONS: dict[str, tuple[int, int]] = {
-    "T": (0, -1),
-    "R": (1, 0),
-    "B": (0, 1),
-    "L": (-1, 0),
-    "TR": (1, -1),
-    "BR": (1, 1),
-    "BL": (-1, 1),
-    "TL": (-1, -1),
+TILE_DIRECTIONS: dict[str, Direction] = {
+    "T": Direction(0, -1),
+    "R": Direction(1, 0),
+    "B": Direction(0, 1),
+    "L": Direction(-1, 0),
+    "TR": Direction(1, -1),
+    "BR": Direction(1, 1),
+    "BL": Direction(-1, 1),
+    "TL": Direction(-1, -1),
 }
 
-AROUND: list[int] = [-1, 0, 1]
 
 DUPLICATE_CHECKS: list[str] = [
     "TR",
@@ -88,22 +106,25 @@ def debug_instance_variables(self: Any) -> None:
 
 
 def get_distance_in_direction(
-    position: tuple[int, int], direction: str, grid_size: int
-) -> tuple[int, int]:
+    position: Position, direction: str, grid_size: int
+) -> Position:
     if direction == "RIGHT":
-        return (position[0] + grid_size, position[1])
+        return Position(position[0] + grid_size, position[1])
     if direction == "LEFT":
-        return (position[0] - grid_size, position[1])
+        return Position(position[0] - grid_size, position[1])
     if direction == "DOWN":
-        return (position[0], position[1] + grid_size)
+        return Position(position.x, position.y + grid_size)
     if direction == "UP":
-        return (position[0], position[1] - grid_size)
+        return Position(position.x, position.y - grid_size)
     else:
-        return (position[0], position[1])
+        return Position(position.x, position.y)
 
 
-def position_to_grid_position(pos: tuple[int, int], grid_size: int) -> tuple[int, int]:
-    return tuple(map(lambda x: (x // grid_size) * grid_size, pos))
+def position_to_grid_position(position: Position, grid_size: int) -> Position:
+
+    x, y = tuple(map(lambda x: (x // grid_size) * grid_size, position))
+
+    return Position(x, y)
 
 
 def get_list_difference(list01: list[Any], list02: list[Any]) -> list[Any]:

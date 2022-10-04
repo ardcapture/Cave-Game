@@ -2,11 +2,13 @@ import random
 from dataclasses import dataclass
 from itertools import chain, groupby
 from operator import itemgetter
-from typing import Any
+from typing import TYPE_CHECKING
+import copy
 
-from src.utilities import DIRECTIONS
+from src.utilities import DIRECTIONS_FOUR, Position
 
-T_object = Any
+if TYPE_CHECKING:
+    from src.level import Level
 
 
 @dataclass
@@ -20,62 +22,32 @@ class Light_Data:
 
 
 class Lights:
-    def __init__(self, grid_size: int) -> None:
+    def __init__(self, level) -> None:
 
-        self.grid_size = grid_size
-        self.grid_size_2D = (self.grid_size, self.grid_size)
+        self.grid_size = level.GRID_SIZE
+        self.grid_size_2D = (level.GRID_SIZE, level.GRID_SIZE)
 
         self.objs = []
+        self.brightness_list: list = []
 
-    def update(
-        self,
-        paths: list[tuple[int, int]],
-        path_start_position: tuple[int, int],
-        path_finish_position: tuple[int, int],
-        player_path_position: tuple[int, int],
-        lights_state: bool,
-        grid_size: int,
-        brightness_list: list = [],
-    ) -> T_object:
+    def update(self, level: "Level", path):
 
-        self.light_positions = dict.fromkeys(paths, (0, 0, 0))
+        self.light_positions = dict.fromkeys(path.paths, (0, 0, 0))
+        self.character_light_positions = dict.fromkeys(path.paths, (0, 0, 0))
 
-        self.character_light_positions = dict.fromkeys(paths, (0, 0, 0))
+        x, self.brightness_list = self.set_color_value(1)
 
-        x, brightness_list = self.set_color_value(1)
+        # self.set_lights_debug(level)
 
-        self.set_lights_debug(
-            lights_state,
-            brightness_list,
+        self.source = self.set_light_source(level, path)
+
+        self.sun_light_positions = self.get_positions_sun(level, path)
+
+        self.character_light_positions = self.update_character_light_positions(
+            level, path
         )
 
-        source = self.set_light_source(paths)
-
-        light_positions_adjacent_source = self.get_light_positions_adjacent_source(
-            source, paths, grid_size
-        )
-
-        light_positions_adjacent = self.get_light_positions_adjacent(
-            light_positions_adjacent_source, paths, grid_size
-        )
-
-        sun_light_positions = self.get_positions_sun(
-            path_start_position, paths, brightness_list, path_finish_position, grid_size
-        )
-
-        character_light_positions = self.update_character_light_positions(
-            self.character_light_positions,
-            player_path_position,
-            paths,
-            brightness_list,
-            grid_size,
-        )
-
-        light_positions = self.update_light_positions(
-            self.light_positions,
-            sun_light_positions,
-            character_light_positions,
-        )
+        light_positions = self.update_light_positions()
 
         light_objs = [
             Light_Data(position=pos, color=color)
@@ -87,18 +59,18 @@ class Lights:
 
     def get_light_positions_adjacent(
         self,
-        light_positions_adjacent: list[tuple[int, int]],
-        paths: list[tuple[int, int]],
-        grid_size,
-    ) -> list[tuple[int, int]]:
+        level: "Level",
+        light_positions_adjacent: list[Position],
+    ) -> list[Position]:
+        """Recursive"""
 
         result = []
         for light in light_positions_adjacent:
             pos = (
-                light["position"][0] + (light["direction"][0] * grid_size),
-                light["position"][1] + (light["direction"][1] * grid_size),
+                light["position"][0] + (light["direction"][0] * self.grid_size),
+                light["position"][1] + (light["direction"][1] * self.grid_size),
             )
-            if pos in paths:
+            if pos in level.path_obj.paths:
                 result.append(
                     {
                         "position": pos,
@@ -108,22 +80,20 @@ class Lights:
                 )
 
         if len(result) > 0:
-            result = self.get_light_positions_adjacent(result, paths, grid_size)
+            result = self.get_light_positions_adjacent(level, result)
 
         light_positions_adjacent += result
 
         return light_positions_adjacent
 
-    def get_light_positions_adjacent_source(
-        self, source: tuple[int, int], path: list[tuple[int, int]], grid_size: int
-    ):
+    def get_light_positions_adjacent_source(self, level: "Level"):
         result = []
-        for direction in DIRECTIONS:
+        for direction in DIRECTIONS_FOUR:
             pos = (
-                source[0] + (direction[0] * grid_size),
-                source[1] + (direction[1] * grid_size),
+                self.source[0] + (direction[0] * self.grid_size),
+                self.source[1] + (direction[1] * self.grid_size),
             )
-            if pos in path:
+            if pos in level.path_obj.paths:
                 result.append(
                     {
                         "position": pos,
@@ -133,115 +103,94 @@ class Lights:
                 )
         return result
 
-    # def get_light_data(self):
-    #     pass
-
-    def set_light_source(self, paths: list[tuple[int, int]]) -> tuple[int, int]:
-        return random.choice(paths)
-
-    def set_attrs_C_V_Data(
-        self, pos: tuple[int, int], positions: list[tuple[int, int]]
-    ) -> dict[str, Any]:
-        return {
-            "surface": "LIGHT",
-            "to_surface": "WINDOW",
-            "font_size": 15,
-            "color": positions[pos],
-            "special_flags": "BLEND_RGB_ADD",
-            "pos": pos,
-        }
+    def set_light_source(self, level: "Level", path) -> Position:
+        seq = path.paths
+        return random.choice(seq)
 
     def set_color_value(self, x: int):
-        brightness_list = []
+        """Recursive"""
+        self.brightness_list = []
+
         if x < 256:
-            res, brightness_list = self.set_color_value((x * 2))
+            res, self.brightness_list = self.set_color_value((x * 2))
             res = int(res)
             if res >= 255:
                 res += -1
-            brightness_list.append(tuple([res] * 3))
-        return x, brightness_list
+            self.brightness_list.append(tuple([res] * 3))
 
-    def set_lights_debug(self, lights_state: bool, brightness):
-        # todo brightness not getting outside method!
-        if lights_state:
-            brightness = brightness[1]
+        return x, self.brightness_list
 
-    def update_character_light_positions(
-        self,
-        character_light_positions: list[tuple[int, int]],
-        current_position: tuple[int, int],
-        paths: list[tuple[int, int]],
-        brightness_list,
-        grid_size: int,
-    ) -> list[tuple[int, int]]:
-        mylist = [grid_size, -grid_size]
+    #! uses itself
+    def update_character_light_positions(self, level: "Level", path) -> list[Position]:
+
+        character_light_positions_copy = copy.copy(self.character_light_positions)
+
+        mylist = [level.GRID_SIZE, -level.GRID_SIZE]
         for i in mylist:
-            posslightposition = current_position
+            poss_light_position = path.player_path_position
             brightness = 0
             run = True
             while run:
-                if posslightposition in paths:
-                    character_light_positions[posslightposition] = brightness_list[
-                        brightness
-                    ]
-                    posslightposition = (posslightposition[0] + i, posslightposition[1])
-                    if brightness < len(brightness_list) - 1:
+                if poss_light_position in path.paths:
+                    character_light_positions_copy[
+                        poss_light_position
+                    ] = self.brightness_list[brightness]
+                    poss_light_position = Position(
+                        poss_light_position[0] + i, poss_light_position[1]
+                    )
+                    if brightness < len(self.brightness_list) - 1:
                         brightness += 1
                 else:
                     run = False
         for i in mylist:
-            posslightposition = current_position
+            poss_light_position = path.player_path_position
             brightness = 0
             run = True
             while run:
-                if posslightposition in paths:
-                    character_light_positions[posslightposition] = brightness_list[
-                        brightness
-                    ]
-                    posslightposition = (posslightposition[0], posslightposition[1] + i)
-                    if brightness < len(brightness_list) - 1:
+                if poss_light_position in path.paths:
+                    character_light_positions_copy[
+                        poss_light_position
+                    ] = self.brightness_list[brightness]
+                    poss_light_position = Position(
+                        poss_light_position[0], poss_light_position[1] + i
+                    )
+                    if brightness < len(self.brightness_list) - 1:
                         brightness += 1
                 else:
                     run = False
-        character_light_positions[current_position] = (0, 0, 0)
-        return character_light_positions
+        character_light_positions_copy[path.player_path_position] = (0, 0, 0)
+        return character_light_positions_copy
 
-    def get_positions_sun(
-        self,
-        path_start_position: tuple[int, int],
-        paths: list[tuple[int, int]],
-        brightness_list,
-        path_finish_position: tuple[int, int],
-        grid_size: int,
-    ):
-        sun_light_positions = dict.fromkeys(paths, (0, 0, 0))
+    #! takes itself
+    def get_positions_sun(self, level: "Level", path):
+        sun_light_positions = dict.fromkeys(path.paths, (0, 0, 0))
 
-        for light_position in [path_start_position, path_finish_position]:
+        for light_position in [
+            path.path_start_position,
+            path.path_finish_position,
+        ]:
             brightness = 1
 
             while True:
-                if not light_position in paths:
+                if not light_position in path.paths:
                     break
-                sun_light_positions[light_position] = brightness_list[brightness]
-                light_position = (light_position[0], light_position[1] + grid_size)
-                if brightness < len(brightness_list) - 1:
+                sun_light_positions[light_position] = self.brightness_list[brightness]
+                light_position = (light_position[0], light_position[1] + self.grid_size)
+                if brightness < len(self.brightness_list) - 1:
                     brightness += 1
 
         return sun_light_positions
 
-    def update_light_positions(
-        self,
-        light_positions: list[tuple[int, int]],
-        sun_light_positions: list[tuple[int, int]],
-        character_light_positions: list[tuple[int, int]],
-    ):
+    #! takes self
+    def update_light_positions(self):
 
         get_key, get_val = itemgetter(0), itemgetter(1)
+
         merged_data = sorted(
             chain(
-                light_positions.items(),
-                sun_light_positions.items(),
-                character_light_positions.items(),
+                self.light_positions.items(),
+                self.sun_light_positions.items(),
+                self.character_light_positions.items(),
             ),
             key=get_key,
         )

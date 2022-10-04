@@ -1,9 +1,16 @@
 from src.water import Water
+from src import utilities
+from typing import TYPE_CHECKING
 
 
 from src.level.build import Paths_Build
 from src.level.lights import Lights
-from src.level.paths import Paths
+from src.level.path import Path
+
+
+if TYPE_CHECKING:
+    from src.view import Keyboard, Mouse
+    from src.utilities import Position
 
 
 LevelStates = ["01_Title", "02_Settings", "03_Build", "04_Play"]
@@ -20,87 +27,86 @@ state = {
     # "level_run": level_run,
     # "level_pause": level_pause
 }
-GRID_SIZE = 32
-WIDTH_GS = (GRID_SIZE * 2) + (GRID_SIZE * 35)
-HEIGHT_GS = (GRID_SIZE * 2) + (GRID_SIZE * 22)
-# TOP_OFFSET = 5
+
+
+KEY_LEFT = "K_LEFT"
+KEY_RIGHT = "K_RIGHT"
+KEY_UP = "K_UP"
+KEY_DOWN = "K_DOWN"
 
 
 class Level:
+
+    GRID_SIZE = 32
+    GRID_SIZE_2D = (GRID_SIZE, GRID_SIZE)
+    WIDTH_GS = (GRID_SIZE * 2) + (GRID_SIZE * 35)
+    HEIGHT_GS = (GRID_SIZE * 2) + (GRID_SIZE * 22)
+    # TOP_OFFSET = 5
+
     def __init__(self):
 
         self.objs = []
-        self.top_offset =  5
+        self.top_offset = 5
 
         self.path_climb_positions_visited = []
         self.lights_state = False
 
         self.previous_position = ()
         self.selected = False
-        self.velocity = GRID_SIZE
+        self.velocity = self.GRID_SIZE
 
-        self.build = Paths_Build(GRID_SIZE, WIDTH_GS, self.top_offset, HEIGHT_GS)
+        self.build = Paths_Build(
+            self.GRID_SIZE, self.WIDTH_GS, self.top_offset, self.HEIGHT_GS
+        )
 
         self.build_path_positions = self.build.update()
 
-        self.path = Paths()
+        self.path = Path()
 
-        self.path_obj = self.path.update_build(
-            build_path_positions=self.build_path_positions,
-            grid_size=GRID_SIZE,
-            top_offset=self.top_offset,
-            width=WIDTH_GS,
-            height=HEIGHT_GS,
-        )
+        self.path.update_build(self)
 
-        if not self.path_obj:
+        if self.path.reset:
             self.reset()
             pass
 
-        self.lights = Lights(GRID_SIZE)
+        self.lights = Lights(self)
         self.water = Water()
+
+        self.route = []
 
     def update_build(self):
 
-        self.water_datas = self.water.update(
-            GRID_SIZE, HEIGHT_GS, paths=self.path_obj.paths
-        )
+        self.water.update(self, path=self.path)
 
-    def update_run(self, set_position, mouse_event_run):
+    def update_run(self, keyboard: "Keyboard", mouse: "Mouse"):
 
         self.path_climb_positions_visited = self.path.update_run(
-            climb_positions=self.path_obj.climb_positions,
-            player_path_position=self.path_obj.player_path_position,
+            climb_positions=self.path.list_climb_positions,
+            player_path_position=self.path.player_path_position,
             path_climb_positions_visited=self.path_climb_positions_visited,
         )
 
-        self.light_objs = self.lights.update(
-            paths=self.path_obj.paths,
-            path_start_position=self.path_obj.path_start_position,
-            path_finish_position=self.path_obj.path_finish_position,
-            player_path_position=self.path_obj.player_path_position,
-            grid_size=GRID_SIZE,
-            lights_state=self.lights_state,
-        )
+        self.light_objs = self.lights.update(self, self.path)
 
-        if mouse_event_run:
+        if mouse.mouse_event_run:
             player_path_position = self.mouse_event_run(
-                mouse_event_run,
-                self.path_obj.camp_positions,
-                self.path_obj.player_path_position,
-                self.path_obj.paths,
-                self.path_obj.path_type,
-                self.path_obj.path_directions,
+                mouse,
+                self.path,
+                self.path.camp_positions,
+                self.path.player_path_position,
+                self.path.paths,
+                self.path.dict_position_str,
+                self.path.dict_position_list_position,
             )
 
         player_path_position = self.get_player_path_position(
-            set_position,
-            self.path_obj.paths,
-            self.path_obj.camp_positions,
-            self.path_obj.player_path_position,
+            keyboard,
+            self.path.paths,
+            self.path.camp_positions,
+            self.path.player_path_position,
         )
 
-        self.path_obj.player_path_position = player_path_position
+        self.path.player_path_position = player_path_position
 
     def reset(
         self,
@@ -109,18 +115,30 @@ class Level:
 
     #!!!! Class navigation?
 
+    @property
+    def water_line(self) -> float:
+        return (self.HEIGHT_GS - self.GRID_SIZE * 2) * (2 / 3)
+
     def mouse_event_run(
         self,
-        res: tuple,
+        mouse: "Mouse",
+        path,
         camp_positions,
         player_path_position,
         paths,
         path_type,
         path_directions,
     ):
-        res = position_to_grid_position(res)
+
+        print(f"mouse event run!!!!")
+
+        position = mouse.mouse_event_run
+        grid_size = self.GRID_SIZE
+        res = utilities.position_to_grid_position(position, grid_size)
+
         if res not in paths or res not in camp_positions:
-            route = self.set_route(
+
+            self.route = self.set_route(
                 player_path_position,
                 res,
                 paths,
@@ -130,15 +148,24 @@ class Level:
             )
             route_index = 0
             index = 1
-            for i in route[route_index:]:  # TODO need breaking into steps
+            for i in self.route[route_index:]:  # TODO need breaking into steps
                 index += 1
                 player_path_position = self.get_player_path_position(
                     i, paths, camp_positions, player_path_position
                 )
         return player_path_position
 
-    def set_route(self, start, end, paths, camp_positions, path_type, path_directions):
+    def set_route(
+        self,
+        start: "Position",
+        end: "Position",
+        paths: list["Position"],
+        camp_positions: list["Position"],
+        path_type: dict["Position", str],
+        path_directions: dict["Position", list["Position"]],
+    ):
         """For Nav - currently used in controller."""
+
         route_list_A = [start]
         if end in paths or end in camp_positions:
             route_list_B = [end]
@@ -167,19 +194,23 @@ class Level:
         return route_list_A
 
     def get_player_path_position(
-        self, event, paths, camp_positions, player_path_position
+        self, keyboard: "Keyboard", paths, camp_positions, player_path_position
     ):
+
         x, y = player_path_position
-        if event == "K_LEFT":
+
+        if isinstance(keyboard, tuple):
+            x, y = keyboard
+
+        elif keyboard.event_keyboard == KEY_LEFT:
             x -= self.velocity
-        elif event == "K_RIGHT":
+        elif keyboard.event_keyboard == KEY_RIGHT:
             x += self.velocity
-        elif event == "K_UP":
+        elif keyboard.event_keyboard == KEY_UP:
             y -= self.velocity
-        elif event == "K_DOWN":
+        elif keyboard.event_keyboard == KEY_DOWN:
             y += self.velocity
-        elif isinstance(event, tuple):
-            x, y = event
+
         if (x, y) in paths or (x, y) in camp_positions:
             return (x, y)
 

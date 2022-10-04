@@ -2,53 +2,42 @@
 from src.level.level import Level
 from src.view.view import View
 
-from dataclasses import dataclass
 
-# @dataclass
-# class View_Data:
-#     keyboard_set_position: str
-#     mouse_event_run: str
-
-
-
-
-
-
+class Game:
     # Debugs:
-run_debug_state = False
+    run_debug_state = True
 
-# game state controllers:
+    # game state controllers:
 
+    level = Level()
+    # model and views:
+    view = View(level)
 
-level = Level()
-# model and views:
-view = View()
+    # self.view.setup_view_event_handlers()
 
-# self.view.setup_view_event_handlers()
+    # TODO _run/update too?
 
-# TODO _run/update too?
+    def update(self) -> None:
 
-def update(keyboard_set_position, mouse_event_run) -> None:
-    state = "build"
+        state = "build"
 
-    while True:
-        if state == "build":
-            level.update_build()
-            state = "run"
-        if state == "run":
-            level.update_run(keyboard_set_position, mouse_event_run)
+        while True:
+            if state == "build":
+                self.level.update_build()
+                state = "run"
+            if state == "run":
+                self.level.update_run(self.view.keyboard, self.view.mouse)
 
-            keyboard_set_position, mouse_event_run = view.update(
-                level,
-                run_debug_state,
-                level.path_obj.player_path_position,
-            )
+                # TODO self.level.path should not be here?!
+                self.view.update(
+                    self,
+                    self.level,
+                    self.level.path,
+                )
+
 
 # TODO get state / event
 # TODO update (run object's update)
 # TODO end
 # TODO add object
 # TODO remove object
-
-
-

@@ -1,35 +1,57 @@
 import os
 import sys
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, NamedTuple
 
 import pygame
+from pygame import Surface
 from pygame.constants import BLEND_RGB_SUB
-from src.level import Level, Surround
-from src.level.level import GRID_SIZE, HEIGHT_GS, WIDTH_GS
-from src.utilities import DIRECTIONS, Colors, Position
-from src.view import Mouse, Tile, Window
-from src.view.keyboard import Keyboard
+from src import pygame_surface_maker
+from src.level import Level
+from src.utilities import DIRECTIONS_FOUR, Colors, Position
+from src.view import Keyboard, Mouse, Surround, Tile, Window
 
-Type_Surface = pygame.Surface
+if TYPE_CHECKING:
+    from src.game import Game
+    from src.level.path import Path
+    from src.view.window import Window
+    from src.water import Water
 
-GRID_SCALE = GRID_SIZE
+
+class DataBlit(NamedTuple):
+    surface: Surface
+    source: Surface
+    dest: Position
+    area: bool
+    special_flags: int
+
+
+# class DataRect:
+#     def __init__(self, level: "Level") -> None:
+#         self.left = level.GRID_SIZE
+#         self.top: int
+#         self.width: int
+#         self.height: int
+
+
+# DATARECT_CLIMB_POSITIONS = DataRect(
+#     left=7 / 16,
+#     top= 0,
+#     width= 8,
+#     height=0,
+# )
 
 
 class View:
 
-    IMAGES_PATH: str = "res"
-    player_file = "player_tran.png"
-    filename_player = os.path.join(IMAGES_PATH, player_file)
+    PATH_IMAGES: str = "res"
     player_key = Colors.WHITE
-    player_scale = GRID_SCALE // 16
 
     # pygame
     pygame.init()
     clock = pygame.time.Clock()
 
-    # grid
-    grid_size_2D = (GRID_SCALE, GRID_SCALE)
-
-    window_events = []
+    # window_events = []
 
     run = True  # TODO CHECK WHAT IS USING
 
@@ -39,23 +61,23 @@ class View:
     title = "Maze Game"
     width = 35
     height = 22
-    grid_size = GRID_SCALE
 
-    def __init__(self):
+    def __init__(self, level: Level):
+
+        self.player_scale = level.GRID_SIZE // 16
 
         self.window = Window(
-            self,
             title=self.title,
             view_width=self.width,
             view_height=self.height,
-            grid_size=self.grid_size,
+            grid_size=level.GRID_SIZE,
         )
 
         # self.keyboard = Keyboard()
         self.mouse = Mouse()
         self.keyboard = Keyboard()
 
-        self.tile = Tile(GRID_SCALE)
+        self.tile = Tile(level.GRID_SIZE)
         self.surround = Surround()
 
         self.player_init()
@@ -68,280 +90,359 @@ class View:
 
         self.pygame_surfaces = {
             "GRASS_IMAGE": self.get_surface_file(
-                "grass.png", self.IMAGES_PATH, self.grid_size_2D
+                "grass.png",
+                self.PATH_IMAGES,
+                level.GRID_SIZE_2D,
             ),
             "DIRT_IMAGE": self.get_surface_file(
-                "dirt.png", self.IMAGES_PATH, self.grid_size_2D
+                "dirt.png",
+                self.PATH_IMAGES,
+                level.GRID_SIZE_2D,
             ),
             "ROCK_IMAGE": self.get_surface_file(
-                "rock.png", self.IMAGES_PATH, self.grid_size_2D
+                "rock.png",
+                self.PATH_IMAGES,
+                level.GRID_SIZE_2D,
             ),
             "WINDOW": self.window.window_surface,
             "TEXT": self.get_surface_text,
             "LIGHT": self.get_surface_lights,
         }
 
-        self.set_window()
+        # self.set_window()
 
     #! DRAW
-    def set_window(self):
-        self.window.window_surface.blit(self.window.scaled_window_surface, (0, 0))
 
-    # def setup_view_event_handlers(self):
-    #     # subscribe("user_registered", handle_user_registered_event)
-    #     event.subscribe("update", self.update)
+    #! not sure how this is not needed
+    # def set_window(self):
+
+    #     surface = self.window.window_surface
+    #     source = self.window.scaled_window_surface
+    #     dest = (0, 0)
+    #     area = None
+    #     special_flags = 0
+
+    #     self.list_DataBlit.append(DataBlit(surface, source, dest, area, special_flags))
+
+    @property
+    def filename_player(self):
+        path = self.PATH_IMAGES
+        paths = "player_tran.png"
+        return os.path.join(path, paths)
 
     # TODO convert return to dataclass
-    def update(self, level: Level, run_debug_state: bool, current_position: Position):
+    def update(self, game: "Game", level: Level, paths: "Path"):
 
-        self.surround_positions, self.path_adjacent = self.surround.update(
-            paths=level.path_obj.paths, grid_size=GRID_SCALE
-        )
+        self.clear_blit_list()
 
-        self.route_light_positions_tiles, self.tiles = self.tile.update(
-            surround_positions=self.surround_positions,
-            width=WIDTH_GS,
-            top_offset=level.top_offset,
-            path_adjacent=self.path_adjacent,
-            path_obj=level.path_obj,
-            grid_size=GRID_SCALE,
-            height=HEIGHT_GS,
-        )
+        # update surround:
 
-        #! circle with window!
-        self.window_events = self.window.get_events()
-        self.window.update(self.window_events)
+        # TODO level.path should not be here?!
+        self.surround.update(level, level.path)
+        self.path_adjacent = self.surround.path_adjacent
+        self.poss_surround_positions = self.surround.poss_surround_positions
 
-        self.set_window_end()
+        # update tile:
+        self.tile.create_tile_locations(level)
+        self.route_light_positions_tiles = self.tile.set_path_surround_tiles(self)
+        self.tiles = self.tile.create_dict_tiles(self, level.path)
 
-        # keyboard
-
-        keyboard_set_position = self.keyboard.update(self)
+        # update window:
+        self.window_events = self.window.win_event
+        self.window_quit = self.window.get_window_quit(self)
 
         # mouse
         self.mouse.update(self)
 
-        self.draw_level(level)
-        # print(f"{len(self.mouse_data_list)=}")
+        # keyboard
+        self.keyboard.update(self)
 
-        # for m in self.mouse_data_list:
+        # more stuff!:
+        self.set_window_end()
 
-        surface = self.window.window_surface
-        mouse_motion = self.mouse.mouse_motion
-        pygame_font = self.pygame_fonts["MONOSPACE"](15)
+        #! DRAW WINDOW START
+        self.draw_level(level)  # blit (via set_surface_to_surface)
 
-        self.draw_coordinates(
-            surface,
-            mouse_motion,
-            pygame_font,
-        )
+        self.draw_coordinates(self.window, self.mouse)  # append list_blit
 
-        #!return result 01
+        self.draw_water(self.window, level, level.water)  # append list_blit
 
-        self.draw_water(level)
+        self.set_surface_to_window(
+            self.window, level, paths
+        )  # blit (via set_surface_to_surface)
 
-        self.set_surface_to_window(self.player_image, current_position)
+        self.set_blit_objs(level)  # append list_blit
 
-        self.set_blit_objs(level.light_objs)
+        if game.run_debug_state:
+            self.in_list_climb_positions(paths, level)  # append list_blit
+            self.draw_debug_start_position(level, paths)  # draw rect (via draw_outline)
+            self.draw_debug_ends(level)  # blit
+            self.draw_debug_route(level, paths)  # draw rect (via draw_outline)
 
-        self.draw_debug_start_position(level, run_debug_state)
-        self.draw_debug_climb_positions(level, run_debug_state)
-        self.draw_debug_ends(level, run_debug_state)
-        self.draw_debug_route(level, run_debug_state)
+        # self.if_debug(game, level, paths)
+
+        self.Blit(self.list_DataBlit)  # run list_blit
+        #! DRAW WINDOW END
 
         self.clock.tick(60)  # TODO Check what this is doing!!!
 
         pygame.display.update()
 
-        return keyboard_set_position, self.mouse.mouse_event_run
-
     #!!!!! DRAWING OF SELF.SURFACE *****************************************************************
 
-    def get_surface_lights(self, brightness):
-        surface = pygame.Surface(self.grid_size_2D)
-        pygame.draw.rect(surface, brightness, surface.get_rect())
+    @property
+    def pygame_font(self):
+        return self.pygame_fonts["MONOSPACE"](15)
+
+    def get_surface_lights(self, level: "Level", color):
+        surface = pygame.Surface(level.GRID_SIZE_2D)
+        rect = surface.get_rect()
+        pygame.draw.rect(surface, color, rect)
         return surface
 
-    def get_pygame_fonts(self, size):
-        return pygame.font.SysFont("monospace", size)
+    def get_pygame_fonts(self, size: int):
+        name = "monospace"
+        return pygame.font.SysFont(name, size)
 
-    def draw_coordinates(self, surface: Type_Surface, mouse_motion, pygame_font):
-        if not mouse_motion:
+    def draw_coordinates(self, window: Window, mouse: Mouse):
+        if not mouse.m_event:
             return
 
-        surface_font = pygame_font.render(str(mouse_motion.pos), 1, (Colors.RED))
-        surface.blit(surface_font, (10, 10))
+        # Font > Surface
+        font = self.pygame_font
+        text = str(mouse.m_event.pos)
+        antialias = True
+        color = Colors.RED
 
-    def draw_debug_ends(self, level, run_debug):
-        if not run_debug:
-            return
+        surface_font = font.render(text, antialias, color)
 
-        for k, v in dict.items(level.path.path_type):
+        # DataBlit > ListBlit
+        surface = window.window_surface
+        source = surface_font
+        dest = Position(10, 10)
+        area = None
+        special_flags = 0
 
-            surface = self.pygame_surfaces["TEXT"](v, "MONOSPACE", 15)
+        self.list_DataBlit.append(DataBlit(surface, source, dest, area, special_flags))
 
-            self.window.window_surface.blit(surface, (k[0] + 1, k[1] + 5))
+    def draw_debug_ends(self, level: Level):
+        for k, v in dict.items(level.path.dict_position_str):
+
+            surface = self.window.window_surface
+            source = self.pygame_surfaces["TEXT"](v, "MONOSPACE", 15)
+            dest = Position(k[0] + 1, k[1] + 5)
+            area = None
+            special_flags = 0
+
+            self.list_DataBlit.append(
+                DataBlit(surface, source, dest, area, special_flags)
+            )
 
     #!!!!! DRAW**********************************************************************************
 
     def get_surface_text(self, text: str, font, size):
         font = self.pygame_fonts[font](size)
-        return font.render("{0}".format(text), 1, ((COLORS["GREEN"])))
+        return font.render("{0}".format(text), 1, ((Colors.GREEN)))
 
-    def set_surface_to_surface(self, surface, to_surface, pos, special_flags):
-        to_surface.blit(surface, pos, special_flags=special_flags)
+    def set_surface_to_surface(
+        self,
+        surface: Surface,
+        source: Surface,
+        dest: Position,
+        area: bool,
+        special_flags: int,
+    ):
 
-    def set_blit_objs(self, lights):
-        for obj in lights:
-            self.pygame_surfaces[obj.to_surface].blit(
-                self.pygame_surfaces[obj.surface](obj.color),
-                obj.position,
-                special_flags=self.pygame_special_flags["BLEND_RGB_ADD"],
+        # self.list_DataBlit.append(DataBlit(surface, source, dest, area, special_flags))
+
+        surface.blit(source, dest, area, special_flags)
+
+    def set_blit_objs(self, level: "Level"):
+        for obj in level.light_objs:
+
+            surface = self.pygame_surfaces[obj.to_surface]
+            source = self.pygame_surfaces[obj.surface](level, obj.color)
+            dest = obj.position
+            area = None
+            special_flags = self.pygame_special_flags["BLEND_RGB_ADD"]
+
+            self.list_DataBlit.append(
+                DataBlit(surface, source, dest, area, special_flags)
             )
 
     #!!!!!! Create shape and draw?*******************************************************************************
 
-    def draw_rect(self, color, pos):
-        pygame.draw.rect(
-            self.window.window_surface, color, (pos, (GRID_SCALE, GRID_SCALE))
-        )
+    def draw_rect(self, level: "Level", color, pos):
 
-    def draw_outline(self, color, pos):
-        pygame.draw.rect(
-            self.window.window_surface,
-            color,
-            (pos, (GRID_SCALE - 1, GRID_SCALE - 1)),
-            2,
-        )
+        surface = self.window.window_surface
+        rect = (pos, (level.GRID_SIZE, level.GRID_SIZE))
+        pygame.draw.rect(surface, color, rect)
 
-    def draw_climb_positions_visited(self):
-        for p in self.climb_positions_visited:
-            if p not in self.water_list:
-                pygame.draw.rect(
-                    self.window.window_surface,
-                    COLORS["RED"],
-                    (p[0] + GRID_SCALE * 7 / 16, p[1], GRID_SCALE / 8, GRID_SCALE),
-                )
+    def get_surface_from_rect(self, level: "Level"):
+        flag = pygame.SRCALPHA
+        surface = pygame.Surface(level.GRID_SIZE_2D, flag)
 
-    def draw_debug_climb_positions(self, model, debug):
-        if debug:
-            for p in model.path.list_climb_positions:
-                pygame.draw.rect(
-                    self.window.window_surface,
-                    COLORS["GREEN"],
-                    (p[0] + GRID_SCALE * 7 / 16, p[1], GRID_SCALE / 8, GRID_SCALE),
-                )
+        color = Colors.GREEN
+
+        # pygame rect
+
+        left = level.GRID_SIZE * 7 / 16
+        top = 0
+        width = level.GRID_SIZE / 8
+        height = level.GRID_SIZE
+
+        rect = pygame.Rect(left, top, width, height)
+
+        pygame.draw.rect(surface, color, rect)
+
+        return surface
+
+    def draw_outline(self, level: "Level", color: Colors, position: Position):
+
+        #  pygame rect
+        left = position[0]
+        top = position[1]
+        width = level.GRID_SIZE - 1
+        height = level.GRID_SIZE - 1
+
+        rect_02 = pygame.Rect(left, top, width, height)
+
+        # pygame draw rect
+        surface = self.window.window_surface
+        width_02 = 2
+        pygame.draw.rect(surface, color, rect_02, width_02)
+
+    def in_list_climb_positions(self, path: "Path", level: "Level"):
+        for p in path.list_climb_positions:
+
+            source = self.get_surface_from_rect(level)
+            surface = self.window.window_surface
+            dest = (p.x, p.y)
+            area = None
+            special_flags = 0
+
+            self.list_DataBlit.append(
+                DataBlit(surface, source, dest, area, special_flags)
+            )
 
     #!!!! set draw locations???  ****************************************************************************
 
-    def draw_debug_route(self, level, run_debug):
-        if run_debug:
-            for p in level.path.route:
-                self.draw_outline(COLORS["GREEN"], (p[0], p[1]))
+    def draw_debug_route(self, level: "Level", path: "Path"):
+        for p in level.route:
+            color = Colors.GREEN
+            position = Position(p[0], p[1])
+            self.draw_outline(level, color, position)
 
     def draw_level(self, level):
-        for k, v in self.tiles.items():
-            pos = k[0], k[1]
+        for position, v in self.tiles.items():
+            pos = position[0], position[1]
             if v == "S":
-                self.draw_rect((146, 244, 255), pos)
+                self.draw_rect(level, (146, 244, 255), pos)
             if v == "G":
-                self.set_surface_to_surface(
-                    self.pygame_surfaces["GRASS_IMAGE"],
-                    self.window.window_surface,
-                    pos,
-                    special_flags=0,
-                )
+
+                surface = self.window.window_surface
+                source = pygame_surface_maker.grass_image(level)
+                dest = pos
+                area = None
+                special_flags = 0
+                surface.blit(source, dest, area, special_flags)
+
             if v == "E":
-                self.set_surface_to_surface(
-                    self.pygame_surfaces["DIRT_IMAGE"],
-                    self.window.window_surface,
-                    pos,
-                    special_flags=0,
-                )
+                surface = self.window.window_surface
+                source = pygame_surface_maker.dirt_image(level)
+                dest = pos
+                area = None
+                special_flags = 0
+
             if v == "P":
-                self.set_surface_to_surface(
-                    self.pygame_surfaces["ROCK_IMAGE"],
-                    self.window.window_surface,
-                    pos,
+                PATH_BLIT = DataBlit(
+                    surface=self.window.window_surface,
+                    source=pygame_surface_maker.rock_image(level),
+                    dest=pos,
+                    area=None,
                     special_flags=0,
                 )
+
+                self.Blit([PATH_BLIT])
+
             if v == "A":
                 # todo sometimes this key 'k' below is not present causing an error!!!
-                tile01 = pygame.image.load(self.route_light_positions_tiles[k])
-                tile01 = pygame.transform.scale(tile01, (GRID_SCALE, GRID_SCALE))
+                tile01 = pygame.image.load(self.route_light_positions_tiles[position])
+                tile01 = pygame.transform.scale(
+                    tile01, (level.GRID_SIZE, level.GRID_SIZE)
+                )
                 self.set_surface_to_surface(
-                    tile01, self.window.window_surface, pos, special_flags=0
+                    self.window.window_surface,
+                    tile01,
+                    pos,
+                    area=None,
+                    special_flags=0,
                 )
 
     #!!!! WATER:
 
-    def draw_water(self, model):
-        for p in model.water_datas:
-            self.draw_transparent(Colors.BLUE_LIGHT, p.position)
+    def draw_water(self, window: Window, level: "Level", water: "Water"):
+        for p in water.water_positions:
 
-    def draw_transparent(self, color, pos):
-        surface_water = pygame.Surface(self.grid_size_2D)
-        surface_water.set_alpha(75)
-        pygame.draw.rect(surface_water, color, surface_water.get_rect())
+            surface_alpha = pygame.Surface(level.GRID_SIZE_2D)
+            value = 75
+            surface_alpha.set_alpha(value)
 
-        self.window.window_surface.blit(surface_water, pos)
+            color = Colors.BLUE_LIGHT
+            # rect = surface_alpha.get_rect()
+            left = 0
+            top = 0
+            width = level.GRID_SIZE
+            height = level.GRID_SIZE
+            rect = pygame.Rect(left, top, width, height)
+            pygame.draw.rect(surface_alpha, color, rect)
+
+            surface = window.window_surface
+            source = surface_alpha
+            dest = p
+            area = None
+            special_flags = 0
+            self.list_DataBlit.append(
+                DataBlit(surface, source, dest, area, special_flags)
+            )
+
+    def clear_blit_list(self):
+        self.list_DataBlit: list[DataBlit] = []
+
+    def Blit(self, list_blit: list[DataBlit]):
+        for l in list_blit:
+            l.surface.blit(l.source, l.dest, l.area, l.special_flags)
 
     #!!!! ****************
 
-    def draw_build_grid(self, model):
-        for i in model.grid:
-            self.draw_rect(COLORS["BLACK_VERY_LIGHT"], i[0], i[1])
+    def draw_debug_start_position(self, level: "Level", path: "Path"):
+        p = path.paths[0]
+        self.draw_outline(level, Colors.RED, (p.x, p.y))
 
-    def draw_debug_start_position(self, model, debug):
-        if debug:
-            p = model.path.build_positions[0]
-            self.draw_outline(COLORS["RED"], (p[0], p[1]))
-
-    def draw_build_grid_hide(self, model, build_debug):
-        if not build_debug:
+    def set_surface_to_window(self, window: "Window", level: "Level", paths: "Path"):
+        if not paths.player_path_position:
             return
 
-        directions_list = []
-        for g in model.list_grid:
-            for d in DIRECTIONS:
-                if (
-                    g[0] + (d[0] * GRID_SCALE),
-                    g[1] + (d[1] * GRID_SCALE),
-                ) not in model.list_wall_break_positions:
-                    directions_list.append((d[0], d[1]))
+        source = self.player_image
+        surface = window.window_surface
 
-            if len(directions_list) == 4:
-                self.set_surface_to_surface(
-                    self.pygame_surfaces["DIRT_IMAGE"],
-                    self.window.window_surface,
-                    g[0],
-                    g[1],
-                )
-            directions_list.clear()
+        width = source.get_width()
+        x = paths.player_path_position[0] + ((level.GRID_SIZE - width) / 2)
 
-    def set_surface_to_window(self, surface, current_position):
-        if not current_position:
-            return
+        height = source.get_height()
+        y = paths.player_path_position[1] + (level.GRID_SIZE - height)
 
-        self.set_surface_to_surface(
-            surface,
-            self.window.window_surface,
-            (
-                current_position[0] + ((GRID_SCALE - surface.get_width()) / 2),
-                current_position[1] + (GRID_SCALE - surface.get_height()),
-            ),
-            special_flags=0,
-        )
+        dest = Position(x, y)
+        area = None
+        special_flags = 0
+        surface.blit(source, dest, area, special_flags)
 
     #!!!! *********************************************************
 
-    def get_dict_fonts(self):
-        return
-
-    def get_surface_file(self, image, path, scale):
-        res = pygame.image.load(os.path.join(path, image))
-        res = pygame.transform.scale(res, scale)
-        return res
+    def get_surface_file(self, paths, path, size):
+        filename = os.path.join(path, paths)
+        surface = pygame.image.load(filename)
+        return pygame.transform.scale(surface, size)
 
     @property
     def surface_load_player(self):
@@ -350,23 +451,21 @@ class View:
 
     @property
     def player_image(self):
-
-        res_get_width = self.surface_load_player.get_width() * self.player_scale
-        res_get_height = self.surface_load_player.get_height() * self.player_scale
-
-        size = (res_get_width, res_get_height)
-
-        surface_scale = pygame.transform.scale(self.surface_load_player, size)
-
-        return surface_scale
+        surface = self.surface_load_player
+        x = surface.get_width() * self.player_scale
+        y = surface.get_height() * self.player_scale
+        size = (x, y)
+        return pygame.transform.scale(surface, size)
 
     def player_init(self):
-        self.surface_load_player.set_colorkey(self.player_key)
+        color = self.player_key
+        self.surface_load_player.set_colorkey(color)
 
-    #! needs to be run?!
     def set_window_end(self):
-        if self.window.window_quit:
-            self.set_end()
+        if not self.window_quit:
+            return
+
+        self.set_end()
 
     #! needs to be run?!
     def set_end(self):

@@ -1,4 +1,4 @@
-from .mouse import Mouse
-from .window import Window
+from .input import Mouse, Keyboard
 from .tiles import Tile
-from .keyboard import Keyboard
+from .surround import Surround
+from .window import Window

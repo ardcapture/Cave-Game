@@ -3,7 +3,7 @@ import random
 from itertools import product
 from typing import Any
 
-from src.utilities import DIRECTIONS
+from src.utilities import DIRECTIONS_FOUR
 from src.utilities import Direction, Position
 
 import pprint
@@ -72,23 +72,6 @@ class Paths_Build:
         else:
             return self.check_next
 
-    # def add(self, x: int, y: int) -> int:
-    #     return x + y
-
-    # def check_authorization(f):
-    #     def wrapper(*args):
-    #         print args[0].wid
-    #         return f(*args)
-    #     return wrapper
-
-    # class Client(object):
-    #     def __init__(self, url):
-    #         self.url = url
-
-    #     @check_authorization
-    #     def get(self):
-    #         print 'get'
-
     @property
     def list_position_grid(self) -> list[Position]:
         res_product = product(self.range_x, self.range_y)
@@ -113,7 +96,7 @@ class Paths_Build:
     @property
     def list_position_next_random(self) -> list[Position]:
         res_list: list[Position] = []
-        res_sample = random.sample(DIRECTIONS, len(DIRECTIONS))
+        res_sample = random.sample(DIRECTIONS_FOUR, len(DIRECTIONS_FOUR))
 
         for d in res_sample:
             res_get_position_poss = self.get_position_poss(d)
