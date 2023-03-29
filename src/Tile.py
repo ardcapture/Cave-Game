@@ -9,8 +9,8 @@ from src.utilities import IMAGE_TYPES, LIGHTING_TILE_ROTATE, Positions
 
 
 if TYPE_CHECKING:
-    from src.view import View
-    from src.level import Level
+    from src.View import View
+    from src.Level import Level
 
 
 files_for_image = {"rock_lighting_tile": "rock.png"}

@@ -1,29 +1,17 @@
+import copy
 import random
-from dataclasses import dataclass
 from itertools import chain, groupby
 from operator import itemgetter
 from typing import TYPE_CHECKING
-import copy
 
-from src.utilities import DIRECTIONS_FOUR, Positions, Color
+from src.utilities import Color, Positions, Light_Data
 
 if TYPE_CHECKING:
-    from src.level import Level
-    from nav import Nav
-
-
-@dataclass
-class Light_Data:
-    surface: str = "LIGHT"  # TODO change type?
-    to_surface: str = "WINDOW"  # TODO change type?
-    font_size: int = 15
-    color: tuple = (0, 0, 0)
-    special_flags: str = "BLEND_RGB_ADD"
-    position: tuple = None
+    from src.Level import Level
+    from src.Nav import Nav
 
 
 class Lights:
-
     objs = []
     brightness_list: list[Color] = []
     sun_light_positions: dict[Positions, tuple[Color]]

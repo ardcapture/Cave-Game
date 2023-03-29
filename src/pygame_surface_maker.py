@@ -6,7 +6,7 @@ import os
 from pygame import Surface
 
 if TYPE_CHECKING:
-    from src.level import Level
+    from src.Level import Level
 
 
 PATH_IMAGES: str = "res"

@@ -2,9 +2,10 @@ from typing import Any, NamedTuple, TYPE_CHECKING
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
+from pygame import Rect, Surface
 
 if TYPE_CHECKING:
-    from src.water import LevelObject
+    from WaterFactory import LevelObject
 
 
 class Positions(NamedTuple):
@@ -29,6 +30,34 @@ class Color(NamedTuple):
     blue: int
 
 
+class DrawRectData(NamedTuple):
+    surface: Surface
+    color: Color
+    rect: Rect
+
+
+class BlitData(NamedTuple):
+    source: Surface
+    dest: Positions
+    area: bool
+    special_flags: int
+
+
+# class Water(NamedTuple):
+#     left: int
+#     top: int
+#     width: int
+#     height: int
+
+
+# DATARECT_CLIMB_POSITIONS = DataRect(
+#     left=7 / 16,
+#     top= 0,
+#     width= 8,
+#     height=0,
+# )
+
+
 @dataclass
 class Colors:
     BLACK = Color(0, 0, 0)
@@ -40,6 +69,21 @@ class Colors:
     BLUE = Color(0, 0, 255)
     BLUE_LIGHT = Color(125, 125, 255)
     BLUE_VERY_LIGHT = Color(210, 210, 255)
+
+
+@dataclass
+class NavData:
+    position_type: str
+
+
+@dataclass
+class Light_Data:
+    surface: str = "LIGHT"  # TODO change type?
+    to_surface: str = "WINDOW"  # TODO change type?
+    font_size: int = 15
+    color: tuple = (0, 0, 0)
+    special_flags: str = "BLEND_RGB_ADD"
+    position: tuple = None
 
 
 LEFT_UP = Direction(x=-1, y=-1)

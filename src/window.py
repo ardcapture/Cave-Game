@@ -6,8 +6,8 @@ from pygame.event import Event
 from src.utilities import Positions, WindowEvent
 
 if TYPE_CHECKING:
-    from src.level import Level
-    from src.view import View
+    from src.Level import Level
+    from src.View import View
 
 KEY_DOWN = pygame.KEYDOWN
 KEY_UP = pygame.KEYUP

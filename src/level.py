@@ -4,16 +4,16 @@ from typing import TYPE_CHECKING
 
 import pygame
 
-from src.build import Build
-from src.lights import Lights
-from src.nav import Nav
-from src.utilities import NoPositionFound, Positions, Direction
-from src.water import WaterFactory
+from src.Build import Build
+from src.Lights import Lights
+from src.Nav import Nav
+from src.utilities import NoPositionFound, Positions
+from src.WaterFactory import WaterFactory
 
 from . import utilities
 
 if TYPE_CHECKING:
-    from src.window import Window
+    from Window import Window
 
 
 LevelStates = ["01_Title", "02_Settings", "03_Build", "04_Play"]

@@ -1,41 +1,13 @@
 from typing import TYPE_CHECKING
-from abc import ABC, abstractmethod
-import pygame
-from pygame import Surface
 
 from src import utilities
-from src.utilities import Positions, Colors
+from src.LevelObject import LevelObject
+from src.utilities import Colors, Positions
+from src.WaterObject import WaterObject
 
 if TYPE_CHECKING:
-    from level import Level
-    from nav import Nav
-
-
-class LevelObject(ABC):
-    def __init__(self, rect, position: Positions) -> None:
-        self._position: Positions = position
-        self.rect = rect
-
-    @property
-    def position(self) -> Positions:
-        return self._position
-
-    @position.setter
-    def position(self, position: Positions):
-        self._position = position
-
-    @abstractmethod
-    def surface(self) -> Surface:
-        pass
-
-
-class WaterObject(LevelObject):
-    value: int = 75  # for set_alpha
-
-    def surface(self):
-        surface = pygame.Surface(self.rect)
-        surface.set_alpha(self.value)
-        return surface
+    from src.Level import Level
+    from src.Nav import Nav
 
 
 class WaterFactory:

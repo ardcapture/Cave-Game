@@ -1,58 +1,27 @@
 import os
-import pprint
 import sys
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING
 
 import pygame
-from pygame import Rect, Surface
+from pygame import Surface
 from pygame.constants import BLEND_RGB_SUB
 
 from src import pygame_surface_maker
 
 # from src.input import Keyboard
-from src.level import Level
-from src.surround import Surround
-from src.tiles import Tile
-from src.utilities import DIRECTIONS_FOUR, Color, Colors, Positions
-from src.window import Window
-from src.water import WaterObject
+from src.Level import Level
+from src.Surround import Surround
+from src.Tile import Tile
+from src.utilities import BlitData, Colors, Positions
+from src.Window import Window
 
 if TYPE_CHECKING:
-    from nav import Nav
-    from src.game import Game
-    from src.lights import Lights
-    from src.water import WaterFactory
+    from src.Nav import Nav
+    from src.Game import Game
+    from src.Lights import Lights
+    from src.WaterFactory import WaterFactory
 
 WINDOW_CLOSE = pygame.WINDOWCLOSE
-
-
-class BlitData(NamedTuple):
-    source: Surface
-    dest: Positions
-    area: bool
-    special_flags: int
-
-
-# class Water(NamedTuple):
-#     left: int
-#     top: int
-#     width: int
-#     height: int
-
-
-class DrawRectData(NamedTuple):
-    surface: Surface
-    color: Color
-    rect: Rect
-
-
-# DATARECT_CLIMB_POSITIONS = DataRect(
-#     left=7 / 16,
-#     top= 0,
-#     width= 8,
-#     height=0,
-# )
 
 
 class View:

@@ -1,17 +1,9 @@
-from dataclasses import dataclass
-from pprint import pprint
 from typing import TYPE_CHECKING
 
-from src.utilities import DIRECTIONS_FOUR, Positions
+from src.utilities import DIRECTIONS_FOUR, NavData, Positions
 
 if TYPE_CHECKING:
-    from src.build import Build
-    from src.level import Level
-
-
-@dataclass
-class NavData:
-    position_type: str
+    from src.Level import Level
 
 
 class Nav:

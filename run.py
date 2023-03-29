@@ -1,5 +1,5 @@
-from src.game import Game
-from src.view import View
+from src.Game import Game
+from src.View import View
 
 
 def main():

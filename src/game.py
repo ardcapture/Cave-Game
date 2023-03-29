@@ -1,9 +1,9 @@
-from src.level import Level
-
 from typing import TYPE_CHECKING
 
+from src.Level import Level
+
 if TYPE_CHECKING:
-    from src.view import View
+    from src.View import View
 
 
 class Game:
