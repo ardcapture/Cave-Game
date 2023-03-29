@@ -1,19 +1,16 @@
-subscribers = dict()
+subscribers = {}
 
 
 def subscribe(event_type: str, fn):
-    if not event_type in subscribers:
+    if event_type not in subscribers:
         subscribers[event_type] = []
     subscribers[event_type].append(fn)
 
 
 def post_event(event_type: str, *args):
-    if not event_type in subscribers:
-        print(f"not event!")
+    if event_type not in subscribers:
+        print("not event!")
         return
     for fn in subscribers[event_type]:
-        print(f"event")
+        print("event")
         return fn(*args)
-
-
-

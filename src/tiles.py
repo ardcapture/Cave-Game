@@ -5,12 +5,12 @@ import blend_modes
 import numpy
 from PIL import Image as PIL_Image
 from PIL.Image import Image
-from src.utilities import IMAGE_TYPES, LIGHTING_TILE_ROTATE, Position
+from src.utilities import IMAGE_TYPES, LIGHTING_TILE_ROTATE, Positions
 
 
 if TYPE_CHECKING:
-    from src.view.view import View
-    from src.view.view import Level
+    from src.view import View
+    from src.level import Level
 
 
 files_for_image = {"rock_lighting_tile": "rock.png"}
@@ -46,36 +46,31 @@ class Tile:
     ) -> Image:
         res_join = os.path.join(images_path, file_name)
         res_open = PIL_Image.open(res_join)
-        res_resize = res_open.resize((grid_size, grid_size))
-        return res_resize
+        return res_open.resize((grid_size, grid_size))
 
     #! called by update - 1 location
-    def create_dict_tiles(self, view: "View", path) -> dict[Position, str]:
+    def create_dict_tiles(self, view: "View", level: "Level") -> dict[Positions, str]:
         TILE_LETTERS = [
             (self.rock, "R"),
             (view.path_adjacent, "A"),
             (self.sky, "S"),
             (self.grass, "G"),
-            (path.paths, "P"),
+            (level.paths, "P"),
         ]
 
-        res_update: dict[Position, str] = {}
+        res_update: dict[Positions, str] = {}
         for i in TILE_LETTERS:
             res_fromkeys = dict.fromkeys(*i)
-            res_update.update(res_fromkeys)
+            res_update |= res_fromkeys
 
         return res_update
 
     @property
     def tileImages(self) -> dict[str, Image]:
-        res_select_rotate: dict[str, Image] = {}
-
-        for i in IMAGE_TYPES:
-            res_select_rotate[i + "_image"] = self.select_rotate(
-                self.T_image, self.TR_image, i
-            )
-
-        return res_select_rotate
+        return {
+            f"{i}_image": self.select_rotate(self.T_image, self.TR_image, i)
+            for i in IMAGE_TYPES
+        }
 
     #! called by update - 1 location
     def create_tile_locations(self, level: "Level") -> None:
@@ -89,7 +84,7 @@ class Tile:
     def set_path_surround_tiles(self, view: "View"):
 
         # res_image: Image.Image = Image.Image()
-        route_light_positions_tiles: dict[Position, str] = {}
+        route_light_positions_tiles: dict[Positions, str] = {}
 
         for k, v in view.surround.surround_positions.items():
             if len(v) == 1:
@@ -104,8 +99,9 @@ class Tile:
                 route_light_positions_tiles[k] = name
             elif len(v) == 2:
                 res_image = self.image_darken(
-                    self.tileImages[v[0] + "_image"], self.tileImages[v[1] + "_image"]
+                    self.tileImages[f"{v[0]}_image"], self.tileImages[f"{v[1]}_image"]
                 )
+
                 res_image = res_image.convert("L")
                 if not self.path_surround_tiles_debug:
                     res_image = PIL_Image.composite(
@@ -115,11 +111,11 @@ class Tile:
                 res_image.save(name)
                 route_light_positions_tiles[k] = name
             elif len(v) == 3:
-                image01 = self.tileImages[v.pop() + "_image"]
-                image02 = self.tileImages[v.pop() + "_image"]
+                image01 = self.tileImages[f"{v.pop()}_image"]
+                image02 = self.tileImages[f"{v.pop()}_image"]
                 blend01 = self.image_darken(image01, image02)
                 # blend01.show()
-                image03 = self.tileImages[v.pop() + "_image"]
+                image03 = self.tileImages[f"{v.pop()}_image"]
                 blend02 = self.image_darken(blend01, image03)
                 res_image = blend02
                 res_image = res_image.convert("L")
@@ -185,14 +181,12 @@ class Tile:
     def image_darken(self, foreground_image: Image, background_image: Image) -> Image:
         array_foreground = self.tile_array(foreground_image)
         array_background = self.tile_array(background_image)
-        res = self.image_lighten(array_foreground, array_background, 1.0)
-        return res
+        return self.image_lighten(array_foreground, array_background, 1.0)
 
     #! called by image_darken - 2 location
     def tile_array(self, image: Image):
         res_array = numpy.array(image)
-        res_astype = res_array.astype(float)
-        return res_astype
+        return res_array.astype(float)
 
     #! called by image_darken - 1 location
     def image_lighten(
@@ -202,5 +196,4 @@ class Tile:
         res_lighten_only = blend_modes.lighten_only(
             image_float01, image_float02, opacity
         )
-        res_fromarrray = PIL_Image.fromarray(numpy.uint8(res_lighten_only))
-        return res_fromarrray
+        return PIL_Image.fromarray(numpy.uint8(res_lighten_only))

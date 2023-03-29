@@ -1,8 +1,9 @@
 from src.game import Game
+from src.view import View
 
 
 def main():
-    game = Game()
+    game = Game(View())
     game.update()
 
 

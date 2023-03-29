@@ -1,6 +1,9 @@
-# from src import event
-from src.level.level import Level
-from src.view.view import View
+from src.level import Level
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.view import View
 
 
 class Game:
@@ -11,28 +14,33 @@ class Game:
 
     level = Level()
     # model and views:
-    view = View(level)
+    # view = View()
 
     # self.view.setup_view_event_handlers()
 
     # TODO _run/update too?
 
+    def __init__(self, view: "View") -> None:
+        self.view = view
+
     def update(self) -> None:
 
         state = "build"
+        self.view.setup(self.level)
 
         while True:
             if state == "build":
-                self.level.update_build()
                 state = "run"
             if state == "run":
-                self.level.update_run(self.view.keyboard, self.view.mouse)
+                self.level.set_visited_climb_positions()
+                self.level.update(self.view.window)
 
                 # TODO self.level.path should not be here?!
                 self.view.update(
                     self,
                     self.level,
-                    self.level.path,
+                    self.level.nav,
+                    self.view.window,
                 )
 
 

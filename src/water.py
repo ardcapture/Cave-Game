@@ -1,78 +1,123 @@
-import copy
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
-
-import numpy as np
+from abc import ABC, abstractmethod
+import pygame
+from pygame import Surface
 
 from src import utilities
-from src.utilities import Position
+from src.utilities import Positions, Colors
 
 if TYPE_CHECKING:
-    from src.level import Level
-    from src.level.path import Path
+    from level import Level
+    from nav import Nav
 
 
-class Water:
+class LevelObject(ABC):
+    def __init__(self, rect, position: Positions) -> None:
+        self._position: Positions = position
+        self.rect = rect
 
-    water: list[Position] = []
+    @property
+    def position(self) -> Positions:
+        return self._position
 
-    def update(self, level: "Level", path: "Path"):
+    @position.setter
+    def position(self, position: Positions):
+        self._position = position
 
-        self.water_add_above_rock(path, level)
+    @abstractmethod
+    def surface(self) -> Surface:
+        pass
 
-        self.water_collect_positions = self.get_water_collect_positions(path, level)
 
-        self.water_waterline_positions = self.get_water_waterline_positions(path, level)
+class WaterObject(LevelObject):
+    value: int = 75  # for set_alpha
 
-    def water_add_above_rock(self, path: "Path", level: "Level") -> None:
+    def surface(self):
+        surface = pygame.Surface(self.rect)
+        surface.set_alpha(self.value)
+        return surface
 
-        for p in path.paths:
+
+class WaterFactory:
+
+    poss_water: list[LevelObject] = []
+
+    left: int = 0  # for Rect
+    top: int = 0  #  for Rect
+
+    color = Colors.BLUE_LIGHT  # for draw rect
+
+    def __init__(self, level: "Level", path: "Nav") -> None:
+        print("init Water")
+
+        self.width: int = level.GRID_SIZE  # for Rect and Surface
+        self.height: int = level.GRID_SIZE  # for Rect ans Surface
+        self.rect = (self.width, self.height)
+
+        self.water_add_above_rock(level)
+
+        self.water_collect_positions = self.get_water_collect_positions(level)
+
+        self.water_waterline_positions = self.get_water_waterline_positions(level)
+
+    def water_add_above_rock(self, level: "Level") -> None:
+
+        for p in level.paths:
             res_pos = utilities.get_distance_in_direction(p, "DOWN", level.GRID_SIZE)
-            if res_pos not in path.paths:
-                self.water.append(Position(p.x, p.y))
+            if res_pos not in level.paths:
+                position = Positions(p.x, p.y)
+                self.poss_water.append(WaterObject(self.rect, position))
 
-    def get_position_either_side(self, position: Position, level: "Level"):
+    def get_position_either_side(self, position: Positions, level: "Level"):
 
+        direction = "LEFT"
+        grid_size = level.GRID_SIZE
         position_left = utilities.get_distance_in_direction(
-            position, "LEFT", level.GRID_SIZE
+            position, direction, grid_size
         )
+
+        direction = "RIGHT"
+        grid_size = level.GRID_SIZE
         position_right = utilities.get_distance_in_direction(
-            position, "RIGHT", level.GRID_SIZE
+            position, direction, grid_size
         )
 
         return [position_left, position_right]
 
-    def get_water_collect_positions(
-        self,
-        path: "Path",
-        level: "Level",
-    ) -> list[Position]:
+    def get_water_collect_positions(self, level: "Level") -> list[LevelObject]:
 
         run = True
         while run:
 
-            start = len(self.water)
-            for index, p in enumerate(self.water):
+            start = len(self.poss_water)
+            for index, p in enumerate(self.poss_water):
                 if any(
-                    item in self.get_position_either_side(p, level)
-                    for item in utilities.get_list_difference(path.paths, self.water)
+                    item in self.get_position_either_side(p.position, level)
+                    for item in utilities.get_list_position_difference(
+                        level.paths, self.poss_water
+                    )
                 ):
-                    self.water.pop(index)
-            end = len(self.water)
+                    self.poss_water.pop(index)
+            end = len(self.poss_water)
 
             run = start != end
 
-        return self.water
+        return self.poss_water
 
-    def get_water_waterline_positions(
-        self, path: "Path", level: "Level"
-    ) -> list[Position]:
+    def get_water_waterline_positions(self, level: "Level") -> list[LevelObject]:
 
-        return [position for position in path.paths if position.y > level.water_line]
+        positions = [
+            position for position in level.paths if position.y > level.water_line
+        ]
+
+        self.water_waterline_positions: list[LevelObject] = [
+            WaterObject(self.rect, p) for p in positions
+        ]
+
+        return self.water_waterline_positions
 
     @property
-    def water_positions(self):
+    def water_objects(self) -> list[LevelObject]:
 
         res_set = set(self.water_collect_positions + self.water_waterline_positions)
-        res_list = list(res_set)
-        return res_list
+        return list(res_set)

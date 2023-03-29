@@ -1,18 +1,26 @@
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, TYPE_CHECKING
 from dataclasses import dataclass
+from abc import ABC, abstractmethod
 
 
-class Position(NamedTuple):
+if TYPE_CHECKING:
+    from src.water import LevelObject
+
+
+class Positions(NamedTuple):
     x: int
     y: int
-
-    def left(self):
-        pass
 
 
 class Direction(NamedTuple):
     x: int
     y: int
+
+
+class WindowEvent(NamedTuple):
+    pos: Positions
+    key: int
+    state: int
 
 
 class Color(NamedTuple):
@@ -98,6 +106,10 @@ LIGHTING_TILE_ROTATE: dict[str, tuple[str, int]] = {
 }
 
 
+class NoPositionFound(Exception):
+    pass
+
+
 def debug_instance_variables(self: Any) -> None:
     print(f"* {self.__class__.__name__}.debug_instance_variables")
 
@@ -106,26 +118,40 @@ def debug_instance_variables(self: Any) -> None:
 
 
 def get_distance_in_direction(
-    position: Position, direction: str, grid_size: int
-) -> Position:
+    position: Positions, direction: str, grid_size: int
+) -> Positions:
     if direction == "RIGHT":
-        return Position(position[0] + grid_size, position[1])
+        return Positions(position[0] + grid_size, position[1])
     if direction == "LEFT":
-        return Position(position[0] - grid_size, position[1])
+        return Positions(position[0] - grid_size, position[1])
     if direction == "DOWN":
-        return Position(position.x, position.y + grid_size)
+        return Positions(position.x, position.y + grid_size)
     if direction == "UP":
-        return Position(position.x, position.y - grid_size)
+        return Positions(position.x, position.y - grid_size)
     else:
-        return Position(position.x, position.y)
+        return Positions(position.x, position.y)
 
 
-def position_to_grid_position(position: Position, grid_size: int) -> Position:
+def position_to_grid_position(position: Positions, grid_size: int) -> Positions:
 
-    x, y = tuple(map(lambda x: (x // grid_size) * grid_size, position))
+    x = (position.x // grid_size) * grid_size
+    y = (position.y // grid_size) * grid_size
 
-    return Position(x, y)
+    return Positions(x, y)
 
 
 def get_list_difference(list01: list[Any], list02: list[Any]) -> list[Any]:
     return [x for x in list01 if x not in list02]
+
+
+def get_list_position_difference(
+    list01: list[Any], object_list: list["LevelObject"]
+) -> list[Any]:
+    list02 = [x.position for x in object_list]
+    return [x for x in list01 if x not in list02]
+
+
+# def path_directions_dict_to_class(self, my_dict):
+
+#     for key in my_dict:
+#         setattr(self, key, my_dict[key])
