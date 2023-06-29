@@ -5,39 +5,35 @@ import blend_modes
 import numpy
 from PIL import Image as PIL_Image
 from PIL.Image import Image
+
 from src.utilities import IMAGE_TYPES, LIGHTING_TILE_ROTATE, Positions
 
-
 if TYPE_CHECKING:
-    from src.View import View
     from src.Level import Level
-
-
-files_for_image = {"rock_lighting_tile": "rock.png"}
-
-
-images_path = "res"
+    from src.View import View
 
 
 #! called by view > __init__ - 1 location
 class Tile:
+    images_path = "res"
+
     def __init__(self, grid_size: int) -> None:
 
         self.path_surround_tiles_debug = False
 
         # todo repeats - 4 variables
         self.rock_lighting_tile: Image = self.PIL_to_size_from_file(
-            grid_size, images_path, "rock.png"
+            grid_size, self.images_path, "rock.png"
         )
 
         self.BlackSQ: Image = self.PIL_to_size_from_file(
-            grid_size, images_path, "BlackSQ.png"
+            grid_size, self.images_path, "BlackSQ.png"
         )
         self.T_image: Image = self.PIL_to_size_from_file(
-            grid_size, images_path, "I_Image_01.png"
+            grid_size, self.images_path, "I_Image_01.png"
         )
         self.TR_image: Image = self.PIL_to_size_from_file(
-            grid_size, images_path, "Corner.png"
+            grid_size, self.images_path, "Corner.png"
         )
 
     #! called by init - 4 location

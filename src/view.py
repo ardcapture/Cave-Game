@@ -3,22 +3,18 @@ import sys
 from typing import TYPE_CHECKING
 
 import pygame
-from pygame import Surface
-from pygame.constants import BLEND_RGB_SUB
-
-from src import pygame_surface_maker
 
 # from src.input import Keyboard
-from src.Level import Level
 from src.Surround import Surround
 from src.Tile import Tile
 from src.utilities import BlitData, Colors, Positions
 from src.Window import Window
 
 if TYPE_CHECKING:
-    from src.Nav import Nav
     from src.Game import Game
+    from src.Level import Level
     from src.Lights import Lights
+    from src.Nav import Nav
     from src.WaterFactory import WaterFactory
 
 WINDOW_CLOSE = pygame.WINDOWCLOSE
@@ -37,7 +33,7 @@ class View:
 
     run = True  # TODO CHECK WHAT IS USING
 
-    pygame_special_flags = {"BLEND_RGB_ADD": BLEND_RGB_SUB}
+    pygame_special_flags = {"BLEND_RGB_ADD": pygame.BLEND_RGB_SUB}
 
     # Window
     title = "Maze Game"
@@ -63,7 +59,7 @@ class View:
         return os.path.join(path, paths)
 
     # TODO convert return to dataclass
-    def update(self, game: "Game", level: Level, paths: "Nav", window: "Window"):
+    def update(self, game: "Game", level: "Level", paths: "Nav", window: "Window"):
 
         self.clear_blit_list()
 
@@ -212,7 +208,7 @@ class View:
 
         self.list_DataBlit.append(BlitData(source, dest, area, special_flags))
 
-    def draw_debug_ends(self, level: Level):
+    def draw_debug_ends(self, level: "Level"):
         for k, v in dict.items(level.nav.d_position_str):
 
             source = self.get_surface_text(v, "MONOSPACE", 15)
@@ -248,8 +244,8 @@ class View:
 
     def set_surface_to_surface(
         self,
-        surface: Surface,
-        source: Surface,
+        surface: pygame.Surface,
+        source: pygame.Surface,
         dest: Positions,
         area: bool,
         special_flags: int,
@@ -277,14 +273,14 @@ class View:
                 )
             elif v == "E":
                 surface = self.window.window_surface
-                source = pygame_surface_maker.dirt_image(level)
+                source = self.dirt_image(level)
                 dest = pos
                 area = None
                 special_flags = 0
 
             elif v == "G":
                 surface = self.window.window_surface
-                source = pygame_surface_maker.grass_image(level)
+                source = self.grass_image(level)
                 dest = pos
                 area = None
                 special_flags = 0
@@ -292,7 +288,7 @@ class View:
 
             elif v == "P":
                 PATH_BLIT = BlitData(
-                    source=pygame_surface_maker.rock_image(level),
+                    source=self.rock_image(level),
                     dest=pos,
                     area=None,
                     special_flags=0,
@@ -375,3 +371,28 @@ class View:
         self.run = False
         self.window.close_window()
         sys.exit()  # TODO MOVE ELSEWHERE?
+
+    def dirt_image(self, level):
+        paths = "dirt.png"
+        return self.get_surface_file(paths, level)
+
+    def grass_image(self, level):
+        paths = "grass.png"
+        return self.get_surface_file(paths, level)
+
+    def rock_image(self, level: "Level") -> pygame.Surface:
+        paths = "rock.png"
+        return self.get_surface_file(paths, level)
+
+    # window = self.window.window_surface
+
+    # text = (self.get_surface_text,)
+
+    # light = (self.get_surface_lights,)
+
+    def get_surface_file(self, paths, level: "Level"):
+        path = self.PATH_IMAGES
+        filename = os.path.join(path, paths)
+        surface = pygame.image.load(filename)
+        size = level.GRID_SIZE_2D
+        return pygame.transform.scale(surface, size)

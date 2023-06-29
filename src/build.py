@@ -16,6 +16,20 @@ class Build:
     grid_positions = GridPositions()
     build_path_positions: list[Positions] = []
 
+    #! tuples
+    @property
+    def position_break_current(self) -> Positions:
+        x = self.current_position.x + self.direction_current.x
+        y = self.current_position.y + self.direction_current.y
+        return Positions(x, y)
+
+    #! tuples
+    @property
+    def direction_current(self) -> Positions:
+        x = (self.position_next.x - self.current_position.x) // 2
+        y = (self.position_next.y - self.current_position.y) // 2
+        return Positions(x, y)
+
     def __init__(self, level: "Level"):
 
         print("init Paths_Build")
@@ -42,20 +56,6 @@ class Build:
         for _ in range(res_len // 3):
             res_grid.remove(random.choice(res_grid))
         self.reduced_positions = res_grid
-
-    #! tuples
-    @property
-    def position_break_current(self) -> Positions:
-        x = self.current_position.x + self.direction_current.x
-        y = self.current_position.y + self.direction_current.y
-        return Positions(x, y)
-
-    #! tuples
-    @property
-    def direction_current(self) -> Positions:
-        x = (self.position_next.x - self.current_position.x) // 2
-        y = (self.position_next.y - self.current_position.y) // 2
-        return Positions(x, y)
 
     # TODO NEW CLASS?
 
