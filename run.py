@@ -1,5 +1,5 @@
-from src.Game import Game
-from src.View import View
+from src.game import Game
+from src.view import View
 
 
 def main():
@@ -9,3 +9,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+    

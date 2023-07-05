@@ -5,16 +5,16 @@ from typing import TYPE_CHECKING
 import pygame
 
 # from src.input import Keyboard
-from src.Surround import Surround
+from src.surround import Surround
 from src.Tile import Tile
 from src.utilities import BlitData, Colors, Positions
-from src.Window import Window
+from src.window import Window
 
 if TYPE_CHECKING:
-    from src.Game import Game
-    from src.Level import Level
-    from src.Lights import Lights
-    from src.Nav import Nav
+    from src.game import Game
+    from src.level import Level
+    from src.lights import Lights
+    from src.nav import Nav
     from src.WaterFactory import WaterFactory
 
 WINDOW_CLOSE = pygame.WINDOWCLOSE
