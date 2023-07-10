@@ -4,7 +4,7 @@ from itertools import chain, groupby
 from operator import itemgetter
 from typing import TYPE_CHECKING
 
-from src.utilities import Color, Positions, Light_Data
+from src.utilities import Color, Position, Light_Data
 
 if TYPE_CHECKING:
     from src.level import Level
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class Lights:
     objs = []
     brightness_list: list[Color] = []
-    sun_light_positions: dict[Positions, tuple[Color]]
+    sun_light_positions: dict[Position, tuple[Color]]
 
     def __init__(self, level: "Level") -> None:
         print("init Lights")
@@ -44,7 +44,7 @@ class Lights:
             if color[0] > 0
         ]
 
-    def set_light_source(self, level: "Level") -> Positions:
+    def set_light_source(self, level: "Level") -> Position:
         seq = level.paths
         return random.choice(seq)
 
@@ -57,7 +57,7 @@ class Lights:
         return self.brightness_list
 
     #! uses itself
-    def update_character_light_positions(self, level: "Level") -> list[Positions]:
+    def update_character_light_positions(self, level: "Level") -> list[Position]:
         character_light_positions_copy = copy.copy(self.character_light_positions)
 
         mylist = [level.GRID_SIZE, -level.GRID_SIZE]
@@ -70,7 +70,7 @@ class Lights:
                     character_light_positions_copy[
                         poss_light_position
                     ] = self.brightness_list[brightness]
-                    poss_light_position = Positions(
+                    poss_light_position = Position(
                         poss_light_position[0] + i, poss_light_position[1]
                     )
                     if brightness < len(self.brightness_list) - 1:
@@ -86,7 +86,7 @@ class Lights:
                     character_light_positions_copy[
                         poss_light_position
                     ] = self.brightness_list[brightness]
-                    poss_light_position = Positions(
+                    poss_light_position = Position(
                         poss_light_position[0], poss_light_position[1] + i
                     )
                     if brightness < len(self.brightness_list) - 1:
@@ -97,7 +97,7 @@ class Lights:
         return character_light_positions_copy
 
     #! takes itself
-    def get_positions_sun(self, level: "Level") -> dict[Positions, tuple[int]]:
+    def get_positions_sun(self, level: "Level") -> dict[Position, tuple[int]]:
         path_paths = level.paths
         path_path_start_position = level.path_start_position
         path_path_finish_position = level.path_finish_position

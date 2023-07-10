@@ -7,7 +7,7 @@ import pygame
 # from src.input import Keyboard
 from src.surround import Surround
 from src.Tile import Tile
-from src.utilities import BlitData, Colors, Positions
+from src.utilities import BlitData, Colors, Position
 from src.window import Window
 
 if TYPE_CHECKING:
@@ -21,7 +21,6 @@ WINDOW_CLOSE = pygame.WINDOWCLOSE
 
 
 class View:
-
     PATH_IMAGES: str = "res"
     player_key = Colors.WHITE
 
@@ -60,7 +59,6 @@ class View:
 
     # TODO convert return to dataclass
     def update(self, game: "Game", level: "Level", paths: "Nav", window: "Window"):
-
         self.clear_blit_list()
 
         # update surround:
@@ -153,9 +151,8 @@ class View:
         return surface
 
     def rect_to_surface_outline(
-        self, level: "Level", color: Colors, position: Positions
+        self, level: "Level", color: Colors, position: Position
     ):
-
         #  pygame rect
         left = position[0]
         top = position[1]
@@ -171,7 +168,6 @@ class View:
 
     def draw_water(self, water: "WaterFactory"):
         for p in water.water_objects:
-
             rect = pygame.Rect(water.left, water.top, self.width, self.height)
 
             surface = p.surface()
@@ -202,7 +198,7 @@ class View:
 
         # DataBlit > ListBlit
         source = surface_font
-        dest = Positions(10, 10)
+        dest = Position(10, 10)
         area = None
         special_flags = 0
 
@@ -210,9 +206,8 @@ class View:
 
     def draw_debug_ends(self, level: "Level"):
         for k, v in dict.items(level.nav.d_position_str):
-
             source = self.get_surface_text(v, "MONOSPACE", 15)
-            dest = Positions(k[0] + 1, k[1] + 5)
+            dest = Position(k[0] + 1, k[1] + 5)
             area = None
             special_flags = 0
 
@@ -220,7 +215,6 @@ class View:
 
     def set_blit_objs(self, level: "Level", lights: "Lights"):
         for obj in lights.light_objs:
-
             source = self.get_surface_lights(level, obj.color)
             dest = obj.position
             area = None
@@ -230,7 +224,6 @@ class View:
 
     def in_list_climb_positions(self, path: "Nav", level: "Level"):
         for p in level.list_climb_positions:
-
             source = self.get_surface_from_rect(level)
             dest = (p.x, p.y)
             area = None
@@ -246,11 +239,10 @@ class View:
         self,
         surface: pygame.Surface,
         source: pygame.Surface,
-        dest: Positions,
+        dest: Position,
         area: bool,
         special_flags: int,
     ):
-
         # self.list_DataBlit.append(DataBlit(surface, source, dest, area, special_flags))
 
         surface.blit(source, dest, area, special_flags)
@@ -317,7 +309,7 @@ class View:
         height = source.get_height()
         y = level.player_path_position[1] + (level.GRID_SIZE - height)
 
-        dest = Positions(x, y)
+        dest = Position(x, y)
         area = None
         special_flags = 0
         surface.blit(source, dest, area, special_flags)
@@ -327,7 +319,7 @@ class View:
     def draw_debug_route(self, level: "Level"):
         for p in level.route:
             color = Colors.GREEN
-            position = Positions(p[0], p[1])
+            position = Position(p[0], p[1])
             self.rect_to_surface_outline(level, color, position)
 
     def clear_blit_list(self):

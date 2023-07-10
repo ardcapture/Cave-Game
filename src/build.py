@@ -3,40 +3,40 @@ import random
 from typing import TYPE_CHECKING
 
 from src.GridPositions import GridPositions
-from src.utilities import DIRECTIONS_FOUR, Direction, Positions
+from src.utilities import DIRECTIONS_FOUR, Direction, Position
 
 if TYPE_CHECKING:
     from src.level import Level
 
 
 class Build:
-    return_positions: list[Positions] = []  #! X2
-    list_position_jump: list[Positions] = []
-    grid_positions = GridPositions()
-    build_path_positions: list[Positions] = []
+    return_positions: list[Position] = []  #! X2
+    list_position_jump: list[Position] = []
+    grid_positions: GridPositions = GridPositions()
+    build_path_positions: list[Position] = []
 
     #! tuples
     @property
-    def position_break_current(self) -> Positions:
+    def position_break_current(self) -> Position:
         x = self.current_position.x + self.direction_current.x
         y = self.current_position.y + self.direction_current.y
-        return Positions(x, y)
+        return Position(x, y)
 
     #! tuples
     @property
-    def direction_current(self) -> Positions:
+    def direction_current(self) -> Position:
         x = (self.position_next.x - self.current_position.x) // 2
         y = (self.position_next.y - self.current_position.y) // 2
-        return Positions(x, y)
+        return Position(x, y)
 
     def __init__(self, level: "Level"):
         print("init Paths_Build")
 
         self.set_reduced_positions(level)
-        self.current_position = random.choice(self.reduced_positions)
+        self.current_position: Position = random.choice(self.reduced_positions)
 
         while self.grid_positions.is_build_finish(self.current_position):
-            self.grid_positions += [self.current_position]
+            self.grid_positions = self.grid_positions + [self.current_position]
 
             self.set_position_next(level)
 
@@ -73,27 +73,32 @@ class Build:
                 self.set_return_positions()
                 res = self.get_return_position_next()
 
-        self.position_next = res
+        self.position_next: Position = res
+
+    def res_sample(self):
+        return random.sample(DIRECTIONS_FOUR, len(DIRECTIONS_FOUR))
 
     #! all_positions - list
     #! reduced_positions - list
     #! RETURNS LIST
-    def set_get_next_positions(self, level: "Level") -> list[Positions]:
-        res_list: list[Positions] = []
-        res_sample = random.sample(DIRECTIONS_FOUR, len(DIRECTIONS_FOUR))
+    def set_get_next_positions(self, level: "Level") -> list[Position]:
+        res_list: list[Position] = []
+        isNotIn: list[Position]
 
-        for d in res_sample:
-            res_get_position_poss = self.get_position_poss(level, d)
-            is_in = res_get_position_poss in self.reduced_positions
-            is_not_in = res_get_position_poss not in self.grid_positions
+        for d in self.res_sample():
+            resGetPositionPoss: Position = self.get_position_poss(level, d)
 
-            if is_in and is_not_in:
-                res_list.append(res_get_position_poss)
+            isIn = resGetPositionPoss in self.reduced_positions
+
+            isNotIn = resGetPositionPoss not in self.grid_positions
+
+            if isIn and isNotIn:
+                res_list.append(resGetPositionPoss)
 
         return res_list
 
     #! LIST FROM FUNCTION
-    def position_next_random(self, level: "Level") -> Positions:
+    def position_next_random(self, level: "Level") -> Position:
         population = self.set_get_next_positions(level)
         slice_end = len(self.set_get_next_positions(level))
         weights_slice = slice(slice_end)
@@ -101,10 +106,10 @@ class Build:
         return random.choices(population, weights, k=1)[0]
 
     #! current_position - tuple
-    def get_position_poss(self, level: "Level", direction: Direction) -> Positions:
+    def get_position_poss(self, level: "Level", direction: Direction) -> Position:
         x = self.current_position.x + (direction.x * level.GRID_SIZE * 2)
         y = self.current_position.y + (direction.y * level.GRID_SIZE * 2)
-        return Positions(x, y)
+        return Position(x, y)
 
     #! return_positions - list
     def set_return_positions(self):

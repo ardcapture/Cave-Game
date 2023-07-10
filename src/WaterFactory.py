@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from src import utilities
 from src.LevelObject import LevelObject
-from src.utilities import Colors, Positions
+from src.utilities import Colors, Position
 from src.WaterObject import WaterObject
 
 if TYPE_CHECKING:
@@ -35,10 +35,10 @@ class WaterFactory:
         for p in level.paths:
             res_pos = utilities.get_distance_in_direction(p, "DOWN", level.GRID_SIZE)
             if res_pos not in level.paths:
-                position = Positions(p.x, p.y)
+                position = Position(p.x, p.y)
                 self.poss_water.append(WaterObject(self.rect, position))
 
-    def get_position_either_side(self, position: Positions, level: "Level"):
+    def get_position_either_side(self, position: Position, level: "Level"):
         direction = "LEFT"
         grid_size = level.GRID_SIZE
         position_left = utilities.get_distance_in_direction(

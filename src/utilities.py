@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from WaterFactory import LevelObject
 
 
-class Positions(NamedTuple):
+class Position(NamedTuple):
     x: int
     y: int
 
@@ -19,7 +19,7 @@ class Direction(NamedTuple):
 
 
 class WindowEvent(NamedTuple):
-    pos: Positions
+    pos: Position
     key: int
     state: int
 
@@ -38,7 +38,7 @@ class DrawRectData(NamedTuple):
 
 class BlitData(NamedTuple):
     source: Surface
-    dest: Positions
+    dest: Position
     area: bool
     special_flags: int
 
@@ -162,26 +162,25 @@ def debug_instance_variables(self: Any) -> None:
 
 
 def get_distance_in_direction(
-    position: Positions, direction: str, grid_size: int
-) -> Positions:
+    position: Position, direction: str, grid_size: int
+) -> Position:
     if direction == "RIGHT":
-        return Positions(position[0] + grid_size, position[1])
+        return Position(position[0] + grid_size, position[1])
     if direction == "LEFT":
-        return Positions(position[0] - grid_size, position[1])
+        return Position(position[0] - grid_size, position[1])
     if direction == "DOWN":
-        return Positions(position.x, position.y + grid_size)
+        return Position(position.x, position.y + grid_size)
     if direction == "UP":
-        return Positions(position.x, position.y - grid_size)
+        return Position(position.x, position.y - grid_size)
     else:
-        return Positions(position.x, position.y)
+        return Position(position.x, position.y)
 
 
-def position_to_grid_position(position: Positions, grid_size: int) -> Positions:
-
+def position_to_grid_position(position: Position, grid_size: int) -> Position:
     x = (position.x // grid_size) * grid_size
     y = (position.y // grid_size) * grid_size
 
-    return Positions(x, y)
+    return Position(x, y)
 
 
 def get_list_difference(list01: list[Any], list02: list[Any]) -> list[Any]:

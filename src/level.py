@@ -7,7 +7,7 @@ import pygame
 from src.build import Build
 from src.lights import Lights
 from src.nav import Nav
-from src.utilities import NoPositionFound, Positions
+from src.utilities import NoPositionFound, Position
 from src.WaterFactory import WaterFactory
 
 from . import utilities
@@ -28,7 +28,7 @@ KEY_BACKQUOTE = pygame.K_BACKQUOTE
 
 
 class Level:
-    climb_positions_visited: list[Positions] = []
+    climb_positions_visited: list[Position] = []
 
     lights_state: bool = False
     selected = False
@@ -41,9 +41,9 @@ class Level:
     WIDTH_GS = (GRID_SIZE * 2) + (GRID_SIZE * 35)
     HEIGHT_GS = (GRID_SIZE * 2) + (GRID_SIZE * 22)
 
-    previous_position: Positions = Positions(0, 0)
+    previous_position: Position = Position(0, 0)
 
-    route: list["Positions"] = []
+    route: list["Position"] = []
 
     def __init__(self):
         self._set_grid_positions()
@@ -84,7 +84,7 @@ class Level:
 
         self.player_path_position = self.get_player_path_position(
             window,
-            Positions(0, 0),
+            Position(0, 0),
         )
 
         # self.path.player_path_position = player_path_position
@@ -112,12 +112,12 @@ class Level:
         stop = self.WIDTH_GS
         step = self.GRID_SIZE
         seq = range(start, stop, step)
-        self.camp_positions = [Positions(x, y) for x in seq]
+        self.camp_positions = [Position(x, y) for x in seq]
 
     #! self.grid_positions - SET
     def _set_grid_positions(self) -> None:
         res_product = product(self._range_x(), self._range_y())
-        self.grid_positions = [Positions(x, y) for x, y in res_product]
+        self.grid_positions = [Position(x, y) for x, y in res_product]
 
     #! -
     def _range_x(self) -> list[int]:
@@ -144,7 +144,7 @@ class Level:
         ]
 
     #! self.paths - GET
-    def _is_climb_position(self, position: "Positions") -> bool:
+    def _is_climb_position(self, position: "Position") -> bool:
         return (
             utilities.get_distance_in_direction(position, "UP", self.GRID_SIZE)
             in self.paths
@@ -168,10 +168,10 @@ class Level:
             raise NoPositionFound
 
         pos_list = random.choice(self.poss_path_start_position)
-        self.path_start_position = Positions(pos_list[0], pos_list[1] - self.GRID_SIZE)
+        self.path_start_position = Position(pos_list[0], pos_list[1] - self.GRID_SIZE)
 
     #! -
-    def is_start_position(self, position: "Positions") -> bool:
+    def is_start_position(self, position: "Position") -> bool:
         return position.y == self.GRID_SIZE * self.top_offset and position.x < (
             (self.WIDTH_GS - self.GRID_SIZE * 2) * (1 / 3)
         )
@@ -185,7 +185,7 @@ class Level:
         ]
 
     #! -
-    def is_finish_position(self, position: "Positions"):
+    def is_finish_position(self, position: "Position"):
         return position.x == self.WIDTH_GS - (self.GRID_SIZE * 2) and position.y > (
             (self.HEIGHT_GS - self.GRID_SIZE * 2) * (2 / 3)
         )
@@ -198,7 +198,7 @@ class Level:
             raise NoPositionFound
 
         poss_maze_finish = random.choice(self.poss_path_finish)
-        self.path_finish_position = Positions(
+        self.path_finish_position = Position(
             poss_maze_finish[0] + self.GRID_SIZE, poss_maze_finish[1]
         )
 
@@ -234,11 +234,11 @@ class Level:
     #! self.paths
     #! self.camp_positions
     def get_player_path_position(
-        self, window: "Window", position: "Positions"
-    ) -> Positions:
+        self, window: "Window", position: "Position"
+    ) -> Position:
         x, y = self.player_path_position
 
-        if position != Positions(0, 0):
+        if position != Position(0, 0):
             x, y = position
 
         elif window.event_keyboard == KEY_LEFT:
@@ -250,8 +250,8 @@ class Level:
         elif window.event_keyboard == KEY_DOWN:
             y += self.GRID_SIZE
 
-        if Positions(x, y) in self.paths or Positions(x, y) in self.camp_positions:
-            return Positions(x, y)
+        if Position(x, y) in self.paths or Position(x, y) in self.camp_positions:
+            return Position(x, y)
 
         else:
-            return Positions(0, 0)
+            return Position(0, 0)

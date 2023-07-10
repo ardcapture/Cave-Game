@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from src.utilities import DIRECTIONS_FOUR, NavData, Positions
+from src.utilities import DIRECTIONS_FOUR, NavData, Position
 
 if TYPE_CHECKING:
     from src.level import Level
@@ -12,22 +12,22 @@ class Nav:
 
         iterable = level.paths + level.camp_positions
         value = "X"
-        self.d_position_str: dict[Positions, str] = dict.fromkeys(iterable, value)
+        self.d_position_str: dict[Position, str] = dict.fromkeys(iterable, value)
 
         iterable = level.paths + level.camp_positions
         value = []
-        self.d_position_list_position: dict[Positions, list[Positions]] = dict.fromkeys(
+        self.d_position_list_position: dict[Position, list[Position]] = dict.fromkeys(
             iterable, value
         )
 
         self.d_position_str, self.d_position_list_position = self.set_navigation(level)
 
-    def set_path_directions_list(self, level: "Level", position: Positions):
-        path_directions_list: list[Positions] = []
+    def set_path_directions_list(self, level: "Level", position: Position):
+        path_directions_list: list[Position] = []
         for direction in DIRECTIONS_FOUR:
             x = position.x + (direction.x * level.GRID_SIZE)
             y = position.y + (direction.y * level.GRID_SIZE)
-            direction = Positions(x, y)
+            direction = Position(x, y)
 
             if direction in self.d_position_str:
                 path_directions_list.append(direction)
@@ -37,7 +37,7 @@ class Nav:
     def set_navigation(self, level: "Level"):
         # TODO needs fixing
 
-        dict_position_NavData: dict[Positions, NavData]
+        dict_position_NavData: dict[Position, NavData]
         iterable = level.paths + level.camp_positions
         value = NavData("X")
         dict_position_NavData = dict.fromkeys(iterable, value)
@@ -120,11 +120,11 @@ class Nav:
     def set_route(
         self,
         level: "Level",
-        position_01: "Positions",
+        position_01: "Position",
     ):
         """For Nav - currently used in controller."""
 
-        position_02: Positions
+        position_02: Position
 
         route_list_A = [level.player_path_position]
         if position_01 in level.paths or position_01 in level.camp_positions:

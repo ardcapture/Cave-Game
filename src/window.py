@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import pygame
 from pygame.event import Event
 
-from src.utilities import Positions, WindowEvent
+from src.utilities import Position, WindowEvent
 
 if TYPE_CHECKING:
     from src.level import Level
@@ -29,7 +29,7 @@ class Window:
     KEYBOARD_KEYS = [K_BACKQUOTE, K_DOWN, K_LEFT, K_RIGHT, K_UP]
     MOUSE_BUTTON_EVENTS = [MOUSE_BUTTON_UP, MOUSE_BUTTON_DOWN]
 
-    pos = Positions(0, 0)
+    pos = Position(0, 0)
     key = 0
     state = 0
     m_event = WindowEvent(pos, key, state)
@@ -56,28 +56,28 @@ class Window:
     def control_pygame_events(self):
         for event in self.pygame_events:
             if event.type == WINDOW_CLOSE:
-                pos = Positions(0, 0)
+                pos = Position(0, 0)
                 key = 0
                 state = event.type
             elif event.type in self.MOUSE_BUTTON_EVENTS:
                 x, y = event.pos
-                pos = Positions(x, y)
+                pos = Position(x, y)
                 key = event.button
                 state = event.type
             elif event.type in self.KEYBOARD_EVENTS:
-                pos = Positions(0, 0)
+                pos = Position(0, 0)
                 state = event.type
                 key = event.key
             elif event.type == MOUSE_MOTION:
                 x, y = event.pos
-                pos = Positions(x, y)
+                pos = Position(x, y)
                 key = 0
                 state = 0
                 if any(event.buttons):
                     key = event.buttons.index(1) + 1
                     state = event.type
             else:
-                pos = Positions(0, 0)
+                pos = Position(0, 0)
                 key = 0
                 state = 0
 
@@ -91,9 +91,9 @@ class Window:
     @property
     def mouse_event_run(self):
         if not self.m_event:
-            return Positions(0, 0)
+            return Position(0, 0)
         position = self.m_event.pos
-        return position if self.m_event.state == MOUSE_BUTTON_DOWN else Positions(0, 0)
+        return position if self.m_event.state == MOUSE_BUTTON_DOWN else Position(0, 0)
 
     #! breaks when used as property!
     def get_window_surface(self):

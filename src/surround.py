@@ -8,7 +8,7 @@ from src.utilities import (
     DUPLICATE_CHECKS,
     TILE_DIRECTIONS,
     Direction,
-    Positions,
+    Position,
 )
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ class Surround:
         }
 
     def set_poss_path_surround_positions(self, level: "Level"):
-        d: dict[Positions, list[str]] = defaultdict(list)
+        d: dict[Position, list[str]] = defaultdict(list)
 
         for position, direction in product(self.path_adjacent, DIRECTIONS_EIGHT):
             tile = (
@@ -52,8 +52,8 @@ class Surround:
         return res_list
 
     def tile(
-        self, level: "Level", position: Positions, direction: Direction
-    ) -> Positions:
+        self, level: "Level", position: Position, direction: Direction
+    ) -> Position:
         x = position.x + (direction.x * level.GRID_SIZE)
         y = position.y + (direction.y * level.GRID_SIZE)
-        return Positions(x, y)
+        return Position(x, y)

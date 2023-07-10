@@ -6,7 +6,7 @@ import numpy
 from PIL import Image as PIL_Image
 from PIL.Image import Image
 
-from src.utilities import IMAGE_TYPES, LIGHTING_TILE_ROTATE, Positions
+from src.utilities import IMAGE_TYPES, LIGHTING_TILE_ROTATE, Position
 
 if TYPE_CHECKING:
     from src.level import Level
@@ -44,7 +44,7 @@ class Tile:
         return res_open.resize((grid_size, grid_size))
 
     #! called by update - 1 location
-    def create_dict_tiles(self, view: "View", level: "Level") -> dict[Positions, str]:
+    def create_dict_tiles(self, view: "View", level: "Level") -> dict[Position, str]:
         TILE_LETTERS = [
             (self.rock, "R"),
             (view.path_adjacent, "A"),
@@ -53,7 +53,7 @@ class Tile:
             (level.paths, "P"),
         ]
 
-        res_update: dict[Positions, str] = {}
+        res_update: dict[Position, str] = {}
         for i in TILE_LETTERS:
             res_fromkeys = dict.fromkeys(*i)
             res_update |= res_fromkeys
@@ -78,7 +78,7 @@ class Tile:
     #! called by update - 1 location
     def set_path_surround_tiles(self, view: "View"):
         # res_image: Image.Image = Image.Image()
-        route_light_positions_tiles: dict[Positions, str] = {}
+        route_light_positions_tiles: dict[Position, str] = {}
 
         for k, v in view.surround.surround_positions.items():
             if len(v) == 1:
