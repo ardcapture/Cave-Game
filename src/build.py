@@ -6,11 +6,10 @@ from src.GridPositions import GridPositions
 from src.utilities import DIRECTIONS_FOUR, Direction, Positions
 
 if TYPE_CHECKING:
-    from src.Level import Level
+    from src.level import Level
 
 
 class Build:
-
     return_positions: list[Positions] = []  #! X2
     list_position_jump: list[Positions] = []
     grid_positions = GridPositions()
@@ -31,14 +30,12 @@ class Build:
         return Positions(x, y)
 
     def __init__(self, level: "Level"):
-
         print("init Paths_Build")
 
         self.set_reduced_positions(level)
         self.current_position = random.choice(self.reduced_positions)
 
         while self.grid_positions.is_build_finish(self.current_position):
-
             self.grid_positions += [self.current_position]
 
             self.set_position_next(level)

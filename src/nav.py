@@ -3,12 +3,11 @@ from typing import TYPE_CHECKING
 from src.utilities import DIRECTIONS_FOUR, NavData, Positions
 
 if TYPE_CHECKING:
-    from src.Level import Level
+    from src.level import Level
 
 
 class Nav:
     def __init__(self, level: "Level") -> None:
-
         print("init Nav")
 
         iterable = level.paths + level.camp_positions
@@ -31,7 +30,6 @@ class Nav:
             direction = Positions(x, y)
 
             if direction in self.d_position_str:
-
                 path_directions_list.append(direction)
 
         self.path_directions_list = path_directions_list
@@ -53,7 +51,6 @@ class Nav:
         dict_position_int = dict.fromkeys(iterable, value)
 
         for position in self.d_position_str.keys():
-
             self.set_path_directions_list(level, position)
 
             #! set self.dict_position_str based on path directions_list
@@ -76,7 +73,6 @@ class Nav:
 
         run = True
         while run:
-
             #! if "for number" increment from previous number
             #! set the item next to them ready for increment (if "2" item")
             if any(k for k, v in self.d_position_str.items() if v == "#"):
@@ -102,7 +98,6 @@ class Nav:
             elif any(k for k, v in self.d_position_str.items() if v == "3 or 4"):
                 for k, v in self.d_position_str.items():
                     if v == "3 or 4":
-
                         result_list = []
                         for i in self.d_position_list_position[k]:
                             if isinstance(self.d_position_str[i], int):

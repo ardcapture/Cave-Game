@@ -6,12 +6,11 @@ from src.utilities import Colors, Positions
 from src.WaterObject import WaterObject
 
 if TYPE_CHECKING:
-    from src.Level import Level
-    from src.Nav import Nav
+    from src.level import Level
+    from src.nav import Nav
 
 
 class WaterFactory:
-
     poss_water: list[LevelObject] = []
 
     left: int = 0  # for Rect
@@ -33,7 +32,6 @@ class WaterFactory:
         self.water_waterline_positions = self.get_water_waterline_positions(level)
 
     def water_add_above_rock(self, level: "Level") -> None:
-
         for p in level.paths:
             res_pos = utilities.get_distance_in_direction(p, "DOWN", level.GRID_SIZE)
             if res_pos not in level.paths:
@@ -41,7 +39,6 @@ class WaterFactory:
                 self.poss_water.append(WaterObject(self.rect, position))
 
     def get_position_either_side(self, position: Positions, level: "Level"):
-
         direction = "LEFT"
         grid_size = level.GRID_SIZE
         position_left = utilities.get_distance_in_direction(
@@ -57,10 +54,8 @@ class WaterFactory:
         return [position_left, position_right]
 
     def get_water_collect_positions(self, level: "Level") -> list[LevelObject]:
-
         run = True
         while run:
-
             start = len(self.poss_water)
             for index, p in enumerate(self.poss_water):
                 if any(
@@ -77,7 +72,6 @@ class WaterFactory:
         return self.poss_water
 
     def get_water_waterline_positions(self, level: "Level") -> list[LevelObject]:
-
         positions = [
             position for position in level.paths if position.y > level.water_line
         ]
@@ -90,6 +84,5 @@ class WaterFactory:
 
     @property
     def water_objects(self) -> list[LevelObject]:
-
         res_set = set(self.water_collect_positions + self.water_waterline_positions)
         return list(res_set)

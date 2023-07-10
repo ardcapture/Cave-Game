@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 from src.utilities import Color, Positions, Light_Data
 
 if TYPE_CHECKING:
-    from src.Level import Level
-    from src.Nav import Nav
+    from src.level import Level
+    from src.nav import Nav
 
 
 class Lights:
@@ -17,7 +17,6 @@ class Lights:
     sun_light_positions: dict[Positions, tuple[Color]]
 
     def __init__(self, level: "Level") -> None:
-
         print("init Lights")
 
         self.grid_size = level.GRID_SIZE
@@ -26,7 +25,6 @@ class Lights:
         self.brightness_list = self.set_color_value(256)
 
     def update(self, level: "Level", path: "Nav"):
-
         self.light_positions = dict.fromkeys(level.paths, (0, 0, 0))
         self.character_light_positions = dict.fromkeys(level.paths, (0, 0, 0))
 
@@ -51,7 +49,6 @@ class Lights:
         return random.choice(seq)
 
     def set_color_value(self, x: int):
-
         while x > 0:
             r, g, b = tuple([x] * 3)
             self.brightness_list.append(Color(r, g, b))
@@ -61,7 +58,6 @@ class Lights:
 
     #! uses itself
     def update_character_light_positions(self, level: "Level") -> list[Positions]:
-
         character_light_positions_copy = copy.copy(self.character_light_positions)
 
         mylist = [level.GRID_SIZE, -level.GRID_SIZE]
@@ -125,7 +121,6 @@ class Lights:
 
     #! takes self
     def update_light_positions(self):
-
         get_key, get_val = itemgetter(0), itemgetter(1)
 
         merged_data = sorted(

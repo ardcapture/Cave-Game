@@ -9,8 +9,8 @@ from PIL.Image import Image
 from src.utilities import IMAGE_TYPES, LIGHTING_TILE_ROTATE, Positions
 
 if TYPE_CHECKING:
-    from src.Level import Level
-    from src.View import View
+    from src.level import Level
+    from src.view import View
 
 
 #! called by view > __init__ - 1 location
@@ -18,7 +18,6 @@ class Tile:
     images_path = "res"
 
     def __init__(self, grid_size: int) -> None:
-
         self.path_surround_tiles_debug = False
 
         # todo repeats - 4 variables
@@ -78,7 +77,6 @@ class Tile:
 
     #! called by update - 1 location
     def set_path_surround_tiles(self, view: "View"):
-
         # res_image: Image.Image = Image.Image()
         route_light_positions_tiles: dict[Positions, str] = {}
 
@@ -147,7 +145,6 @@ class Tile:
     def create_tile_location(
         self, type: str, width: int, height: int, top_offset: int, grid_size: int
     ) -> None:
-
         y_start_stop = self.condition_y_start_stop(type, grid_size, top_offset, height)
 
         res = [
@@ -163,7 +160,6 @@ class Tile:
     def select_rotate(
         self, TOP_image: Image, TOP_R_image: Image, neighbor: str
     ) -> Image:
-
         image: Image
 
         if LIGHTING_TILE_ROTATE[neighbor][0] == "TOP_image":
@@ -188,7 +184,6 @@ class Tile:
     def image_lighten(
         self, image_float01: Image, image_float02: Image, opacity: float
     ) -> Image:
-
         res_lighten_only = blend_modes.lighten_only(
             image_float01, image_float02, opacity
         )

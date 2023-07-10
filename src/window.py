@@ -6,8 +6,8 @@ from pygame.event import Event
 from src.utilities import Positions, WindowEvent
 
 if TYPE_CHECKING:
-    from src.Level import Level
-    from src.View import View
+    from src.level import Level
+    from src.view import View
 
 KEY_DOWN = pygame.KEYDOWN
 KEY_UP = pygame.KEYUP
@@ -23,7 +23,6 @@ WINDOW_CLOSE = pygame.WINDOWCLOSE  # used to be WINDOW_QUIT = pygame.QUIT
 
 
 class Window:
-
     pygame_events: list[Event] = []
 
     KEYBOARD_EVENTS = [KEY_DOWN, KEY_UP]
@@ -38,7 +37,6 @@ class Window:
     scale = 1
 
     def __init__(self, view: "View", level: "Level"):
-
         self.view_width = view.width
         self.view_height = view.height
 
@@ -56,9 +54,7 @@ class Window:
         self.m_event = self.control_pygame_events()
 
     def control_pygame_events(self):
-
         for event in self.pygame_events:
-
             if event.type == WINDOW_CLOSE:
                 pos = Positions(0, 0)
                 key = 0

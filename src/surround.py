@@ -12,12 +12,11 @@ from src.utilities import (
 )
 
 if TYPE_CHECKING:
-    from src.Level import Level
+    from src.level import Level
 
 
 class Surround:
     def update(self, level: "Level") -> None:
-
         self.path_adjacent = self.update_dict_path_adjacent(level)
 
         self.poss_surround_positions = self.set_poss_path_surround_positions(level)
@@ -30,7 +29,6 @@ class Surround:
         }
 
     def set_poss_path_surround_positions(self, level: "Level"):
-
         d: dict[Positions, list[str]] = defaultdict(list)
 
         for position, direction in product(self.path_adjacent, DIRECTIONS_EIGHT):

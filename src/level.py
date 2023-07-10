@@ -28,7 +28,6 @@ KEY_BACKQUOTE = pygame.K_BACKQUOTE
 
 
 class Level:
-
     climb_positions_visited: list[Positions] = []
 
     lights_state: bool = False
@@ -47,7 +46,6 @@ class Level:
     route: list["Positions"] = []
 
     def __init__(self):
-
         self._set_grid_positions()
 
         self.build = Build(self)
@@ -80,7 +78,6 @@ class Level:
 
     #! self.player_path_position - set
     def update(self, window: "Window"):
-
         self.lights.update(self, self.nav)
 
         self.player_path_position = self.mouse_event_run(self.nav, window)
@@ -96,7 +93,7 @@ class Level:
     #! self.list_climb_positions - get
     #! self.climb_positions_visited - get
     @property
-    def is_new_climb_position(self):
+    def isNewClimbPosition(self):
         a = self.player_path_position
         b = self.list_climb_positions
         c = self.climb_positions_visited
@@ -209,7 +206,7 @@ class Level:
     #! self.climb_positions_visited
     #! self.player_path_position - tuple
     def set_visited_climb_positions(self) -> None:
-        if not self.is_new_climb_position:
+        if not self.isNewClimbPosition:
             return
 
         self.climb_positions_visited.append(self.player_path_position)
@@ -227,7 +224,6 @@ class Level:
         position = utilities.position_to_grid_position(position, grid_size)
 
         if position not in self.paths or position not in self.camp_positions:
-
             self.route = nav.set_route(self, position)
             route_index = 0
             for i in self.route[route_index:]:  # TODO need breaking into steps
@@ -240,7 +236,6 @@ class Level:
     def get_player_path_position(
         self, window: "Window", position: "Positions"
     ) -> Positions:
-
         x, y = self.player_path_position
 
         if position != Positions(0, 0):
