@@ -205,7 +205,7 @@ class View:
         self.list_DataBlit.append(BlitData(source, dest, area, special_flags))
 
     def draw_debug_ends(self, level: "Level"):
-        for k, v in dict.items(level.nav.d_position_str):
+        for k, v in dict.items(level.nav.positionInt):
             source = self.get_surface_text(v, "MONOSPACE", 15)
             dest = Position(k[0] + 1, k[1] + 5)
             area = None
