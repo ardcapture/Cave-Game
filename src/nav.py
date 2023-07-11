@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from src.utilities import DIRECTIONS_FOUR, NavData, Position
+from src.utilities import DIRECTIONS_FOUR, Position
 
 if TYPE_CHECKING:
     from src.level import Level
@@ -14,6 +14,12 @@ PATH = -2
 PATH_02 = -22
 T_JUNCTION = -3
 X_JUNCTION = -4
+PATHS_PATHSNAME = {
+    1: 1,
+    2: PATH,
+    3: T_JUNCTION,
+    4: X_JUNCTION,
+}
 
 
 class Nav:
@@ -40,39 +46,17 @@ class Nav:
             if direction in self.positionInt:
                 path_directions_list.append(direction)
 
-        self.path_directions_list = path_directions_list
+        return path_directions_list
 
-    # def setPathsPathname(self, position: Position):
-    #     PathsPathname = {
-    #         1: 1,
-    #         2: PATH,
-    #         3: T_JUNCTION,
-    #         4: X_JUNCTION,
-    #     }
-
-    #     if len(self.path_directions_list) == 1:
-    #         self.positionInt[position] = PathsPathname[len(self.path_directions_list)]
+    def setPathName(self):
+        # TODO: not sure where self.path_directions_list is coming from! How it is changing each loop!
+        return PATHS_PATHSNAME[len(self.positions)]
 
     def set_navigation(self, level: "Level"):
         for position in self.positionInt.keys():
-            self.set_path_directions_list(level, position)
-
-            #! set self.dict_position_str based on path directions_list
-            if len(self.path_directions_list) == 1:
-                self.positionInt[position] = 1
-                self.positionPositions[position] = self.path_directions_list
-
-            elif len(self.path_directions_list) == 2:
-                self.positionInt[position] = PATH
-                self.positionPositions[position] = self.path_directions_list
-
-            elif len(self.path_directions_list) == 3:
-                self.positionInt[position] = T_JUNCTION
-                self.positionPositions[position] = self.path_directions_list
-
-            elif len(self.path_directions_list) == 4:
-                self.positionInt[position] = X_JUNCTION
-                self.positionPositions[position] = self.path_directions_list
+            self.positions = self.set_path_directions_list(level, position)
+            self.positionInt[position] = self.setPathName()
+            self.positionPositions[position] = self.positions
 
         #! for "1" items -  set the item next to them ready for increment (if "-2" item")
         seq = [k for k, v in self.positionInt.items() if v == 1]
@@ -147,7 +131,7 @@ class Nav:
                 self.positionInt[routeListA[-1]] <= self.positionInt[routeListB[-1]]
                 or not routeListA
             ):
-                print(f"{self.positionPositions[routeListA[-1]]=}")
+                # print(f"{self.positionPositions[routeListA[-1]]=}")
                 position_02: Position = max(
                     self.positionPositions[routeListA[-1]],
                     # TODO: key might need turning back on -not sure what it is doing!
