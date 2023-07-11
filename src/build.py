@@ -36,7 +36,7 @@ class Build:
         self.current_position: Position = random.choice(self.reduced_positions)
 
         while self.grid_positions.is_build_finish(self.current_position):
-            self.grid_positions = self.grid_positions + [self.current_position]
+            self.grid_positions.addPosition(self.current_position)
 
             self.set_position_next(level)
 
@@ -44,7 +44,9 @@ class Build:
 
             self.current_position = self.position_next
 
-            self.build_path_positions = self.grid_positions + self.list_position_jump
+            self.build_path_positions = (
+                self.grid_positions.returnAllPositions() + self.list_position_jump
+            )
 
     #! reduced_positions - list
     def set_reduced_positions(self, level: "Level") -> None:
@@ -83,14 +85,14 @@ class Build:
     #! RETURNS LIST
     def set_get_next_positions(self, level: "Level") -> list[Position]:
         res_list: list[Position] = []
-        isNotIn: list[Position]
+        isNotIn: bool
 
         for d in self.res_sample():
             resGetPositionPoss: Position = self.get_position_poss(level, d)
 
             isIn = resGetPositionPoss in self.reduced_positions
 
-            isNotIn = resGetPositionPoss not in self.grid_positions
+            isNotIn = resGetPositionPoss not in self.grid_positions.returnAllPositions()
 
             if isIn and isNotIn:
                 res_list.append(resGetPositionPoss)

@@ -2,9 +2,11 @@ from src.utilities import Position
 
 
 class GridPositions:
-    def __init__(self, items: Position = None):
+    nonePosition: Position = Position(-1, -1)
+
+    def __init__(self, items: list[Position] = []):
         self.value = 0
-        self._items: list[Position] = [] if items is None else items
+        self._items: list[Position] = items
 
     #! self._items - GET
     def __len__(self):
@@ -19,10 +21,16 @@ class GridPositions:
         self._items[position] = item
         print(f"{itemType=}")
 
-    #! self - SET
-    def __add__(self, other: Position):
-        res = list(self._items) + list(other)
-        return GridPositions(res)
+    # TODO - test before removing
+    # def __add__(self, other: Position):
+    #     res = list(self._items) + list(other)
+    #     return GridPositions(res)
+
+    def addPosition(self, position: Position):
+        self._items.append(position)
+
+    def returnAllPositions(self):
+        return self._items
 
     #! self._items - GET
     def path_return(self, position: Position) -> Position:

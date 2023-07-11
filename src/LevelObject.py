@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
-
 from pygame import Surface
-
 from src.utilities import Position
+
+# TODO - complex type to class
+Rect = tuple[int, int]
 
 
 class LevelObject(ABC):
-    def __init__(self, rect, position: Position) -> None:
+    def __init__(self, rect: Rect, position: Position) -> None:
         self._position: Position = position
         self.rect = rect
 

@@ -67,7 +67,7 @@ class Level:
         ]
 
         self.set_camp_positions()
-        self.player_path_position = random.choice(self.camp_positions)
+        self.player_path_position: Position = random.choice(self.camp_positions)
 
         self.nav = Nav(self)
 
@@ -215,9 +215,9 @@ class Level:
     #! self.camp_positions
     #! self.route
     #! self.player_path_position - tuple
-    def mouse_event_run(self, nav: "Nav", window: "Window"):
+    def mouse_event_run(self, nav: "Nav", window: "Window") -> Position:
         if not window.mouse_event_run:
-            return
+            return Position(-1, -1)
 
         position = window.mouse_event_run
         grid_size = self.GRID_SIZE
