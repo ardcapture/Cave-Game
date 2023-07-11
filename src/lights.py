@@ -119,15 +119,12 @@ class Lights:
             while True:
                 if not light_position in path_paths:
                     break
-                print(f"{self.brightness_list=}")
                 sun_light_positions[light_position] = self.brightness_list[
                     brightnessIndex
                 ]
                 light_position = (light_position[0], light_position[1] + self.grid_size)
                 if brightnessIndex < len(self.brightness_list) - 1:
                     brightnessIndex += 1
-
-        # print(f"{sun_light_positions=}")
 
         return sun_light_positions
 
