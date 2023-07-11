@@ -84,8 +84,10 @@ class Nav:
             if any(k for k, v in self.d_position_str.items() if v == "-22"):
                 for k in [k for k, v in self.d_position_str.items() if v == "-22"]:
                     for i in self.Position_ListPosition[k]:
-                        if isinstance(self.d_position_str[i], int):
-                            result = self.d_position_str[i]
+                        print(f"{self.d_position_str[i]=}")
+                        if isinstance(int(self.d_position_str[i]), int):
+                            if int(self.d_position_str[i]) >= 1:
+                                result = self.d_position_str[i]
                         if self.d_position_str[i] == "-2":
                             self.d_position_str[i] = "-22"
                     self.d_position_str[k] = result + 1
@@ -98,12 +100,13 @@ class Nav:
                     for i in self.Position_ListPosition[k]:
                         # what are these numbers?!
                         # print(f"{self.d_position_str[i]=}")
-                        if isinstance(self.d_position_str[i], int):
-                            # TODO TO REMOVE ABOVE CHECK WITH BELOW
-                            if self.d_position_str[i] > 0:
+                        if isinstance(int(self.d_position_str[i]), int):
+                            # TODO TO REMOVE ABOVE CHECK WITH BELOW5
+                            if int(int(self.d_position_str[i])) >= 1:
                                 result_list02.append(self.d_position_str[i])
-                        if isinstance(self.d_position_str[i], str):
-                            self.d_position_str[i] = "-22"
+                        if isinstance(int(self.d_position_str[i]), int):
+                            if int(self.d_position_str[i]) <= -1:
+                                self.d_position_str[i] = "-22"
                     self.d_position_str[k] = sorted(result_list02)[-1] + 1
 
             elif any(k for k, v in self.d_position_str.items() if v in {"-3", "4"}):
@@ -111,12 +114,13 @@ class Nav:
                     if v in {"-3", "4"}:
                         result_list = []
                         for i in self.Position_ListPosition[k]:
-                            if isinstance(self.d_position_str[i], int):
-                                result_list.append(i)
-                                if len(result_list) == (
-                                    len(self.Position_ListPosition[k]) - 1
-                                ) and self.d_position_str[k] in {"-3", "4"}:
-                                    self.d_position_str[k] = "-5"
+                            if isinstance(int(self.d_position_str[i]), int):
+                                if int(self.d_position_str[i]) >= 1:
+                                    result_list.append(i)
+                                    if len(result_list) == (
+                                        len(self.Position_ListPosition[k]) - 1
+                                    ) and self.d_position_str[k] in {"-3", "4"}:
+                                        self.d_position_str[k] = "-5"
             else:
                 run = False
 
