@@ -14,6 +14,7 @@ PATH = -2
 PATH_02 = -22
 T_JUNCTION = -3
 X_JUNCTION = -4
+
 PATHS_PATHSNAME = {
     1: 1,
     2: PATH,
@@ -27,12 +28,11 @@ class Nav:
         print("init Nav")
 
         iterable = level.paths + level.camp_positions
-        value = 0
+        value: int = 0
         self.positionInt: PositionInt = dict.fromkeys(iterable, value)
 
         iterable = level.paths + level.camp_positions
-        value = []
-        self.positionPositions: PositionPositions = dict.fromkeys(iterable, value)
+        self.positionPositions: PositionPositions = dict.fromkeys(iterable, [])
 
         self.positionInt, self.positionPositions = self.set_navigation(level)
 
@@ -69,6 +69,7 @@ class Nav:
             #! if "for number" increment from previous number
             #! set the item next to them ready for increment (if "PATH" item")
             if any(k for k, v in self.positionInt.items() if v == PATH_02):
+                result = 0
                 for k in [k for k, v in self.positionInt.items() if v == PATH_02]:
                     for i in self.positionPositions[k]:
                         if self.positionInt[i] >= 1:
@@ -112,6 +113,9 @@ class Nav:
 
         return self.positionInt, self.positionPositions
 
+    def maxKey(self, x: Position) -> int:
+        return self.positionInt.get(x, 0)
+
     def set_route(
         self,
         level: "Level",
@@ -119,39 +123,38 @@ class Nav:
     ):
         """For Nav - currently used in controller."""
 
-        routeListA = [level.player_path_position]
+        positionsA = [level.player_path_position]
         if position_01 in level.paths or position_01 in level.camp_positions:
-            routeListB = [position_01]
+            positionsB = [position_01]
         else:
-            routeListB = [level.player_path_position]
+            positionsB = [level.player_path_position]
 
         run = True
         while run:
             if (
-                self.positionInt[routeListA[-1]] <= self.positionInt[routeListB[-1]]
-                or not routeListA
-            ):
-                # print(f"{self.positionPositions[routeListA[-1]]=}")
-                position_02: Position = max(
-                    self.positionPositions[routeListA[-1]],
-                    # TODO: key might need turning back on -not sure what it is doing!
-                    key=self.positionInt.get,
-                )
-                routeListA.append(position_02)
-            if (
-                self.positionInt[routeListB[-1]] <= self.positionInt[routeListA[-1]]
-                or not routeListB
+                self.positionInt[positionsA[-1]] <= self.positionInt[positionsB[-1]]
+                or not positionsA
             ):
                 position_02: Position = max(
-                    self.positionPositions[routeListB[-1]],
-                    # TODO: key might need turning back on -not sure what it is doing!
-                    key=self.positionInt.get,
+                    self.positionPositions[positionsA[-1]],
+                    key=self.maxKey,
                 )
-                routeListB.append(position_02)
-            if [i for i in routeListA if i in routeListB]:
-                routeListA.pop(-1)
-                run = False
-        routeListB.reverse()
-        routeListA.extend(routeListB)
 
-        return routeListA
+                positionsA.append(position_02)
+            if (
+                self.positionInt[positionsB[-1]] <= self.positionInt[positionsA[-1]]
+                or not positionsB
+            ):
+                position_02: Position = max(
+                    self.positionPositions[positionsB[-1]],
+                    key=self.maxKey,
+                )
+
+                positionsB.append(position_02)
+            if [i for i in positionsA if i in positionsB]:
+                positionsA.pop(-1)
+                run = False
+        positionsB.reverse()
+        positionsA.extend(positionsB)
+
+        return positionsA

@@ -1,6 +1,5 @@
 from typing import Any, NamedTuple, TYPE_CHECKING
 from dataclasses import dataclass
-from abc import ABC, abstractmethod
 import pygame
 from pygame import Rect
 
