@@ -1,21 +1,18 @@
-import os
-import sys
-from typing import TYPE_CHECKING
-
-import pygame
-
-# from src.input import Keyboard
-from src.surround import Surround
 from src.Tile import Tile
-from src.utilities import BlitData, Colors, Position
+from src.surround import Surround
+from src.utilities import BlitData, Colors, Position, Color
 from src.window import Window
+from typing import TYPE_CHECKING
+import os
+import pygame
+import sys
 
 if TYPE_CHECKING:
+    from src.WaterFactory import WaterFactory
     from src.game import Game
     from src.level import Level
     from src.lights import Lights
     from src.nav import Nav
-    from src.WaterFactory import WaterFactory
 
 WINDOW_CLOSE = pygame.WINDOWCLOSE
 
@@ -48,8 +45,6 @@ class View:
         self.surround = Surround()
 
         self.player_init()
-
-        self.pygame_fonts = {"MONOSPACE": self.get_pygame_fonts}
 
     @property
     def filename_player(self):
@@ -95,7 +90,7 @@ class View:
         if game.run_debug_state:
             self.in_list_climb_positions(paths, level)  # append list_blit
             self.draw_debug_start_position(level)  # draw rect (via draw_outline)
-            self.draw_debug_ends(level)  # blit
+            self.draw_debug_ends(level.nav)  # blit
             self.draw_debug_route(level)  # draw rect (via draw_outline)
 
         # self.if_debug(game, level, paths)
@@ -109,24 +104,22 @@ class View:
 
     @property
     def pygame_font(self):
-        return self.pygame_fonts["MONOSPACE"](15)
+        return pygame.font.SysFont("monospace", 15)
 
-    def get_pygame_fonts(self, size: int):
-        name = "monospace"
-        return pygame.font.SysFont(name, size)
-
-    def get_surface_text(self, text: str, font, size):
-        font = self.pygame_fonts[font](size)
-        return font.render("{0}".format(text), 1, ((Colors.GREEN)))
+    def get_surface_text(self, formatText: str) -> pygame.surface.Surface:
+        font: pygame.font.Font = pygame.font.SysFont("monospace", 15)
+        renderText: str = "{0}".format(formatText)
+        antialias: bool = True
+        return font.render(renderText, antialias, ((Colors.GREEN)))
 
     #! RECT > SURFACE - METHODS - START ******************
-    def get_surface_lights(self, level: "Level", color):
+    def get_surface_lights(self, level: "Level", color: Color):
         surface = pygame.Surface(level.GRID_SIZE_2D)
         rect = surface.get_rect()
         pygame.draw.rect(surface, color, rect)
         return surface
 
-    def draw_rect(self, level: "Level", color, pos):
+    def draw_rect(self, level: "Level", color: Color, pos: Position):
         surface = self.window.window_surface
         rect = (pos, (level.GRID_SIZE, level.GRID_SIZE))
         pygame.draw.rect(surface, color, rect)
@@ -150,9 +143,7 @@ class View:
 
         return surface
 
-    def rect_to_surface_outline(
-        self, level: "Level", color: Colors, position: Position
-    ):
+    def rect_to_surface_outline(self, level: "Level", color: Color, position: Position):
         #  pygame rect
         left = position[0]
         top = position[1]
@@ -170,11 +161,11 @@ class View:
         for p in water.water_objects:
             rect = pygame.Rect(water.left, water.top, self.width, self.height)
 
-            surface = p.surface()
+            surface: pygame.surface.Surface = p.surface()
             pygame.draw.rect(surface, water.color, rect)
 
             # blit data
-            source = surface
+            source: pygame.surface.Surface = surface
             dest = p.position
             area = None  # PyGame
             special_flags = 0  # PyGame
@@ -204,10 +195,10 @@ class View:
 
         self.list_DataBlit.append(BlitData(source, dest, area, special_flags))
 
-    def draw_debug_ends(self, level: "Level"):
-        for k, v in dict.items(level.nav.positionInt):
-            source = self.get_surface_text(v, "MONOSPACE", 15)
-            dest = Position(k[0] + 1, k[1] + 5)
+    def draw_debug_ends(self, nav: "Nav"):
+        for position, v in nav.positionInt.items():
+            source: pygame.surface.Surface = self.get_surface_text(str(v))
+            dest = Position(position[0] + 1, position[1] + 5)
             area = None
             special_flags = 0
 
@@ -225,7 +216,7 @@ class View:
     def in_list_climb_positions(self, path: "Nav", level: "Level"):
         for p in level.list_climb_positions:
             source = self.get_surface_from_rect(level)
-            dest = (p.x, p.y)
+            dest = Position(p.x, p.y)
             area = None
             special_flags = 0
 
@@ -237,10 +228,10 @@ class View:
 
     def set_surface_to_surface(
         self,
-        surface: pygame.Surface,
-        source: pygame.Surface,
+        surface: pygame.surface.Surface,
+        source: pygame.surface.Surface,
         dest: Position,
-        area: bool,
+        area: None,
         special_flags: int,
     ):
         # self.list_DataBlit.append(DataBlit(surface, source, dest, area, special_flags))
@@ -249,7 +240,7 @@ class View:
 
     def draw_level(self, level: "Level", window: "Window"):
         for position, v in self.tiles.items():
-            pos = position[0], position[1]
+            pos = Position(position[0], position[1])
             if v == "A":
                 # todo sometimes this key 'k' below is not present causing an error!!!
                 tile01 = pygame.image.load(self.route_light_positions_tiles[position])
@@ -289,7 +280,7 @@ class View:
                 self.Blit([PATH_BLIT], window)
 
             elif v == "S":
-                self.draw_rect(level, (146, 244, 255), pos)
+                self.draw_rect(level, Color(146, 244, 255), pos)
 
     def Blit(self, list_blit: list[BlitData], window: "Window"):
         surface = window.window_surface
@@ -304,7 +295,7 @@ class View:
         surface = window.window_surface
 
         width = source.get_width()
-        x = level.player_path_position[0] + ((level.GRID_SIZE - width) / 2)
+        x = int(level.player_path_position[0] + ((level.GRID_SIZE - width) / 2))
 
         height = source.get_height()
         y = level.player_path_position[1] + (level.GRID_SIZE - height)
@@ -327,12 +318,7 @@ class View:
 
     def draw_debug_start_position(self, level: "Level"):
         p = level.paths[0]
-        self.rect_to_surface_outline(level, Colors.RED, (p.x, p.y))
-
-    def get_surface_file(self, paths, path, size):
-        filename = os.path.join(path, paths)
-        surface = pygame.image.load(filename)
-        return pygame.transform.scale(surface, size)
+        self.rect_to_surface_outline(level, Colors.RED, Position(p.x, p.y))
 
     @property
     def surface_load_player(self):
@@ -364,17 +350,17 @@ class View:
         self.window.close_window()
         sys.exit()  # TODO MOVE ELSEWHERE?
 
-    def dirt_image(self, level):
-        paths = "dirt.png"
-        return self.get_surface_file(paths, level)
+    def dirt_image(self, level: "Level") -> pygame.surface.Surface:
+        paths: str = "dirt.png"
+        return self.getSurfaceFile(paths, level)
 
-    def grass_image(self, level):
+    def grass_image(self, level: "Level") -> pygame.surface.Surface:
         paths = "grass.png"
-        return self.get_surface_file(paths, level)
+        return self.getSurfaceFile(paths, level)
 
-    def rock_image(self, level: "Level") -> pygame.Surface:
-        paths = "rock.png"
-        return self.get_surface_file(paths, level)
+    def rock_image(self, level: "Level") -> pygame.surface.Surface:
+        paths: str = "rock.png"
+        return self.getSurfaceFile(paths, level)
 
     # window = self.window.window_surface
 
@@ -382,7 +368,7 @@ class View:
 
     # light = (self.get_surface_lights,)
 
-    def get_surface_file(self, paths, level: "Level"):
+    def getSurfaceFile(self, paths: str, level: "Level") -> pygame.surface.Surface:
         path = self.PATH_IMAGES
         filename = os.path.join(path, paths)
         surface = pygame.image.load(filename)

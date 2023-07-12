@@ -47,7 +47,7 @@ class Window:
 
         pygame.display.set_caption(view.title)
 
-        self.window_surface = self.get_window_surface()
+        self.window_surface: pygame.surface.Surface = self.get_window_surface()
 
     def update(self):
         self.pygame_events = pygame.event.get()

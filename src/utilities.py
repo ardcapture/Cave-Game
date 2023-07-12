@@ -1,8 +1,8 @@
 from typing import Any, NamedTuple, TYPE_CHECKING
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-
-from pygame import Rect, Surface
+import pygame
+from pygame import Rect
 
 if TYPE_CHECKING:
     from WaterFactory import LevelObject
@@ -31,15 +31,15 @@ class Color(NamedTuple):
 
 
 class DrawRectData(NamedTuple):
-    surface: Surface
+    surface: pygame.surface.Surface
     color: Color
     rect: Rect
 
 
 class BlitData(NamedTuple):
-    source: Surface
+    source: pygame.surface.Surface
     dest: Position
-    area: bool
+    area: None
     special_flags: int
 
 
@@ -81,9 +81,9 @@ class Light_Data:
     surface: str = "LIGHT"  # TODO change type?
     to_surface: str = "WINDOW"  # TODO change type?
     font_size: int = 15
-    color: tuple = (0, 0, 0)
+    color: Color = Color(0, 0, 0)
     special_flags: str = "BLEND_RGB_ADD"
-    position: tuple = None
+    position: Position = Position(-1, -1)
 
 
 LEFT_UP = Direction(x=-1, y=-1)
