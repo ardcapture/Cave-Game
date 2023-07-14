@@ -7,31 +7,11 @@ import numpy
 from PIL import Image as PIL_Image
 from PIL.Image import Image
 
+
 from src.utilities import IMAGE_TYPES, LIGHTING_TILE_ROTATE, Position
 
 if TYPE_CHECKING:
     from src.level import Level
-    from src.view import View
-
-
-class Tile_V02:
-    def __init__(self, level: "Level", y_start: int, adjust: int, name: str):
-        self.grid_size = level.GRID_SIZE
-        self.top_offset = level.top_offset
-        self.width = level.WIDTH_GS
-
-        self.adjust = adjust
-        self.y_start = y_start
-        self.y_stop = self.grid_size * (self.top_offset - self.adjust)
-        self.name = name
-
-    @property
-    def positions(self):
-        return (
-            (x, y)
-            for x in range(0, self.width, self.grid_size)
-            for y in range(self.y_start, self.y_stop, self.grid_size)
-        )
 
 
 #! called by view > __init__ - 1 location
@@ -40,29 +20,6 @@ class Tile:
 
     def __init__(self, level: "Level") -> None:
         self.grid_size = level.GRID_SIZE
-
-        self.sky_V02 = Tile_V02(
-            level=level,
-            y_start=0,
-            adjust=1,
-            name="sky",
-        )
-
-        self.rock_V02 = Tile_V02(
-            level=level,
-            y_start=0,
-            adjust=1,
-            name="rock",
-        )
-
-        self.grass_V02 = Tile_V02(
-            level=level,
-            y_start=level.GRID_SIZE * (level.top_offset - 1),
-            adjust=0,
-            name="grass",
-        )
-
-        # self.tiles_v02 = [self.sky_V02, self.rock_V02, self.grass_V02]
 
         self.path_surround_tiles_debug = False
 
@@ -88,25 +45,6 @@ class Tile:
         res_join = os.path.join(images_path, file_name)
         res_open = PIL_Image.open(res_join)
         return res_open.resize((grid_size, grid_size))
-
-    #! called by update - 1 location
-    def create_dict_tiles(self, view: "View", level: "Level") -> dict[Position, str]:
-        TILE_LETTERS = [
-            (self.rock_V02.positions, "R"),
-            (view.path_adjacent, "A"),
-            (self.sky_V02.positions, "S"),
-            (self.grass_V02.positions, "G"),
-            (level.paths, "P"),
-        ]
-
-        res_update: dict[Position, str] = {}
-        for i in TILE_LETTERS:
-            res_fromkeys = dict.fromkeys(*i)
-            res_update |= res_fromkeys
-
-        print(f"{res_update=}")
-
-        return res_update
 
     @property
     def tileImages(self) -> dict[str, Image]:

@@ -1,4 +1,4 @@
-from src.tile import Tile, Tile_V02
+from src.tile import Tile
 from src.surround import Surround
 from src.utilities import BlitData, Colors, Position, Color
 from src.window import Window
@@ -17,13 +17,30 @@ if TYPE_CHECKING:
 WINDOW_CLOSE = pygame.WINDOWCLOSE
 
 
-# class View_V02:
-#     def __init__(self, window):
-#         surface = self.window.window_surface
-#         source = self.dirt_image(level)
-#         dest = pos
-#         area = None
-#         special_flags = 0
+class Tile_V02:
+    def __init__(
+        self,
+        level: "Level",
+        y_start: int,
+        adjust: int,
+        path: str,
+    ):
+        self.grid_size = level.GRID_SIZE
+        self.top_offset = level.top_offset
+        self.width = level.WIDTH_GS
+
+        self.adjust = adjust
+        self.y_start = y_start
+        self.y_stop = self.grid_size * (self.top_offset - self.adjust)
+        self.path = path
+
+    @property
+    def positions(self):
+        return (
+            (x, y)
+            for x in range(0, self.width, self.grid_size)
+            for y in range(self.y_start, self.y_stop, self.grid_size)
+        )
 
 
 class View:
@@ -52,6 +69,27 @@ class View:
 
         self.tile = Tile(level=level)
 
+        self.sky_V02 = Tile_V02(
+            level=level,
+            y_start=0,
+            adjust=1,
+            path="noImage.png",
+        )
+
+        self.rock_V02 = Tile_V02(
+            level=level,
+            y_start=0,
+            adjust=1,
+            path="rock.png",
+        )
+
+        self.grass_V02 = Tile_V02(
+            level=level,
+            y_start=level.GRID_SIZE * (level.top_offset - 1),
+            adjust=0,
+            path="grass.png",
+        )
+
         self.surround = Surround()
 
         self.player_init()
@@ -76,7 +114,6 @@ class View:
         # update tile:
         # self.tile.create_tile_locations(level)
         self.route_light_positions_tiles = self.tile.set_path_surround_tiles(self)
-        self.tiles = self.tile.create_dict_tiles(self, level)
 
         # update window:
         self.window.update()
@@ -85,6 +122,7 @@ class View:
         self.set_window_end(self.window)
 
         #! DRAW WINDOW START
+
         self.draw_level(level, window)  # blit (via set_surface_to_surface)
 
         self.draw_coordinates(self.window)  # append list_blit
@@ -111,6 +149,23 @@ class View:
         self.clock.tick(60)  # TODO Check what this is doing!!!
 
         pygame.display.update()
+
+    # #! called by update - 1 location
+    # def create_dict_tiles(self, view: "View", level: "Level") -> dict[Position, str]:
+    #     TILE_LETTERS = [
+    #         (self.rock_V02.positions, "R"),
+    #         (view.path_adjacent, "A"),
+    #         (self.sky_V02.positions, "S"),
+    #         (self.grass_V02.positions, "G"),
+    #         (level.paths, "P"),
+    #     ]
+
+    #     res_update: dict[Position, str] = {}
+    #     for i in TILE_LETTERS:
+    #         res_fromkeys = dict.fromkeys(*i)
+    #         res_update |= res_fromkeys
+
+    #     return res_update
 
     @property
     def pygame_font(self):
@@ -249,7 +304,24 @@ class View:
         surface.blit(source, dest, area, special_flags)
 
     def draw_level(self, level: "Level", window: "Window"):
-        for position, v in self.tiles.items():
+        # tiles = self.create_dict_tiles(self, level)
+
+        TILE_LETTERS = [
+            (self.rock_V02.positions, "R"),
+            (self.path_adjacent, "A"),
+            (self.sky_V02.positions, "S"),
+            (self.grass_V02.positions, "G"),
+            (level.paths, "P"),
+        ]
+
+        res_update: dict[Position, str] = {}
+        for i in TILE_LETTERS:
+            res_fromkeys = dict.fromkeys(*i)
+            res_update |= res_fromkeys
+
+        tiles = res_update
+
+        for position, v in tiles.items():
             pos = Position(position[0], position[1])
             if v == "A":
                 # todo sometimes this key 'k' below is not present causing an error!!!
@@ -266,14 +338,14 @@ class View:
                 )
             elif v == "E":
                 surface = self.window.window_surface
-                source = self.dirt_image(level)
+                source = self.imageSurface(level, "dirt.png")
                 dest = pos
                 area = None
                 special_flags = 0
 
             elif v == "G":
                 surface = self.window.window_surface
-                source = self.grass_image(level)
+                source = self.imageSurface(level, self.grass_V02.path)
                 dest = pos
                 area = None
                 special_flags = 0
@@ -281,7 +353,7 @@ class View:
 
             elif v == "P":
                 PATH_BLIT = BlitData(
-                    source=self.rock_image(level),
+                    source=self.imageSurface(level, "rock.png"),
                     dest=pos,
                     area=None,
                     special_flags=0,
@@ -360,16 +432,8 @@ class View:
         self.window.close_window()
         sys.exit()  # TODO MOVE ELSEWHERE?
 
-    def dirt_image(self, level: "Level") -> pygame.surface.Surface:
-        paths: str = "dirt.png"
-        return self.getSurfaceFile(paths, level)
-
-    def grass_image(self, level: "Level") -> pygame.surface.Surface:
-        paths = "grass.png"
-        return self.getSurfaceFile(paths, level)
-
-    def rock_image(self, level: "Level") -> pygame.surface.Surface:
-        paths: str = "rock.png"
+    def imageSurface(self, level: "Level", paths: str) -> pygame.surface.Surface:
+        # paths: str = "rock.png"
         return self.getSurfaceFile(paths, level)
 
     # window = self.window.window_surface
