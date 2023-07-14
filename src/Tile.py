@@ -12,6 +12,7 @@ from src.utilities import IMAGE_TYPES, LIGHTING_TILE_ROTATE, Position
 
 if TYPE_CHECKING:
     from src.level import Level
+    from src.view import View
 
 
 #! called by view > __init__ - 1 location

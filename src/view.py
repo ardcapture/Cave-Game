@@ -23,7 +23,7 @@ class Tile_V02:
         level: "Level",
         y_start: int,
         adjust: int,
-        path: str,
+        surface: pygame.surface.Surface,
     ):
         self.grid_size = level.GRID_SIZE
         self.top_offset = level.top_offset
@@ -32,12 +32,12 @@ class Tile_V02:
         self.adjust = adjust
         self.y_start = y_start
         self.y_stop = self.grid_size * (self.top_offset - self.adjust)
-        self.path = path
+        self.surface = surface
 
     @property
     def positions(self):
         return (
-            (x, y)
+            Position(x, y)
             for x in range(0, self.width, self.grid_size)
             for y in range(self.y_start, self.y_stop, self.grid_size)
         )
@@ -73,21 +73,21 @@ class View:
             level=level,
             y_start=0,
             adjust=1,
-            path="noImage.png",
+            surface=self.imageSurface(level, "sky.png"),
         )
 
         self.rock_V02 = Tile_V02(
             level=level,
             y_start=0,
             adjust=1,
-            path="rock.png",
+            surface=self.imageSurface(level, "rock.png"),
         )
 
         self.grass_V02 = Tile_V02(
             level=level,
             y_start=level.GRID_SIZE * (level.top_offset - 1),
             adjust=0,
-            path="grass.png",
+            surface=self.imageSurface(level, "grass.png"),
         )
 
         self.surround = Surround()
@@ -109,7 +109,9 @@ class View:
         # TODO level.path should not be here?!
         self.surround.update(level)
         self.path_adjacent = self.surround.path_adjacent
-        self.poss_surround_positions = self.surround.poss_surround_positions
+
+        # TODO is this needed!:
+        # self.poss_surround_positions = self.surround.poss_surround_positions
 
         # update tile:
         # self.tile.create_tile_locations(level)
@@ -150,23 +152,6 @@ class View:
 
         pygame.display.update()
 
-    # #! called by update - 1 location
-    # def create_dict_tiles(self, view: "View", level: "Level") -> dict[Position, str]:
-    #     TILE_LETTERS = [
-    #         (self.rock_V02.positions, "R"),
-    #         (view.path_adjacent, "A"),
-    #         (self.sky_V02.positions, "S"),
-    #         (self.grass_V02.positions, "G"),
-    #         (level.paths, "P"),
-    #     ]
-
-    #     res_update: dict[Position, str] = {}
-    #     for i in TILE_LETTERS:
-    #         res_fromkeys = dict.fromkeys(*i)
-    #         res_update |= res_fromkeys
-
-    #     return res_update
-
     @property
     def pygame_font(self):
         return pygame.font.SysFont("monospace", 15)
@@ -184,10 +169,10 @@ class View:
         pygame.draw.rect(surface, color, rect)
         return surface
 
-    def draw_rect(self, level: "Level", color: Color, pos: Position):
-        surface = self.window.window_surface
-        rect = (pos, (level.GRID_SIZE, level.GRID_SIZE))
-        pygame.draw.rect(surface, color, rect)
+    # def draw_rect(self, level: "Level", color: Color, pos: Position):
+    #     surface = self.window.window_surface
+    #     rect = (pos, (level.GRID_SIZE, level.GRID_SIZE))
+    #     pygame.draw.rect(surface, color, rect)
 
     def get_surface_from_rect(self, level: "Level"):
         flag = pygame.SRCALPHA
@@ -291,21 +276,23 @@ class View:
 
     #! Blit - METHODS - START *****************
 
-    def set_surface_to_surface(
-        self,
-        surface: pygame.surface.Surface,
-        source: pygame.surface.Surface,
-        dest: Position,
-        area: None,
-        special_flags: int,
-    ):
-        # self.list_DataBlit.append(DataBlit(surface, source, dest, area, special_flags))
+    # def set_surface_to_surface(
+    #     self,
+    #     surface: pygame.surface.Surface,
+    #     source: pygame.surface.Surface,
+    #     dest: Position,
+    #     area: None,
+    #     special_flags: int,
+    # ):
+    #     # self.list_DataBlit.append(DataBlit(surface, source, dest, area, special_flags))
 
-        surface.blit(source, dest, area, special_flags)
+    #     surface.blit(source, dest, area, special_flags)
+
+    def tile_adjacent(self, level: "Level", position: Position):
+        surface = pygame.image.load(self.route_light_positions_tiles[position])
+        return pygame.transform.scale(surface, (level.GRID_SIZE, level.GRID_SIZE))
 
     def draw_level(self, level: "Level", window: "Window"):
-        # tiles = self.create_dict_tiles(self, level)
-
         TILE_LETTERS = [
             (self.rock_V02.positions, "R"),
             (self.path_adjacent, "A"),
@@ -314,55 +301,53 @@ class View:
             (level.paths, "P"),
         ]
 
-        res_update: dict[Position, str] = {}
+        tiles: dict[Position, str] = {}
         for i in TILE_LETTERS:
             res_fromkeys = dict.fromkeys(*i)
-            res_update |= res_fromkeys
-
-        tiles = res_update
+            tiles |= res_fromkeys
 
         for position, v in tiles.items():
             pos = Position(position[0], position[1])
             if v == "A":
-                # todo sometimes this key 'k' below is not present causing an error!!!
-                tile01 = pygame.image.load(self.route_light_positions_tiles[position])
-                tile01 = pygame.transform.scale(
-                    tile01, (level.GRID_SIZE, level.GRID_SIZE)
-                )
-                self.set_surface_to_surface(
-                    self.window.window_surface,
-                    tile01,
-                    pos,
-                    area=None,
-                    special_flags=0,
-                )
-            elif v == "E":
                 surface = self.window.window_surface
-                source = self.imageSurface(level, "dirt.png")
-                dest = pos
-                area = None
-                special_flags = 0
-
-            elif v == "G":
-                surface = self.window.window_surface
-                source = self.imageSurface(level, self.grass_V02.path)
+                source = self.tile_adjacent(level, position)
                 dest = pos
                 area = None
                 special_flags = 0
                 surface.blit(source, dest, area, special_flags)
 
             elif v == "P":
-                PATH_BLIT = BlitData(
-                    source=self.imageSurface(level, "rock.png"),
-                    dest=pos,
-                    area=None,
-                    special_flags=0,
-                )
-
-                self.Blit([PATH_BLIT], window)
+                surface = window.window_surface
+                source = self.rock_V02.surface
+                dest = pos
+                area = None
+                special_flags = 0
+                surface.blit(source, dest, area, special_flags)
 
             elif v == "S":
-                self.draw_rect(level, Color(146, 244, 255), pos)
+                surface = window.window_surface
+                source = self.sky_V02.surface
+                dest = pos
+                area = None
+                special_flags = 0
+                surface.blit(source, dest, area, special_flags)
+
+            elif v == "G":
+                surface = window.window_surface
+                source = self.grass_V02.surface
+                dest = pos
+                area = None
+                special_flags = 0
+                surface.blit(source, dest, area, special_flags)
+
+        # for tile in [self.grass_V02, self.sky_V02]:
+        #     for i in tile.positions:
+        #         surface = self.window.window_surface
+        #         source = tile.surface
+        #         dest = i
+        #         area = None
+        #         special_flags = 0
+        #         surface.blit(source, dest, area, special_flags)
 
     def Blit(self, list_blit: list[BlitData], window: "Window"):
         surface = window.window_surface
