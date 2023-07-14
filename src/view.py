@@ -1,4 +1,4 @@
-from src.Tile import Tile
+from src.tile import Tile, Tile_V02
 from src.surround import Surround
 from src.utilities import BlitData, Colors, Position, Color
 from src.window import Window
@@ -15,6 +15,15 @@ if TYPE_CHECKING:
     from src.nav import Nav
 
 WINDOW_CLOSE = pygame.WINDOWCLOSE
+
+
+# class View_V02:
+#     def __init__(self, window):
+#         surface = self.window.window_surface
+#         source = self.dirt_image(level)
+#         dest = pos
+#         area = None
+#         special_flags = 0
 
 
 class View:
@@ -41,7 +50,8 @@ class View:
 
         self.window = Window(self, level)
 
-        self.tile = Tile(level.GRID_SIZE)
+        self.tile = Tile(level=level)
+
         self.surround = Surround()
 
         self.player_init()
@@ -64,7 +74,7 @@ class View:
         self.poss_surround_positions = self.surround.poss_surround_positions
 
         # update tile:
-        self.tile.create_tile_locations(level)
+        # self.tile.create_tile_locations(level)
         self.route_light_positions_tiles = self.tile.set_path_surround_tiles(self)
         self.tiles = self.tile.create_dict_tiles(self, level)
 

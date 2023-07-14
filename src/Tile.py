@@ -1,7 +1,8 @@
 import os
 from typing import TYPE_CHECKING
 
-import blend_modes
+# from dataclasses import dataclass
+import blend_modes as bm
 import numpy
 from PIL import Image as PIL_Image
 from PIL.Image import Image
@@ -13,26 +14,71 @@ if TYPE_CHECKING:
     from src.view import View
 
 
+class Tile_V02:
+    def __init__(self, level: "Level", y_start: int, adjust: int, name: str):
+        self.grid_size = level.GRID_SIZE
+        self.top_offset = level.top_offset
+        self.width = level.WIDTH_GS
+
+        self.adjust = adjust
+        self.y_start = y_start
+        self.y_stop = self.grid_size * (self.top_offset - self.adjust)
+        self.name = name
+
+    @property
+    def positions(self):
+        return (
+            (x, y)
+            for x in range(0, self.width, self.grid_size)
+            for y in range(self.y_start, self.y_stop, self.grid_size)
+        )
+
+
 #! called by view > __init__ - 1 location
 class Tile:
     images_path = "res"
 
-    def __init__(self, grid_size: int) -> None:
+    def __init__(self, level: "Level") -> None:
+        self.grid_size = level.GRID_SIZE
+
+        self.sky_V02 = Tile_V02(
+            level=level,
+            y_start=0,
+            adjust=1,
+            name="sky",
+        )
+
+        self.rock_V02 = Tile_V02(
+            level=level,
+            y_start=0,
+            adjust=1,
+            name="rock",
+        )
+
+        self.grass_V02 = Tile_V02(
+            level=level,
+            y_start=level.GRID_SIZE * (level.top_offset - 1),
+            adjust=0,
+            name="grass",
+        )
+
+        # self.tiles_v02 = [self.sky_V02, self.rock_V02, self.grass_V02]
+
         self.path_surround_tiles_debug = False
 
         # todo repeats - 4 variables
         self.rock_lighting_tile: Image = self.PIL_to_size_from_file(
-            grid_size, self.images_path, "rock.png"
+            self.grid_size, self.images_path, "rock.png"
         )
 
         self.BlackSQ: Image = self.PIL_to_size_from_file(
-            grid_size, self.images_path, "BlackSQ.png"
+            self.grid_size, self.images_path, "BlackSQ.png"
         )
         self.T_image: Image = self.PIL_to_size_from_file(
-            grid_size, self.images_path, "I_Image_01.png"
+            self.grid_size, self.images_path, "I_Image_01.png"
         )
         self.TR_image: Image = self.PIL_to_size_from_file(
-            grid_size, self.images_path, "Corner.png"
+            self.grid_size, self.images_path, "Corner.png"
         )
 
     #! called by init - 4 location
@@ -46,10 +92,10 @@ class Tile:
     #! called by update - 1 location
     def create_dict_tiles(self, view: "View", level: "Level") -> dict[Position, str]:
         TILE_LETTERS = [
-            (self.rock, "R"),
+            (self.rock_V02.positions, "R"),
             (view.path_adjacent, "A"),
-            (self.sky, "S"),
-            (self.grass, "G"),
+            (self.sky_V02.positions, "S"),
+            (self.grass_V02.positions, "G"),
             (level.paths, "P"),
         ]
 
@@ -57,6 +103,8 @@ class Tile:
         for i in TILE_LETTERS:
             res_fromkeys = dict.fromkeys(*i)
             res_update |= res_fromkeys
+
+        print(f"{res_update=}")
 
         return res_update
 
@@ -66,14 +114,6 @@ class Tile:
             f"{i}_image": self.select_rotate(self.T_image, self.TR_image, i)
             for i in IMAGE_TYPES
         }
-
-    #! called by update - 1 location
-    def create_tile_locations(self, level: "Level") -> None:
-        types = ["sky", "rock", "grass"]
-        for t in types:
-            self.create_tile_location(
-                t, level.WIDTH_GS, level.HEIGHT_GS, level.top_offset, level.GRID_SIZE
-            )
 
     #! called by update - 1 location
     def set_path_surround_tiles(self, view: "View"):
@@ -123,38 +163,6 @@ class Tile:
 
         return route_light_positions_tiles
 
-    #! called by create_tile_location -  1 location
-    def condition_y_start_stop(self, type, grid_size, top_offset, height):
-        y_start: int = 0
-
-        if type == "sky":
-            y_start = 0
-            y_stop = grid_size * top_offset - 1
-        elif type == "rock":
-            y_start = 0
-            y_stop = height
-        elif type == "grass":
-            y_start = grid_size * (top_offset - 1)
-            y_stop = grid_size * top_offset
-        else:
-            raise ValueError("Type not available")
-
-        return (y_start, y_stop)
-
-    #! called by create_tile_locations - 1 location
-    def create_tile_location(
-        self, type: str, width: int, height: int, top_offset: int, grid_size: int
-    ) -> None:
-        y_start_stop = self.condition_y_start_stop(type, grid_size, top_offset, height)
-
-        res = [
-            (x, y)
-            for x in range(0, width, grid_size)
-            for y in range(y_start_stop[0], y_start_stop[1], grid_size)
-        ]
-
-        exec(f"self.{type} = {res}")
-
     #! called by get_surround_images - 1 location
     #! called bt set_path_surround_tiles - 1 location
     def select_rotate(
@@ -184,7 +192,5 @@ class Tile:
     def image_lighten(
         self, image_float01: Image, image_float02: Image, opacity: float
     ) -> Image:
-        res_lighten_only = blend_modes.lighten_only(
-            image_float01, image_float02, opacity
-        )
+        res_lighten_only = bm.lighten_only(image_float01, image_float02, opacity)
         return PIL_Image.fromarray(numpy.uint8(res_lighten_only))
