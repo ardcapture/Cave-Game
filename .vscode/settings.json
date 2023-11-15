@@ -1,6 +1,15 @@
 {
+<<<<<<< HEAD
     "cSpell.words": [
         "pygame"
     ],
     "python.analysis.typeCheckingMode": "strict"
 }
+=======
+  "cSpell.words": ["pygame"],
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "python.formatting.provider": "none"
+}
+>>>>>>> wales
