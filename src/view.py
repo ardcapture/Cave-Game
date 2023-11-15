@@ -433,3 +433,7 @@ class View:
         surface = pygame.image.load(filename)
         size = level.GRID_SIZE_2D
         return pygame.transform.scale(surface, size)
+
+
+def specialFunction():
+    return "Hello"

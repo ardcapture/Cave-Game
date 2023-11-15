@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 
 import pygame
 
-from src.build import Build
-from src.lights import Lights
+from src.build import Build  #! object used 3x
+from src.lights import Lights  #! object used 1x
 from src.nav import Nav
 from src.utilities import NoPositionFound, Position
 from src.WaterFactory import WaterFactory
@@ -107,12 +107,12 @@ class Level:
     #! self.path_start_position - get
     #! self.camp_positions - set
     def set_camp_positions(self) -> None:
-        y = self.path_start_position.y - self.GRID_SIZE
-        start = 0
-        stop = self.WIDTH_GS
-        step = self.GRID_SIZE
-        seq = range(start, stop, step)
-        self.camp_positions = [Position(x, y) for x in seq]
+        camp_y_position = self.path_start_position.y - self.GRID_SIZE
+        grid_start = 0
+        grid_end = self.WIDTH_GS
+        grid_step = self.GRID_SIZE
+        grid_range = range(grid_start, grid_end, grid_step)
+        self.camp_positions = [Position(x, camp_y_position) for x in grid_range]
 
     #! self.grid_positions - SET
     def _set_grid_positions(self) -> None:

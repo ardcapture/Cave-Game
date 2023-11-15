@@ -36,17 +36,24 @@ class Nav:
 
         self.positionInt, self.positionPositions = self.set_navigation(level)
 
-    def set_path_directions_list(self, level: "Level", position: Position):
-        path_directions_list: list[Position] = []
+    #! variable renaming done:
+    def get_adjacent_positions(self, level: "Level", center_position: Position):
+        adjacent_positions: list[Position] = []
+        grid_size = level.GRID_SIZE
+
         for direction in DIRECTIONS_FOUR:
-            x = position.x + (direction.x * level.GRID_SIZE)
-            y = position.y + (direction.y * level.GRID_SIZE)
-            direction = Position(x, y)
+            x_offset, y_offset = direction.x * grid_size, direction.y * grid_size
+            adjacent_x, adjacent_y = (
+                center_position.x + x_offset,
+                center_position.y + y_offset,
+            )
+            adjacent_position = Position(adjacent_x, adjacent_y)
+            adjacent_position = Position(adjacent_x, adjacent_y)
 
-            if direction in self.positionInt:
-                path_directions_list.append(direction)
+            if adjacent_position in self.positionInt:
+                adjacent_positions.append(adjacent_position)
 
-        return path_directions_list
+        return adjacent_positions
 
     def setPathName(self):
         # TODO: not sure where self.path_directions_list is coming from! How it is changing each loop!
@@ -54,7 +61,7 @@ class Nav:
 
     def set_navigation(self, level: "Level"):
         for position in self.positionInt.keys():
-            self.positions = self.set_path_directions_list(level, position)
+            self.positions = self.get_adjacent_positions(level, position)
             self.positionInt[position] = self.setPathName()
             self.positionPositions[position] = self.positions
 

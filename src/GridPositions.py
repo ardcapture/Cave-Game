@@ -4,9 +4,9 @@ from src.utilities import Position
 class GridPositions:
     nonePosition: Position = Position(-1, -1)
 
-    def __init__(self, items: list[Position] = []):
-        self.value = 0
-        self._items: list[Position] = items
+    def __init__(self, positions: list[Position] = []):
+        # self.value = 0
+        self._items: list[Position] = positions
 
     #! self._items - GET
     def __len__(self):
@@ -32,17 +32,16 @@ class GridPositions:
     def returnAllPositions(self):
         return self._items
 
-    #! self._items - GET
-    def path_return(self, position: Position) -> Position:
-        i = self._items.index(position)
-        return self._items[i - 1]
+    def get_previous_position(self, target_position: Position) -> Position:
+        index_of_target = self._items.index(target_position)
+        return self._items[index_of_target - 1]
 
     #! self._items - GET
-    def is_build_finish(self, level_item: Position) -> bool:
+    def is_building_complete(self, level_item: Position) -> bool:
         check_len = len(self._items) > 2
         return not check_len or level_item != self._items[0]
 
     #! self._items - GET
-    def get_all_positions_next(self, position: Position):
+    def get_positions_next_to(self, position: Position):
         if position not in self._items:
             return self._items[-1]

@@ -35,7 +35,7 @@ class Build:
         self.set_reduced_positions(level)
         self.current_position: Position = random.choice(self.reduced_positions)
 
-        while self.grid_positions.is_build_finish(self.current_position):
+        while self.grid_positions.is_building_complete(self.current_position):
             self.grid_positions.addPosition(self.current_position)
 
             self.set_position_next(level)
@@ -70,7 +70,7 @@ class Build:
             res = self.set_get_next_positions(level)[0]
 
         else:
-            res = self.grid_positions.get_all_positions_next(self.current_position)
+            res = self.grid_positions.get_positions_next_to(self.current_position)
             while res is None:
                 self.set_return_positions()
                 res = self.get_return_position_next()
@@ -116,7 +116,7 @@ class Build:
     #! return_positions - list
     def set_return_positions(self):
         self.return_positions.append(
-            self.grid_positions.path_return(self.current_position)
+            self.grid_positions.get_previous_position(self.current_position)
         )
 
     #! return_position - list
