@@ -2,7 +2,8 @@ import copy
 import random
 from typing import TYPE_CHECKING
 
-from src.gridPositions import GridPositions
+
+from src.GridPositions import GridPositions
 from src.utilities import DIRECTIONS_FOUR, Direction, Position
 
 if TYPE_CHECKING:

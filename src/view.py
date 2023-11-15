@@ -1,4 +1,4 @@
-from src.tile import Tile
+from src.Tile import Tile
 from src.surround import Surround
 from src.utilities import BlitData, Colors, Position, Color
 from src.window import Window
