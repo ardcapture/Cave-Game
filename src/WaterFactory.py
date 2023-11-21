@@ -18,13 +18,11 @@ class WaterFactory:
 
     color = Colors.BLUE_LIGHT  # for draw rect
 
-    @property
-    def water_objects(self) -> list[LevelObject]:
-        res_set = set(self.water_collect_positions + self.water_waterline_positions)
-        return list(res_set)
-
-    def __init__(self, level: "Level", path: "Nav") -> None:
+    def __init__(self, level: "Level") -> None:
         print("init Water")
+
+        self.HEIGHT_GS = level.HEIGHT_GS
+        self.GRID_SIZE = level.GRID_SIZE
 
         self.width: int = level.GRID_SIZE  # for Rect and Surface
         self.height: int = level.GRID_SIZE  # for Rect ans Surface
@@ -35,6 +33,17 @@ class WaterFactory:
         self.water_collect_positions = self.get_water_collect_positions(level)
 
         self.water_waterline_positions = self.get_water_waterline_positions(level)
+
+    @property
+    def water_objects(self) -> list[LevelObject]:
+        res_set = set(self.water_collect_positions + self.water_waterline_positions)
+        return list(res_set)
+
+    @property
+    def water_line(self) -> float:
+        grid_height = self.HEIGHT_GS - self.GRID_SIZE * 2
+        water_level = grid_height * (2 / 3)
+        return water_level
 
     def water_add_above_rock(self, level: "Level") -> None:
         for p in level.paths:
@@ -78,7 +87,7 @@ class WaterFactory:
 
     def get_water_waterline_positions(self, level: "Level") -> list[LevelObject]:
         positions = [
-            position for position in level.paths if position.y > level.water_line
+            position for position in level.paths if position.y > self.water_line
         ]
 
         self.water_waterline_positions: list[LevelObject] = [

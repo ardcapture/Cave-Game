@@ -3,7 +3,6 @@ from operator import itemgetter
 from src.utilities import Color, Position, Light_Data
 from typing import TYPE_CHECKING
 import copy
-import random
 
 if TYPE_CHECKING:
     from src.level import Level
