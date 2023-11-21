@@ -1,8 +1,6 @@
 import random
-import copy
 
 from itertools import product
-from typing import TYPE_CHECKING
 
 import pygame
 
@@ -15,9 +13,6 @@ from src.GridPositions import GridPositions
 from . import utilities
 
 from src.utilities import DIRECTIONS_FOUR, Direction, Position, Color
-
-if TYPE_CHECKING:
-    from window import Window
 
 
 LevelStates = ["01_Title", "02_Settings", "03_Build", "04_Play"]
@@ -102,7 +97,9 @@ class Level:
         self._set_climb_positions()
 
         self.lights = Lights(self.GRID_SIZE)
+
         self.water = WaterFactory(self, self.nav)
+        self.lights.light_positions = dict.fromkeys(self.paths, BLACK)
 
     #! tuples
     @property
@@ -198,12 +195,12 @@ class Level:
             self.grid_positions.get_previous_position(self.current_position)
         )
 
-    def set_player_path_position(self, window: "Window") -> None:
-        self.player_path_position = self.mouse_event_run(self.nav, window)
-        self.player_path_position = self.get_player_path_position(
-            window,
-            Position(0, 0),
-        )
+    # def set_player_path_position(self, window: "Window") -> None:
+    #     self.player_path_position = self.mouse_event_run(self.nav, window)
+    #     self.player_path_position = self.get_player_path_position(
+    #         window,
+    #         Position(0, 0),
+    #     )
 
     def set_character_light_positions(self):
         self.lights.characterLightPositions = dict.fromkeys(self.paths, BLACK)
@@ -228,8 +225,8 @@ class Level:
             self.paths,
         )
 
-    def set_light_positions(self):
-        self.lights.light_positions = dict.fromkeys(self.paths, BLACK)
+    # def set_light_positions(self):
+    #     self.lights.light_positions = dict.fromkeys(self.paths, BLACK)
 
     #! self.path_start_position - get
     #! self.camp_positions - set
@@ -333,10 +330,8 @@ class Level:
     #! self.climb_positions_visited
     #! self.player_path_position - tuple
     def set_visited_climb_positions(self) -> None:
-        if not self.isNewClimbPosition:
-            return
-
-        self.climb_positions_visited.append(self.player_path_position)
+        if self.isNewClimbPosition:
+            self.climb_positions_visited.append(self.player_path_position)
 
     def set_route_positions(self, new_position: Position) -> list[Position]:
         if new_position in self.paths or new_position in self.camp_positions:
@@ -344,49 +339,3 @@ class Level:
         else:
             updated_positions = [self.player_path_position]
         return updated_positions
-
-    #! self.paths
-    #! self.camp_positions
-    #! self.route
-    #! self.player_path_position - tuple
-    def mouse_event_run(self, nav: "Nav", window: "Window") -> Position:
-        if not window.mouse_event_run:
-            return Position(-1, -1)
-
-        position = window.mouse_event_run
-        position = utilities.position_to_grid_position(position, self.GRID_SIZE)
-
-        if position not in self.paths or position not in self.camp_positions:
-            current_positions = [self.player_path_position]
-            updated_positions = self.set_route_positions(position)
-            self.route = nav.set_route(current_positions, updated_positions)
-            route_index = 0
-            for i in self.route[route_index:]:  # TODO need breaking into steps
-                self.player_path_position = self.get_player_path_position(window, i)
-        return self.player_path_position
-
-    #! self.player_path_position
-    #! self.paths
-    #! self.camp_positions
-    def get_player_path_position(
-        self, window: "Window", position: "Position"
-    ) -> Position:
-        x, y = self.player_path_position
-
-        if position != Position(0, 0):
-            x, y = position
-
-        elif window.event_keyboard == KEY_LEFT:
-            x -= self.GRID_SIZE
-        elif window.event_keyboard == KEY_RIGHT:
-            x += self.GRID_SIZE
-        elif window.event_keyboard == KEY_UP:
-            y -= self.GRID_SIZE
-        elif window.event_keyboard == KEY_DOWN:
-            y += self.GRID_SIZE
-
-        if Position(x, y) in self.paths or Position(x, y) in self.camp_positions:
-            return Position(x, y)
-
-        else:
-            return Position(0, 0)
