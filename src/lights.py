@@ -7,7 +7,6 @@ import random
 
 if TYPE_CHECKING:
     from src.level import Level
-    from src.nav import Nav
 
 # TODO: Complex type to class
 Colors = list[Color]
@@ -21,28 +20,18 @@ WHITE_VALUE = 246
 class Lights:
     objs = []
     brightness_list: Colors = []
-    # sun_light_positions: PositionColor
 
-    def __init__(self, level: "Level") -> None:
+    light_positions: dict[Position, Color]
+    characterLightPositions: dict[Position, Color]
+    sun_light_positions: PositionColor
+
+    def __init__(self, GRID_SIZE: int) -> None:
         print("init Lights")
 
-        self.grid_size = level.GRID_SIZE
-        self.grid_size_2D = (level.GRID_SIZE, level.GRID_SIZE)
-
+        self.GRID_SIZE = GRID_SIZE
         self.brightness_list = self.setColorFromValue(WHITE_VALUE)
 
-    def update(self, level: "Level", path: "Nav"):
-        self.light_positions = dict.fromkeys(level.paths, BLACK)
-        self.characterLightPositions = dict.fromkeys(level.paths, BLACK)
-
-        # self.set_lights_debug(level)
-
-        self.source = self.set_light_source(level)
-
-        self.sun_light_positions = self.get_positions_sun(level)
-
-        self.characterLightPositions = self.update_character_light_positions(level)
-
+    def update(self):
         light_positions = self.update_light_positions()
 
         self.light_objs = [
@@ -50,10 +39,6 @@ class Lights:
             for pos, color in light_positions.items()
             if color[0] > 0
         ]
-
-    def set_light_source(self, level: "Level") -> Position:
-        seq = level.paths
-        return random.choice(seq)
 
     def setColorFromValue(self, value: int) -> list[Color]:
         while value > 0:
@@ -63,12 +48,14 @@ class Lights:
 
         return self.brightness_list
 
-    #! uses itself
-    def update_character_light_positions(self, level: "Level") -> dict[Position, Color]:
+    def update_character_light_positions(
+        self,
+        level: "Level",
+        directions: list[int],
+    ) -> dict[Position, Color]:
         characterLightPositions = copy.copy(self.characterLightPositions)
 
-        myList = [level.GRID_SIZE, -level.GRID_SIZE]
-        for i in myList:
+        for i in directions:
             possLightPosition = level.player_path_position
             brightness = 0
             run = True
@@ -84,7 +71,7 @@ class Lights:
                         brightness += 1
                 else:
                     run = False
-        for i in myList:
+        for i in directions:
             possLightPosition = level.player_path_position
             brightness = 0
             run = True
@@ -104,16 +91,15 @@ class Lights:
         return characterLightPositions
 
     #! takes itself
-    def get_positions_sun(self, level: "Level") -> PositionColor:
-        path_paths = level.paths
-        path_path_start_position = level.path_start_position
-        path_path_finish_position = level.path_finish_position
-
+    def get_positions_sun(
+        self,
+        level: "Level",
+        start_finish_positions: list[Position],
+        path_paths: list[Position],
+    ) -> PositionColor:
         sun_light_positions = dict.fromkeys(path_paths, BLACK)
 
-        seq = [path_path_start_position, path_path_finish_position]
-
-        for light_position in seq:
+        for light_position in start_finish_positions:
             brightnessIndex = 1
 
             while True:
@@ -122,7 +108,10 @@ class Lights:
                 sun_light_positions[light_position] = self.brightness_list[
                     brightnessIndex
                 ]
-                light_position = (light_position[0], light_position[1] + self.grid_size)
+                light_position = (
+                    light_position[0],
+                    light_position[1] + level.GRID_SIZE,
+                )
                 if brightnessIndex < len(self.brightness_list) - 1:
                     brightnessIndex += 1
 

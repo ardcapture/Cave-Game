@@ -49,8 +49,7 @@ class Window:
 
         self.window_surface: pygame.surface.Surface = self.get_window_surface()
 
-    def update(self):
-        self.pygame_events = pygame.event.get()
+    def set_m_event(self):
         self.m_event = self.control_pygame_events()
 
     def control_pygame_events(self):

@@ -100,57 +100,14 @@ class View:
         paths = "player_tran.png"
         return os.path.join(path, paths)
 
-    # TODO convert return to dataclass
-    def update(self, game: "Game", level: "Level", paths: "Nav", window: "Window"):
-        self.clear_blit_list()
-
-        # update surround:
-
-        # TODO level.path should not be here?!
-        self.surround.update(level)
-        self.path_adjacent = self.surround.path_adjacent
-
-        # TODO is this needed!:
-        # self.poss_surround_positions = self.surround.poss_surround_positions
-
-        # update tile:
-        # self.tile.create_tile_locations(level)
-        self.route_light_positions_tiles = self.tile.set_path_surround_tiles(self)
-
-        # update window:
-        self.window.update()
-
-        # more stuff!:
-        self.set_window_end(self.window)
-
-        #! DRAW WINDOW START
-
-        self.draw_level(level, window)  # blit (via set_surface_to_surface)
-
-        self.draw_coordinates(self.window)  # append list_blit
-
-        self.draw_water(level.water)  # append list_blit
-
-        self.set_surface_to_window(
-            self.window, level, paths
-        )  # blit (via set_surface_to_surface)
-
-        self.set_blit_objs(level, level.lights)  # append list_blit
-
-        if game.run_debug_state:
-            self.in_list_climb_positions(paths, level)  # append list_blit
-            self.draw_debug_start_position(level)  # draw rect (via draw_outline)
-            self.draw_debug_ends(level.nav)  # blit
-            self.draw_debug_route(level)  # draw rect (via draw_outline)
-
-        # self.if_debug(game, level, paths)
-
-        self.Blit(self.list_DataBlit, window)  # run list_blit
-        #! DRAW WINDOW END
-
-        self.clock.tick(60)  # TODO Check what this is doing!!!
-
+    def update_display(self):
         pygame.display.update()
+
+    def set_pygame_events(self):
+        self.window.pygame_events = pygame.event.get()
+
+    def set_route_light_positions_tiles(self):
+        self.route_light_positions_tiles = self.tile.set_path_surround_tiles(self)
 
     @property
     def pygame_font(self):
@@ -225,13 +182,13 @@ class View:
 
     #! SURFACE > DataBlit - METHODS - START *****************
 
-    def draw_coordinates(self, window: Window):
-        if not window.m_event:
+    def draw_coordinates(self):
+        if not self.window.m_event:
             return
 
         # Font > Surface
         font = self.pygame_font
-        text = str(window.m_event.pos)
+        text = str(self.window.m_event.pos)
         antialias = True
         color = Colors.RED
 
@@ -245,8 +202,8 @@ class View:
 
         self.list_DataBlit.append(BlitData(source, dest, area, special_flags))
 
-    def draw_debug_ends(self, nav: "Nav"):
-        for position, v in nav.positionInt.items():
+    def draw_debug_ends(self, level: "Level"):
+        for position, v in level.nav.positionInt.items():
             source: pygame.surface.Surface = self.get_surface_text(str(v))
             dest = Position(position[0] + 1, position[1] + 5)
             area = None
@@ -254,8 +211,8 @@ class View:
 
             self.list_DataBlit.append(BlitData(source, dest, area, special_flags))
 
-    def set_blit_objs(self, level: "Level", lights: "Lights"):
-        for obj in lights.light_objs:
+    def set_blit_objs(self, level: "Level"):
+        for obj in level.lights.light_objs:
             source = self.get_surface_lights(level, obj.color)
             dest = obj.position
             area = None
@@ -263,7 +220,7 @@ class View:
 
             self.list_DataBlit.append(BlitData(source, dest, area, special_flags))
 
-    def in_list_climb_positions(self, path: "Nav", level: "Level"):
+    def in_list_climb_positions(self, level: "Level"):
         for p in level.list_climb_positions:
             source = self.get_surface_from_rect(level)
             dest = Position(p.x, p.y)
@@ -292,10 +249,10 @@ class View:
         surface = pygame.image.load(self.route_light_positions_tiles[position])
         return pygame.transform.scale(surface, (level.GRID_SIZE, level.GRID_SIZE))
 
-    def draw_level(self, level: "Level", window: "Window"):
+    def draw_level(self, level: "Level"):
         TILE_LETTERS = [
             (self.rock_V02.positions, "R"),
-            (self.path_adjacent, "A"),
+            (self.surround.path_adjacent, "A"),
             (self.sky_V02.positions, "S"),
             (self.grass_V02.positions, "G"),
             (level.paths, "P"),
@@ -317,7 +274,7 @@ class View:
                 surface.blit(source, dest, area, special_flags)
 
             elif v == "P":
-                surface = window.window_surface
+                surface = self.window.window_surface
                 source = self.rock_V02.surface
                 dest = pos
                 area = None
@@ -325,7 +282,7 @@ class View:
                 surface.blit(source, dest, area, special_flags)
 
             elif v == "S":
-                surface = window.window_surface
+                surface = self.window.window_surface
                 source = self.sky_V02.surface
                 dest = pos
                 area = None
@@ -333,7 +290,7 @@ class View:
                 surface.blit(source, dest, area, special_flags)
 
             elif v == "G":
-                surface = window.window_surface
+                surface = self.window.window_surface
                 source = self.grass_V02.surface
                 dest = pos
                 area = None
@@ -349,17 +306,17 @@ class View:
         #         special_flags = 0
         #         surface.blit(source, dest, area, special_flags)
 
-    def Blit(self, list_blit: list[BlitData], window: "Window"):
-        surface = window.window_surface
-        for l in list_blit:
+    def Blit(self):
+        surface = self.window.window_surface
+        for l in self.list_DataBlit:
             surface.blit(l.source, l.dest, l.area, l.special_flags)
 
-    def set_surface_to_window(self, window: "Window", level: "Level", paths: "Nav"):
+    def set_surface_to_window(self, level: "Level"):
         if not level.player_path_position:
             return
 
         source = self.player_image
-        surface = window.window_surface
+        surface = self.window.window_surface
 
         width = source.get_width()
         x = int(level.player_path_position[0] + ((level.GRID_SIZE - width) / 2))
@@ -404,11 +361,11 @@ class View:
         color = self.player_key
         self.surface_load_player.set_colorkey(color)
 
-    def set_window_end(self, window: "Window"):
-        if not window.m_event:
+    def set_window_end(self):
+        if not self.window.m_event:
             return
 
-        if window.m_event.state == WINDOW_CLOSE:
+        if self.window.m_event.state == WINDOW_CLOSE:
             self.set_end()
 
     #! needs to be run?!

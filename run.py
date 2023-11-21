@@ -3,8 +3,9 @@ from src.view import View
 
 
 def main():
-    game = Game(View())
-    game.update()
+    game = Game()
+    view = View()
+    game.update(view)
 
 
 if __name__ == "__main__":

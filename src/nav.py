@@ -1,9 +1,5 @@
-from typing import TYPE_CHECKING
-
 from src.utilities import DIRECTIONS_FOUR, Position
 
-if TYPE_CHECKING:
-    from src.level import Level
 
 # TODO: types to classes
 PositionInt = dict[Position, int]
@@ -24,25 +20,29 @@ PATHS_PATHSNAME = {
 
 
 class Nav:
-    def __init__(self, level: "Level") -> None:
+    def __init__(self, GRID_SIZE: int, combined_positions: list[Position]) -> None:
         print("init Nav")
 
-        iterable = level.paths + level.camp_positions
+        self.GRID_SIZE = GRID_SIZE
+
         value: int = 0
-        self.positionInt: PositionInt = dict.fromkeys(iterable, value)
+        self.positionInt: PositionInt = dict.fromkeys(combined_positions, value)
 
-        iterable = level.paths + level.camp_positions
-        self.positionPositions: PositionPositions = dict.fromkeys(iterable, [])
+        self.positionPositions: PositionPositions = dict.fromkeys(
+            combined_positions, []
+        )
 
-        self.positionInt, self.positionPositions = self.set_navigation(level)
+        self.positionInt, self.positionPositions = self.set_navigation()
 
     #! variable renaming done:
-    def get_adjacent_positions(self, level: "Level", center_position: Position):
+    def get_adjacent_positions(self, center_position: Position):
         adjacent_positions: list[Position] = []
-        grid_size = level.GRID_SIZE
 
         for direction in DIRECTIONS_FOUR:
-            x_offset, y_offset = direction.x * grid_size, direction.y * grid_size
+            x_offset, y_offset = (
+                direction.x * self.GRID_SIZE,
+                direction.y * self.GRID_SIZE,
+            )
             adjacent_x, adjacent_y = (
                 center_position.x + x_offset,
                 center_position.y + y_offset,
@@ -59,9 +59,9 @@ class Nav:
         # TODO: not sure where self.path_directions_list is coming from! How it is changing each loop!
         return PATHS_PATHSNAME[len(self.positions)]
 
-    def set_navigation(self, level: "Level"):
+    def set_navigation(self):
         for position in self.positionInt.keys():
-            self.positions = self.get_adjacent_positions(level, position)
+            self.positions = self.get_adjacent_positions(position)
             self.positionInt[position] = self.setPathName()
             self.positionPositions[position] = self.positions
 
@@ -124,44 +124,38 @@ class Nav:
         return self.positionInt.get(x, 0)
 
     def set_route(
-        self,
-        level: "Level",
-        position_01: "Position",
+        self, current_positions: list[Position], updated_positions: list[Position]
     ):
-        """For Nav - currently used in controller."""
-
-        positionsA = [level.player_path_position]
-        if position_01 in level.paths or position_01 in level.camp_positions:
-            positionsB = [position_01]
-        else:
-            positionsB = [level.player_path_position]
+        # """For Nav - currently used in controller."""
 
         run = True
         while run:
             if (
-                self.positionInt[positionsA[-1]] <= self.positionInt[positionsB[-1]]
-                or not positionsA
+                self.positionInt[current_positions[-1]]
+                <= self.positionInt[updated_positions[-1]]
+                or not current_positions
             ):
                 position_02: Position = max(
-                    self.positionPositions[positionsA[-1]],
+                    self.positionPositions[current_positions[-1]],
                     key=self.maxKey,
                 )
 
-                positionsA.append(position_02)
+                current_positions.append(position_02)
             if (
-                self.positionInt[positionsB[-1]] <= self.positionInt[positionsA[-1]]
-                or not positionsB
+                self.positionInt[updated_positions[-1]]
+                <= self.positionInt[current_positions[-1]]
+                or not updated_positions
             ):
                 position_02: Position = max(
-                    self.positionPositions[positionsB[-1]],
+                    self.positionPositions[updated_positions[-1]],
                     key=self.maxKey,
                 )
 
-                positionsB.append(position_02)
-            if [i for i in positionsA if i in positionsB]:
-                positionsA.pop(-1)
+                updated_positions.append(position_02)
+            if [i for i in current_positions if i in updated_positions]:
+                current_positions.pop(-1)
                 run = False
-        positionsB.reverse()
-        positionsA.extend(positionsB)
+        updated_positions.reverse()
+        current_positions.extend(updated_positions)
 
-        return positionsA
+        return current_positions

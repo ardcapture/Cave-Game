@@ -18,6 +18,11 @@ class WaterFactory:
 
     color = Colors.BLUE_LIGHT  # for draw rect
 
+    @property
+    def water_objects(self) -> list[LevelObject]:
+        res_set = set(self.water_collect_positions + self.water_waterline_positions)
+        return list(res_set)
+
     def __init__(self, level: "Level", path: "Nav") -> None:
         print("init Water")
 
@@ -81,8 +86,3 @@ class WaterFactory:
         ]
 
         return self.water_waterline_positions
-
-    @property
-    def water_objects(self) -> list[LevelObject]:
-        res_set = set(self.water_collect_positions + self.water_waterline_positions)
-        return list(res_set)
