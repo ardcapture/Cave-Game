@@ -31,7 +31,7 @@ class Lights:
         self.GRID_SIZE = GRID_SIZE
         self.brightness_list = self.setColorFromValue(WHITE_VALUE)
 
-    def update(self):
+    def set_light_objs(self):
         light_positions = self.update_light_positions()
 
         self.light_objs = [

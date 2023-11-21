@@ -1,9 +1,8 @@
-from typing import TYPE_CHECKING
-
 from src.level import Level
+from src.view import View
 
-if TYPE_CHECKING:
-    from src.view import View
+# if TYPE_CHECKING:
+#     from src.view import View
 
 
 class Game:
@@ -13,6 +12,7 @@ class Game:
     # game state controllers:
 
     level = Level()
+    view = View(level)
     # model and views:
     # view = View()
 
@@ -21,53 +21,58 @@ class Game:
     # TODO _run/update too?
 
     def __init__(self) -> None:
-        pass
-
-    def update(self, view: "View") -> None:
-        state = "build"
-        view.setup(self.level)
+        self.state = "build"
+        # self.view.set_window(self.level)
+        # self.view.set_tile(self.level)
+        # self.view.set_sky_V02(self.level)
+        # self.view.set_rock_V02(self.level)
+        # self.view.set_grass_V02(self.level)
+        # self.view.set_surround()
 
         while True:
-            if state == "build":
-                state = "run"
-            if state == "run":
+            if self.state == "build":
+                self.state = "run"
+            if self.state == "run":
                 self.level.set_visited_climb_positions()
-
                 self.level.set_light_positions()
-                self.level.set_characterLightPositions()
                 self.level.set_sun_light_positions()
+                self.level.set_character_light_positions()
+                self.level.lights.set_light_objs()
+                self.level.set_player_path_position(self.view.window)
 
-                self.level.update(view.window)
+                self.view.clear_blit_list()
 
-                # TODO self.level.path should not be here?!
-                view.clear_blit_list()
-                view.surround.update(self.level)
-                view.set_route_light_positions_tiles()
-                view.set_pygame_events()
-                view.window.set_m_event()
-                view.set_window_end()
+                self.view.surround.set_path_adjacent(self.level)
+                # view.surround.set_poss_surround_positions(self.level)
+
+                self.view.set_route_light_positions_tiles(self.level)
+                self.view.set_pygame_events()
+                self.view.window.set_m_event()
+                self.view.set_window_end()
 
                 #! DRAW WINDOW START
 
-                view.draw_level(self.level)  # blit (via set_surface_to_surface)
-                view.draw_coordinates()  # append list_blit
-                view.draw_water(self.level.water)  # append list_blit
-                view.set_surface_to_window(
+                self.view.draw_level(self.level)  # blit (via set_surface_to_surface)
+                self.view.draw_coordinates()  # append list_blit
+                self.view.draw_water(self.level.water)  # append list_blit
+                self.view.set_surface_to_window(
                     self.level
                 )  # blit (via set_surface_to_surface)
-                view.set_blit_objs(self.level)  # append list_blit
+                self.view.set_blit_objs(self.level)  # append list_blit
 
                 if self.run_debug_state:
-                    view.in_list_climb_positions(self.level)  # append list_blit
-                    view.draw_debug_start_position(
+                    self.view.in_list_climb_positions(self.level)  # append list_blit
+                    self.view.draw_debug_start_position(
                         self.level
                     )  # draw rect (via draw_outline)
-                    view.draw_debug_ends(self.level)  # blit
-                    view.draw_debug_route(self.level)  # draw rect (via draw_outline)
+                    self.view.draw_debug_ends(self.level)  # blit
+                    self.view.draw_debug_route(
+                        self.level
+                    )  # draw rect (via draw_outline)
 
-                view.Blit()  # run list_blit
-                view.clock.tick(60)  # TODO Check what this is doing!!!
-                view.update_display()
+                self.view.Blit()  # run list_blit
+                self.view.clock.tick(60)  # TODO Check what this is doing!!!
+                self.view.update_display()
 
 
 # TODO get state / event

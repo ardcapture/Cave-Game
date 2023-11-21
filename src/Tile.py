@@ -55,11 +55,11 @@ class Tile:
         }
 
     #! called by update - 1 location
-    def set_path_surround_tiles(self, view: "View"):
+    def set_path_surround_tiles(self, view: "View", level: "Level"):
         # res_image: Image.Image = Image.Image()
         route_light_positions_tiles: dict[Position, str] = {}
 
-        for k, v in view.surround.surround_positions.items():
+        for k, v in view.surround.surround_positions(level).items():
             if len(v) == 1:
                 res_image = self.select_rotate(self.T_image, self.TR_image, v[-1])
                 res_image = res_image.convert("L")

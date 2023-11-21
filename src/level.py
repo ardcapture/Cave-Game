@@ -198,8 +198,16 @@ class Level:
             self.grid_positions.get_previous_position(self.current_position)
         )
 
-    #! self.player_path_position - set
-    def update(self, window: "Window"):
+    def set_player_path_position(self, window: "Window") -> None:
+        self.player_path_position = self.mouse_event_run(self.nav, window)
+        self.player_path_position = self.get_player_path_position(
+            window,
+            Position(0, 0),
+        )
+
+    def set_character_light_positions(self):
+        self.lights.characterLightPositions = dict.fromkeys(self.paths, BLACK)
+
         directions = [self.GRID_SIZE, -self.GRID_SIZE]
         self.lights.characterLightPositions = (
             self.lights.update_character_light_positions(
@@ -207,17 +215,6 @@ class Level:
                 directions,
             )
         )
-
-        self.lights.update()
-
-        self.player_path_position = self.mouse_event_run(self.nav, window)
-
-        self.player_path_position = self.get_player_path_position(
-            window,
-            Position(0, 0),
-        )
-
-        # self.path.player_path_position = player_path_position
 
     def set_sun_light_positions(self):
         start_finish_positions = [
@@ -230,9 +227,6 @@ class Level:
             start_finish_positions,
             self.paths,
         )
-
-    def set_characterLightPositions(self):
-        self.lights.characterLightPositions = dict.fromkeys(self.paths, BLACK)
 
     def set_light_positions(self):
         self.lights.light_positions = dict.fromkeys(self.paths, BLACK)

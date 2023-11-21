@@ -16,13 +16,11 @@ if TYPE_CHECKING:
 
 
 class Surround:
-    def update(self, level: "Level") -> None:
-        self.path_adjacent = self.update_dict_path_adjacent(level)
-
+    def set_poss_surround_positions(self, level: "Level") -> None:
         self.poss_surround_positions = self.set_poss_path_surround_positions(level)
 
-    def update_dict_path_adjacent(self, level: "Level"):
-        return {
+    def set_path_adjacent(self, level: "Level") -> dict[Position, str]:
+        self.path_adjacent = {
             self.tile(level, position, direction): "fish"
             for position, direction in product(level.paths, DIRECTIONS_EIGHT)
             if self.tile(level, position, direction) not in level.paths
@@ -43,9 +41,8 @@ class Surround:
                 d[position].append((res))
         return d
 
-    @property
-    def surround_positions(self):
-        res_list = copy.copy(self.poss_surround_positions)
+    def surround_positions(self, level: "Level"):
+        res_list = copy.copy(self.set_poss_path_surround_positions(level))
         for v, s in product(res_list.values(), DUPLICATE_CHECKS):
             if s in v and any(i in list(s) for i in v):
                 v.remove(s)

@@ -6,52 +6,21 @@ from typing import TYPE_CHECKING
 import os
 import pygame
 import sys
+from src.TileGenerator import TileGenerator
 
 if TYPE_CHECKING:
     from src.WaterFactory import WaterFactory
-    from src.game import Game
     from src.level import Level
-    from src.lights import Lights
-    from src.nav import Nav
 
 WINDOW_CLOSE = pygame.WINDOWCLOSE
 
 
-class Tile_V02:
-    def __init__(
-        self,
-        level: "Level",
-        y_start: int,
-        adjust: int,
-        surface: pygame.surface.Surface,
-    ):
-        self.grid_size = level.GRID_SIZE
-        self.top_offset = level.top_offset
-        self.width = level.WIDTH_GS
-
-        self.adjust = adjust
-        self.y_start = y_start
-        self.y_stop = self.grid_size * (self.top_offset - self.adjust)
-        self.surface = surface
-
-    @property
-    def positions(self):
-        return (
-            Position(x, y)
-            for x in range(0, self.width, self.grid_size)
-            for y in range(self.y_start, self.y_stop, self.grid_size)
-        )
-
-
 class View:
     PATH_IMAGES: str = "res"
-    player_key = Colors.WHITE
 
     # pygame
     pygame.init()
     clock = pygame.time.Clock()
-
-    # window_events = []
 
     run = True  # TODO CHECK WHAT IS USING
 
@@ -62,37 +31,36 @@ class View:
     width = 35
     height = 22
 
-    def setup(self, level: "Level"):
+    surround = Surround()
+
+    def __init__(self, level: "Level") -> None:
         self.player_scale = level.GRID_SIZE // 16
 
         self.window = Window(self, level)
+        self.tile = Tile(level)
 
-        self.tile = Tile(level=level)
-
-        self.sky_V02 = Tile_V02(
+        self.sky_V02 = TileGenerator(
             level=level,
             y_start=0,
             adjust=1,
             surface=self.imageSurface(level, "sky.png"),
         )
 
-        self.rock_V02 = Tile_V02(
+        self.rock_V02 = TileGenerator(
             level=level,
             y_start=0,
             adjust=1,
             surface=self.imageSurface(level, "rock.png"),
         )
 
-        self.grass_V02 = Tile_V02(
+        self.grass_V02 = TileGenerator(
             level=level,
             y_start=level.GRID_SIZE * (level.top_offset - 1),
             adjust=0,
             surface=self.imageSurface(level, "grass.png"),
         )
 
-        self.surround = Surround()
-
-        self.player_init()
+        self.surface_load_player.set_colorkey(Colors.WHITE)
 
     @property
     def filename_player(self):
@@ -106,8 +74,10 @@ class View:
     def set_pygame_events(self):
         self.window.pygame_events = pygame.event.get()
 
-    def set_route_light_positions_tiles(self):
-        self.route_light_positions_tiles = self.tile.set_path_surround_tiles(self)
+    def set_route_light_positions_tiles(self, level: "Level"):
+        self.route_light_positions_tiles = self.tile.set_path_surround_tiles(
+            self, level
+        )
 
     @property
     def pygame_font(self):
@@ -125,11 +95,6 @@ class View:
         rect = surface.get_rect()
         pygame.draw.rect(surface, color, rect)
         return surface
-
-    # def draw_rect(self, level: "Level", color: Color, pos: Position):
-    #     surface = self.window.window_surface
-    #     rect = (pos, (level.GRID_SIZE, level.GRID_SIZE))
-    #     pygame.draw.rect(surface, color, rect)
 
     def get_surface_from_rect(self, level: "Level"):
         flag = pygame.SRCALPHA
@@ -233,18 +198,6 @@ class View:
 
     #! Blit - METHODS - START *****************
 
-    # def set_surface_to_surface(
-    #     self,
-    #     surface: pygame.surface.Surface,
-    #     source: pygame.surface.Surface,
-    #     dest: Position,
-    #     area: None,
-    #     special_flags: int,
-    # ):
-    #     # self.list_DataBlit.append(DataBlit(surface, source, dest, area, special_flags))
-
-    #     surface.blit(source, dest, area, special_flags)
-
     def tile_adjacent(self, level: "Level", position: Position):
         surface = pygame.image.load(self.route_light_positions_tiles[position])
         return pygame.transform.scale(surface, (level.GRID_SIZE, level.GRID_SIZE))
@@ -297,15 +250,6 @@ class View:
                 special_flags = 0
                 surface.blit(source, dest, area, special_flags)
 
-        # for tile in [self.grass_V02, self.sky_V02]:
-        #     for i in tile.positions:
-        #         surface = self.window.window_surface
-        #         source = tile.surface
-        #         dest = i
-        #         area = None
-        #         special_flags = 0
-        #         surface.blit(source, dest, area, special_flags)
-
     def Blit(self):
         surface = self.window.window_surface
         for l in self.list_DataBlit:
@@ -357,10 +301,6 @@ class View:
         size = (x, y)
         return pygame.transform.scale(surface, size)
 
-    def player_init(self):
-        color = self.player_key
-        self.surface_load_player.set_colorkey(color)
-
     def set_window_end(self):
         if not self.window.m_event:
             return
@@ -378,19 +318,9 @@ class View:
         # paths: str = "rock.png"
         return self.getSurfaceFile(paths, level)
 
-    # window = self.window.window_surface
-
-    # text = (self.get_surface_text,)
-
-    # light = (self.get_surface_lights,)
-
     def getSurfaceFile(self, paths: str, level: "Level") -> pygame.surface.Surface:
         path = self.PATH_IMAGES
         filename = os.path.join(path, paths)
         surface = pygame.image.load(filename)
         size = level.GRID_SIZE_2D
         return pygame.transform.scale(surface, size)
-
-
-def specialFunction():
-    return "Hello"
