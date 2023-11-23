@@ -60,7 +60,7 @@ class View:
             surface=self.imageSurface(level, "grass.png"),
         )
 
-        self.surface_load_player.set_colorkey(Colors.WHITE)
+        self.surface_load_player.set_colorkey(Colors.WHITE.value)
 
     @property
     def filename_player(self):
@@ -87,7 +87,7 @@ class View:
         font: pygame.font.Font = pygame.font.SysFont("monospace", 15)
         renderText: str = "{0}".format(formatText)
         antialias: bool = True
-        return font.render(renderText, antialias, ((Colors.GREEN)))
+        return font.render(renderText, antialias, ((Colors.GREEN.value)))
 
     #! RECT > SURFACE - METHODS - START ******************
     def get_surface_lights(self, level: "Level", color: Color):
@@ -100,7 +100,7 @@ class View:
         flag = pygame.SRCALPHA
         surface = pygame.Surface(level.GRID_SIZE_2D, flag)
 
-        color = Colors.GREEN
+        color = Colors.GREEN.value
 
         # pygame rect
 
@@ -155,7 +155,7 @@ class View:
         font = self.pygame_font
         text = str(self.window.m_event.pos)
         antialias = True
-        color = Colors.RED
+        color = Colors.RED.value
 
         surface_font = font.render(text, antialias, color)
 
@@ -277,7 +277,7 @@ class View:
 
     def draw_debug_route(self, level: "Level"):
         for p in level.route:
-            color = Colors.GREEN
+            color = Colors.GREEN.value
             position = Position(p[0], p[1])
             self.rect_to_surface_outline(level, color, position)
 
@@ -286,7 +286,7 @@ class View:
 
     def draw_debug_start_position(self, level: "Level"):
         p = level.paths[0]
-        self.rect_to_surface_outline(level, Colors.RED, Position(p.x, p.y))
+        self.rect_to_surface_outline(level, Colors.RED.value, Position(p.x, p.y))
 
     @property
     def surface_load_player(self):

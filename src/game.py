@@ -27,8 +27,10 @@ class Game:
                 self.state = "run"
             if self.state == "run":
                 self.level.set_visited_climb_positions()
-                # self.level.set_light_positions()
-                self.level.set_sun_light_positions()
+
+                self.level.lights.sun_light_positions = (
+                    self.level.get_sunlight_positions()
+                )
                 self.level.set_character_light_positions()
                 self.level.lights.set_light_objs()
                 self.set_player_path_position()

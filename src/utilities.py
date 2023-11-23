@@ -4,6 +4,7 @@ import pygame
 from pygame import Rect
 import copy
 import random
+from enum import Enum
 
 if TYPE_CHECKING:
     from WaterFactory import LevelObject
@@ -59,8 +60,7 @@ class BlitData(NamedTuple):
 # )
 
 
-@dataclass
-class Colors:
+class Colors(Enum):
     BLACK = Color(0, 0, 0)
     WHITE = Color(255, 255, 255)
     BLACK_VERY_LIGHT = Color(210, 210, 210)
@@ -153,16 +153,6 @@ LIGHTING_TILE_ROTATE: dict[str, tuple[str, int]] = {
 
 class NoPositionFound(Exception):
     pass
-
-
-def set_reduced_positions(grid_positions: list[Position]) -> list[Position]:
-    res_grid: list[Position] = copy.deepcopy(grid_positions)
-    num_removals: int = len(res_grid) // 3
-
-    for _ in range(num_removals):
-        random_position: Position = random.choice(res_grid)
-        res_grid.remove(random_position)
-    return res_grid
 
 
 def debug_instance_variables(self: Any) -> None:

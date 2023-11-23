@@ -7,7 +7,6 @@ from src.WaterObject import WaterObject
 
 if TYPE_CHECKING:
     from src.level import Level
-    from src.nav import Nav
 
 
 class WaterFactory:
@@ -16,7 +15,7 @@ class WaterFactory:
     left: int = 0  # for Rect
     top: int = 0  #  for Rect
 
-    color = Colors.BLUE_LIGHT  # for draw rect
+    color = Colors.BLUE_LIGHT.value  # for draw rect
 
     def __init__(self, level: "Level") -> None:
         print("init Water")

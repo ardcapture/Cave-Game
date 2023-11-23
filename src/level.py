@@ -1,18 +1,15 @@
-import random
-
+from . import utilities
+from collections import defaultdict
 from itertools import product
-
-import pygame
-
+from src.GridPositions import GridPositions
+from src.WaterFactory import WaterFactory
 from src.lights import Lights  #! object used 1x
 from src.nav import Nav
-from src.utilities import NoPositionFound, Position
-from src.WaterFactory import WaterFactory
-from src.GridPositions import GridPositions
-
-from . import utilities
-
 from src.utilities import DIRECTIONS_FOUR, Direction, Position, Color
+from src.utilities import NoPositionFound, Position, Colors
+import copy
+import pygame
+import random
 
 
 LevelStates = ["01_Title", "02_Settings", "03_Build", "04_Play"]
@@ -29,11 +26,11 @@ KEY_BACKQUOTE = pygame.K_BACKQUOTE
 
 
 class Level:
-    climb_positions_visited: list[Position] = []
+    _climb_positions_visited: list[Position] = []
 
-    lights_state: bool = False
-    selected = False
-    reset_02 = False
+    _lights_state: bool = False
+    # selected = False
+    # reset_02 = False
 
     top_offset: int = 5
 
@@ -42,7 +39,7 @@ class Level:
     WIDTH_GS = (GRID_SIZE * 2) + (GRID_SIZE * 35)
     HEIGHT_GS = (GRID_SIZE * 2) + (GRID_SIZE * 22)
 
-    previous_position: Position = Position(0, 0)
+    # previous_position: Position = Position(0, 0)
 
     route: list["Position"] = []
 
@@ -51,9 +48,7 @@ class Level:
     _build_path_positions: list[Position] = []
 
     def __init__(self):
-        self._set_grid_positions()
-
-        self._reduced_positions = utilities.set_reduced_positions(self._grid_positions)
+        self._reduced_positions = self._set_reduced_positions()
 
         self._current_position: Position = random.choice(self._reduced_positions)
 
@@ -71,9 +66,6 @@ class Level:
             self._build_path_positions = (
                 self._grid_positions.returnAllPositions() + self._list_position_jump
             )
-
-        self._set_poss_path_start()
-        self._set_poss_path_finish()
 
         try:
             self._set_start_position()
@@ -100,16 +92,14 @@ class Level:
         # ! PUBLIC
         self.nav = Nav(self.GRID_SIZE, self._combined_positions)
 
-        self._update_climb_positions()
+        # ! PUBLIC
+        self.list_climb_positions = self._generate_climb_positions()
 
         # ! PUBLIC
-        self.lights = Lights(self.GRID_SIZE)
+        self.lights = Lights()
 
         # ! PUBLIC
         self.water = WaterFactory(self)
-
-        # ! PUBLIC
-        self.lights.light_positions = dict.fromkeys(self.paths, BLACK)
 
     @property
     def _position_break_current(self) -> Position:
@@ -127,35 +117,94 @@ class Level:
     def _isNewClimbPosition(self):
         a = self.player_path_position
         b = self.list_climb_positions
-        c = self.climb_positions_visited
+        c = self._climb_positions_visited
         return a in b and a not in c
 
     def set_character_light_positions(self):
-        self.lights.characterLightPositions = dict.fromkeys(self.paths, BLACK)
+        self.lights.characterLightPositions = defaultdict(lambda: Colors.BLACK.value)
+
+        self.lights.characterLightPositions = self.update_character_light_positions()
+
+    def update_character_light_positions(
+        self,
+    ) -> dict[Position, Color]:
+        characterLightPositions = copy.copy(self.lights.characterLightPositions)
 
         directions = [self.GRID_SIZE, -self.GRID_SIZE]
-        self.lights.characterLightPositions = (
-            self.lights.update_character_light_positions(
-                self,
-                directions,
-            )
+
+        for i in directions:
+            possLightPosition = self.player_path_position
+            brightness = 0
+            run = True
+            while run:
+                if possLightPosition in self.paths:
+                    characterLightPositions[
+                        possLightPosition
+                    ] = self.lights.brightness_list[brightness]
+                    possLightPosition = Position(
+                        possLightPosition.x + i, possLightPosition.y
+                    )
+
+                    if brightness < len(self.lights.brightness_list) - 1:
+                        brightness += 1
+                else:
+                    run = False
+        for i in directions:
+            possLightPosition = self.player_path_position
+            brightness = 0
+            run = True
+            while run:
+                if possLightPosition in self.paths:
+                    characterLightPositions[
+                        possLightPosition
+                    ] = self.lights.brightness_list[brightness]
+                    possLightPosition = Position(
+                        possLightPosition.y, possLightPosition.y + i
+                    )
+                    if brightness < len(self.lights.brightness_list) - 1:
+                        brightness += 1
+                else:
+                    run = False
+        characterLightPositions[self.player_path_position] = Colors.BLACK.value
+        return characterLightPositions
+
+    # def set_sun_light_positions(self):
+    #     positions =
+
+    #     self.lights.sun_light_positions = self.get_sunlight_positions()
+
+    def get_sunlight_positions(self) -> dict[Position, Color]:
+        sunlight_positions: defaultdict[Position, Color] = defaultdict(
+            lambda: Colors.BLACK.value
         )
 
-    def set_sun_light_positions(self):
-        start_finish_positions = [
+        for position in [
             self.path_start_position,
             self.path_finish_position,
-        ]
+        ]:
+            brightness_index = 1
 
-        self.lights.sun_light_positions = self.lights.get_positions_sun(
-            self,
-            start_finish_positions,
-            self.paths,
-        )
+            while True:
+                if not position in self.paths:
+                    break
+                sunlight_positions[position] = self.lights.brightness_list[
+                    brightness_index
+                ]
+                position = (
+                    position[0],
+                    position[1] + self.GRID_SIZE,
+                )
+                if brightness_index < len(self.lights.brightness_list) - 1:
+                    brightness_index += 1
+
+                else:
+                    break
+
+        return dict(sunlight_positions)
 
     def set_visited_climb_positions(self) -> None:
         if self._isNewClimbPosition:
-            self.climb_positions_visited.append(self.player_path_position)
+            self._climb_positions_visited.append(self.player_path_position)
 
     def set_route_positions(self, new_position: Position) -> list[Position]:
         if new_position in self.paths or new_position in self.camp_positions:
@@ -166,10 +215,12 @@ class Level:
 
     # TODO under __init__
     def _set_path_finish_position(self):
-        if len(self.poss_path_finish) == 0:
+        poss_path_finish = self._set_poss_path_finish()
+
+        if len(poss_path_finish) == 0:
             raise NoPositionFound
 
-        poss_maze_finish = random.choice(self.poss_path_finish)
+        poss_maze_finish = random.choice(poss_path_finish)
         self.path_finish_position = Position(
             poss_maze_finish[0] + self.GRID_SIZE, poss_maze_finish[1]
         )
@@ -183,11 +234,22 @@ class Level:
         grid_range = range(grid_start, grid_end, grid_step)
         return [Position(x, camp_y_position) for x in grid_range]
 
-    # ! group: _set_grid_positions
+    # ! GROUP: _set_reduced_positions
     # TODO under __init__
-    def _set_grid_positions(self) -> None:
-        res_product = product(self._range_x(), self._range_y())
-        self._grid_positions = [Position(x, y) for x, y in res_product]
+    def _set_reduced_positions(self) -> list[Position]:
+        grid_positions = self._generate_grid_positions()
+        num_removals: int = len(grid_positions) // 3
+
+        for _ in range(num_removals):
+            random_position: Position = random.choice(grid_positions)
+            grid_positions.remove(random_position)
+        return grid_positions
+
+    # TODO under _set_reduced_positions
+    def _generate_grid_positions(self) -> list[Position]:
+        grid_ranges = product(self._range_x(), self._range_y())
+        positions = [Position(x, y) for x, y in grid_ranges]
+        return positions
 
     # TODO under _set_grid_positions
     def _range_x(self) -> list[int]:
@@ -208,12 +270,12 @@ class Level:
         res_range = range(start, stop, range_x_step)
         return list(res_range)
 
-    # ! end group: _set_grid_positions
+    # ! END GROUP: _set_reduced_positions
 
     # ! GROUP: _update_climb_positions
     # TODO under __init__
-    def _update_climb_positions(self) -> None:
-        self.list_climb_positions = [
+    def _generate_climb_positions(self) -> list[Position]:
+        return [
             position for position in self.paths if self._is_climb_position(position)
         ]
 
@@ -230,8 +292,8 @@ class Level:
 
     # ! GROUP: _set_poss_path_start
     # TODO under __init__
-    def _set_poss_path_start(self) -> None:
-        self.poss_path_start_position = [
+    def _set_poss_path_start(self) -> list[Position]:
+        return [
             position
             for position in self._build_path_positions
             if self._is_start_position(position)
@@ -247,17 +309,19 @@ class Level:
 
     # TODO under __init__
     def _set_start_position(self):
-        if len(self.poss_path_start_position) == 0:
+        poss_path_start_position = self._set_poss_path_start()
+
+        if len(poss_path_start_position) == 0:
             # self.path_start_position = Position(-1, -1)
             raise NoPositionFound
 
-        pos_list = random.choice(self.poss_path_start_position)
+        pos_list = random.choice(poss_path_start_position)
         self.path_start_position = Position(pos_list[0], pos_list[1] - self.GRID_SIZE)
 
     # ! GROUP: _set_poss_path_finish
     # TODO under __init__
-    def _set_poss_path_finish(self) -> None:
-        self.poss_path_finish = [
+    def _set_poss_path_finish(self) -> list[Position]:
+        return [
             position
             for position in self._build_path_positions
             if self._is_finish_position(position)
