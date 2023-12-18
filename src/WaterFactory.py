@@ -27,7 +27,7 @@ class WaterFactory:
         self.height: int = level.GRID_SIZE  # for Rect ans Surface
         self.rect = (self.width, self.height)
 
-        self.water_add_above_rock(level)
+        self.add_water_above_rock(level)
 
         self.water_collect_positions = self.get_water_collect_positions(level)
 
@@ -44,12 +44,15 @@ class WaterFactory:
         water_level = grid_height * (2 / 3)
         return water_level
 
-    def water_add_above_rock(self, level: "Level") -> None:
-        for p in level.paths:
-            res_pos = utilities.get_distance_in_direction(p, "DOWN", level.GRID_SIZE)
-            if res_pos not in level.paths:
-                position = Position(p.x, p.y)
-                self.poss_water.append(WaterObject(self.rect, position))
+    def add_water_above_rock(self, level: "Level") -> None:
+        for path in level.paths:
+            new_position = utilities.get_distance_in_direction(
+                path, "DOWN", level.GRID_SIZE
+            )
+            if new_position not in level.paths:
+                position = Position(path.x, path.y)
+                water_object = WaterObject(self.rect, position)
+                self.poss_water.append(water_object)
 
     def get_position_either_side(self, position: Position, level: "Level"):
         direction = "LEFT"
@@ -85,9 +88,7 @@ class WaterFactory:
         return self.poss_water
 
     def get_water_waterline_positions(self, level: "Level") -> list[LevelObject]:
-        positions = [
-            position for position in level.paths if position.y > self.water_line
-        ]
+        positions = level.filter_positions_above_height(level.paths, self.water_line)
 
         self.water_waterline_positions: list[LevelObject] = [
             WaterObject(self.rect, p) for p in positions

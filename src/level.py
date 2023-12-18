@@ -11,6 +11,8 @@ import copy
 import pygame
 import random
 
+# from src.positions import filter_positions_above_height
+
 
 LevelStates = ["01_Title", "02_Settings", "03_Build", "04_Play"]
 game_keys = "K_BACKQUOTE"
@@ -401,3 +403,9 @@ class Level:
         x = self._current_position.x + (direction.x * self.GRID_SIZE * 2)
         y = self._current_position.y + (direction.y * self.GRID_SIZE * 2)
         return Position(x, y)
+
+    # TODO positions, self.paths
+
+    def filter_positions_above_height(self, positions: list[Position], height: float):
+        filtered_positions = [position for position in positions if position.y > height]
+        return filtered_positions

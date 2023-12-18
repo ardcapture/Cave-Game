@@ -16,41 +16,43 @@ if TYPE_CHECKING:
 
 
 class Surround:
-    def set_poss_surround_positions(self, level: "Level") -> None:
-        self.poss_surround_positions = self.set_poss_path_surround_positions(level)
-
     def set_path_adjacent(self, level: "Level") -> dict[Position, str]:
         self.path_adjacent = {
-            self.tile(level, position, direction): "fish"
+            _tile(level, position, direction): "fish"
             for position, direction in product(level.paths, DIRECTIONS_EIGHT)
-            if self.tile(level, position, direction) not in level.paths
+            if _tile(level, position, direction) not in level.paths
         }
 
-    def set_poss_path_surround_positions(self, level: "Level"):
-        d: dict[Position, list[str]] = defaultdict(list)
-
-        for position, direction in product(self.path_adjacent, DIRECTIONS_EIGHT):
-            tile = (
-                position[0] + (direction.x * level.GRID_SIZE),
-                position[1] + (direction.y * level.GRID_SIZE),
-            )
-            if tile in level.paths:
-                res = list(TILE_DIRECTIONS.keys())[
-                    list(TILE_DIRECTIONS.values()).index(direction)
-                ]
-                d[position].append((res))
-        return d
-
     def surround_positions(self, level: "Level"):
-        res_list = copy.copy(self.set_poss_path_surround_positions(level))
-        for v, s in product(res_list.values(), DUPLICATE_CHECKS):
-            if s in v and any(i in list(s) for i in v):
-                v.remove(s)
-        return res_list
+        result_list = copy.copy(
+            _set_possible_surrounding_positions(self.path_adjacent, level)
+        )
+        for values, duplicate in product(result_list.values(), DUPLICATE_CHECKS):
+            if duplicate in values and any(i in list(duplicate) for i in values):
+                values.remove(duplicate)
+        return result_list
 
-    def tile(
-        self, level: "Level", position: Position, direction: Direction
-    ) -> Position:
-        x = position.x + (direction.x * level.GRID_SIZE)
-        y = position.y + (direction.y * level.GRID_SIZE)
-        return Position(x, y)
+
+def _set_possible_surrounding_positions(
+    path_adjacent: dict[Position, str], level: "Level"
+):
+    surrounding_positions: dict[Position, list[str]] = defaultdict(list)
+
+    for position, direction in product(path_adjacent, DIRECTIONS_EIGHT):
+        x_offset = direction.x * level.GRID_SIZE
+        y_offset = direction.y * level.GRID_SIZE
+        tile = (position.x + x_offset, position.y + y_offset)
+
+        if tile in level.paths:
+            direction_keys = list(TILE_DIRECTIONS.keys())
+            direction_values = list(TILE_DIRECTIONS.values())
+            direction_index = direction_values.index(direction)
+            result = direction_keys[direction_index]
+            surrounding_positions[position].append(result)
+    return surrounding_positions
+
+
+def _tile(level: "Level", position: Position, direction: Direction) -> Position:
+    new_x = position.x + (direction.x * level.GRID_SIZE)
+    new_y = position.y + (direction.y * level.GRID_SIZE)
+    return Position(new_x, new_y)

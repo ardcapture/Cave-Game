@@ -36,7 +36,10 @@ class View:
     def __init__(self, level: "Level") -> None:
         self.player_scale = level.GRID_SIZE // 16
 
-        self.window = Window(self, level)
+        width = (level.GRID_SIZE * 2) + (level.GRID_SIZE * self.width)
+        height = (level.GRID_SIZE * 2) + (level.GRID_SIZE * self.height)
+
+        self.window = Window(self.title, width, height, 1, 1)
         self.tile = Tile(level)
 
         self.sky_V02 = TileGenerator(
@@ -71,8 +74,9 @@ class View:
     def update_display(self):
         pygame.display.update()
 
-    def set_pygame_events(self):
+    def update_window_events(self):
         self.window.pygame_events = pygame.event.get()
+        self.window.set_m_event()
 
     def set_route_light_positions_tiles(self, level: "Level"):
         self.route_light_positions_tiles = self.tile.set_path_surround_tiles(

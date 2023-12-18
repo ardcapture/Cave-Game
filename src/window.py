@@ -1,13 +1,8 @@
-from typing import TYPE_CHECKING
-
 import pygame
 from pygame.event import Event
 
 from src.utilities import Position, WindowEvent
 
-if TYPE_CHECKING:
-    from src.level import Level
-    from src.view import View
 
 KEY_DOWN = pygame.KEYDOWN
 KEY_UP = pygame.KEYUP
@@ -36,18 +31,29 @@ class Window:
 
     scale = 1
 
-    def __init__(self, view: "View", level: "Level"):
-        self.view_width = view.width
-        self.view_height = view.height
+    def __init__(
+        self,
+        title: str,
+        width: int,
+        height: int,
+        width_multiplier: int,
+        height_multiplier: int,
+    ):
+        self.window_width = width
+        self.window_height = height
 
-        self.window_width = (level.GRID_SIZE * 2) + (level.GRID_SIZE * view.width)
-        self.window_height = (level.GRID_SIZE * 2) + (level.GRID_SIZE * view.height)
+        self.size = (
+            self.window_width * width_multiplier,
+            self.window_height * height_multiplier,
+        )
 
         self.events: list[Event]
 
-        pygame.display.set_caption(view.title)
+        pygame.display.set_caption(title)
 
-        self.window_surface: pygame.surface.Surface = self.get_window_surface()
+        self.window_surface: pygame.surface.Surface = pygame.display.set_mode(
+            self.size, 0, 32
+        )
 
     def set_m_event(self):
         self.m_event = self.control_pygame_events()
@@ -93,13 +99,6 @@ class Window:
             return Position(0, 0)
         position = self.m_event.pos
         return position if self.m_event.state == MOUSE_BUTTON_DOWN else Position(0, 0)
-
-    #! breaks when used as property!
-    def get_window_surface(self):
-        size = (self.window_width * 1, self.window_height * 1)
-        flags = 0
-        depth = 32
-        return pygame.display.set_mode(size, flags, depth)
 
     @staticmethod
     def close_window():

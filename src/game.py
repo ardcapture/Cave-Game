@@ -41,8 +41,8 @@ class Game:
                 # view.surround.set_poss_surround_positions(self.level)
 
                 self.view.set_route_light_positions_tiles(self.level)
-                self.view.set_pygame_events()
-                self.view.window.set_m_event()
+                self.view.update_window_events()
+
                 self.view.set_window_end()
 
                 #! DRAW WINDOW START
