@@ -27,7 +27,11 @@ class WaterFactory:
         self.height: int = level.GRID_SIZE  # for Rect ans Surface
         self.rect = (self.width, self.height)
 
-        self.add_water_above_rock(level)
+        positions = level.paths.add_water_above_rock(level.GRID_SIZE)
+
+        for position in positions:
+            water_object = WaterObject(self.rect, position)
+            self.poss_water.append(water_object)
 
         self.water_collect_positions = self.get_water_collect_positions(level)
 
@@ -44,15 +48,15 @@ class WaterFactory:
         water_level = grid_height * (2 / 3)
         return water_level
 
-    def add_water_above_rock(self, level: "Level") -> None:
-        for path in level.paths:
-            new_position = utilities.get_distance_in_direction(
-                path, "DOWN", level.GRID_SIZE
-            )
-            if new_position not in level.paths:
-                position = Position(path.x, path.y)
-                water_object = WaterObject(self.rect, position)
-                self.poss_water.append(water_object)
+    # def add_water_above_rock(self, level: "Level") -> None:
+    #     for path in level.paths:
+    #         new_position = utilities.get_distance_in_direction(
+    #             path, "DOWN", level.GRID_SIZE
+    #         )
+    #         if new_position not in level.paths:
+    #             position = Position(path.x, path.y)
+    #             water_object = WaterObject(self.rect, position)
+    #             self.poss_water.append(water_object)
 
     def get_position_either_side(self, position: Position, level: "Level"):
         direction = "LEFT"
@@ -70,15 +74,14 @@ class WaterFactory:
         return [position_left, position_right]
 
     def get_water_collect_positions(self, level: "Level") -> list[LevelObject]:
+        positions = level.paths.get_list_position_difference(self.poss_water)
         run = True
         while run:
             start = len(self.poss_water)
             for index, p in enumerate(self.poss_water):
                 if any(
                     item in self.get_position_either_side(p.position, level)
-                    for item in utilities.get_list_position_difference(
-                        level.paths, self.poss_water
-                    )
+                    for item in positions
                 ):
                     self.poss_water.pop(index)
             end = len(self.poss_water)
@@ -88,7 +91,7 @@ class WaterFactory:
         return self.poss_water
 
     def get_water_waterline_positions(self, level: "Level") -> list[LevelObject]:
-        positions = level.filter_positions_above_height(level.paths, self.water_line)
+        positions = level.paths.filter_positions_above_height(self.water_line)
 
         self.water_waterline_positions: list[LevelObject] = [
             WaterObject(self.rect, p) for p in positions

@@ -5,13 +5,12 @@ from src.GridPositions import GridPositions
 from src.WaterFactory import WaterFactory
 from src.lights import Lights  #! object used 1x
 from src.nav import Nav
+from src.positions import Positions
 from src.utilities import DIRECTIONS_FOUR, Direction, Position, Color
 from src.utilities import NoPositionFound, Position, Colors
 import copy
 import pygame
 import random
-
-# from src.positions import filter_positions_above_height
 
 
 LevelStates = ["01_Title", "02_Settings", "03_Build", "04_Play"]
@@ -78,10 +77,17 @@ class Level:
             return
 
         # ! PUBLIC
-        self.paths = self._build_path_positions + [
+        # self.paths = self._build_path_positions + [
+        #     self.path_start_position,
+        #     self.path_finish_position,
+        # ]
+
+        paths_positions = self._build_path_positions + [
             self.path_start_position,
             self.path_finish_position,
         ]
+
+        self.paths = Positions(paths_positions)
 
         # ! PUBLIC
         self.camp_positions = self._set_camp_positions()
@@ -89,13 +95,15 @@ class Level:
         # ! PUBLIC
         self.player_path_position: Position = random.choice(self.camp_positions)
 
-        self._combined_positions = self.paths + self.camp_positions
+        self._combined_positions = self.paths.add_position(self.camp_positions)
 
         # ! PUBLIC
         self.nav = Nav(self.GRID_SIZE, self._combined_positions)
 
         # ! PUBLIC
-        self.list_climb_positions = self._generate_climb_positions()
+        self.list_climb_positions = self.paths.positions_vertical_in_distance(
+            self.GRID_SIZE
+        )
 
         # ! PUBLIC
         self.lights = Lights()
@@ -139,7 +147,7 @@ class Level:
             brightness = 0
             run = True
             while run:
-                if possLightPosition in self.paths:
+                if possLightPosition in self.paths.positions:
                     characterLightPositions[
                         possLightPosition
                     ] = self.lights.brightness_list[brightness]
@@ -156,7 +164,7 @@ class Level:
             brightness = 0
             run = True
             while run:
-                if possLightPosition in self.paths:
+                if possLightPosition in self.paths.positions:
                     characterLightPositions[
                         possLightPosition
                     ] = self.lights.brightness_list[brightness]
@@ -187,7 +195,7 @@ class Level:
             brightness_index = 1
 
             while True:
-                if not position in self.paths:
+                if not position in self.paths.positions:
                     break
                 sunlight_positions[position] = self.lights.brightness_list[
                     brightness_index
@@ -208,8 +216,12 @@ class Level:
         if self._isNewClimbPosition:
             self._climb_positions_visited.append(self.player_path_position)
 
-    def set_route_positions(self, new_position: Position) -> list[Position]:
-        if new_position in self.paths or new_position in self.camp_positions:
+    def set_route_positions(
+        self,
+        new_position: Position,
+        other_positions: list[Position],
+    ) -> list[Position]:
+        if new_position in self.paths.positions or new_position in other_positions:
             updated_positions = [new_position]
         else:
             updated_positions = [self.player_path_position]
@@ -406,6 +418,6 @@ class Level:
 
     # TODO positions, self.paths
 
-    def filter_positions_above_height(self, positions: list[Position], height: float):
-        filtered_positions = [position for position in positions if position.y > height]
-        return filtered_positions
+    # def filter_positions_above_height(self, positions: list[Position], height: float):
+    #     filtered_positions = [position for position in positions if position.y > height]
+    #     return filtered_positions

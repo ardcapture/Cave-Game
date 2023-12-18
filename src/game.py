@@ -82,11 +82,13 @@ class Game:
         position = utilities.position_to_grid_position(position, self.level.GRID_SIZE)
 
         if (
-            position not in self.level.paths
+            position not in self.level.paths.positions
             or position not in self.level.camp_positions
         ):
             current_positions = [self.level.player_path_position]
-            updated_positions = self.level.set_route_positions(position)
+            updated_positions = self.level.set_route_positions(
+                position, self.level.camp_positions
+            )
             self.route = self.level.nav.set_route(current_positions, updated_positions)
             route_index = 0
             for i in self.route[route_index:]:  # TODO need breaking into steps
@@ -109,7 +111,7 @@ class Game:
             y += self.level.GRID_SIZE
 
         if (
-            Position(x, y) in self.level.paths
+            Position(x, y) in self.level.paths.positions
             or Position(x, y) in self.level.camp_positions
         ):
             return Position(x, y)

@@ -212,7 +212,7 @@ class View:
             (self.surround.path_adjacent, "A"),
             (self.sky_V02.positions, "S"),
             (self.grass_V02.positions, "G"),
-            (level.paths, "P"),
+            (level.paths.positions, "P"),
         ]
 
         tiles: dict[Position, str] = {}
@@ -289,8 +289,10 @@ class View:
         self.list_DataBlit: list[BlitData] = []
 
     def draw_debug_start_position(self, level: "Level"):
-        p = level.paths[0]
-        self.rect_to_surface_outline(level, Colors.RED.value, Position(p.x, p.y))
+        position = level.paths.positions[0]
+        self.rect_to_surface_outline(
+            level, Colors.RED.value, Position(position.x, position.y)
+        )
 
     @property
     def surface_load_player(self):

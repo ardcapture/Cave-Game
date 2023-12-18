@@ -19,8 +19,8 @@ class Surround:
     def set_path_adjacent(self, level: "Level") -> dict[Position, str]:
         self.path_adjacent = {
             _tile(level, position, direction): "fish"
-            for position, direction in product(level.paths, DIRECTIONS_EIGHT)
-            if _tile(level, position, direction) not in level.paths
+            for position, direction in product(level.paths.positions, DIRECTIONS_EIGHT)
+            if _tile(level, position, direction) not in level.paths.positions
         }
 
     def surround_positions(self, level: "Level"):
@@ -43,7 +43,7 @@ def _set_possible_surrounding_positions(
         y_offset = direction.y * level.GRID_SIZE
         tile = (position.x + x_offset, position.y + y_offset)
 
-        if tile in level.paths:
+        if tile in level.paths.positions:
             direction_keys = list(TILE_DIRECTIONS.keys())
             direction_values = list(TILE_DIRECTIONS.values())
             direction_index = direction_values.index(direction)
