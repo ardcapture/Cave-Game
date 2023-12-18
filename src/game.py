@@ -1,5 +1,5 @@
 from src.level import Level
-from src.view import View
+from src.View import View
 from src.utilities import Position
 import src.utilities as utilities
 import pygame
