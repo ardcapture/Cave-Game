@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 
 class Positions:
-    def __init__(self, positions: list[Position]):
+    def __init__(self, positions: list[Position] = []):
         self._positions = positions
 
     def positions_above_height(self, positions: list[Position], height: float):

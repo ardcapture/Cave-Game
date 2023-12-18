@@ -280,7 +280,7 @@ class View:
     #! Blit - METHODS - END *****************
 
     def draw_debug_route(self, level: "Level"):
-        for p in level.route:
+        for p in level.route.positions:
             color = Colors.GREEN.value
             position = Position(p[0], p[1])
             self.rect_to_surface_outline(level, color, position)

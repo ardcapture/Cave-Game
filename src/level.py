@@ -27,7 +27,7 @@ KEY_BACKQUOTE = pygame.K_BACKQUOTE
 
 
 class Level:
-    _climb_positions_visited: list[Position] = []
+    _climb_positions_visited = Positions()
 
     _lights_state: bool = False
     # selected = False
@@ -42,7 +42,7 @@ class Level:
 
     # previous_position: Position = Position(0, 0)
 
-    route: list["Position"] = []
+    route = Positions()
 
     _return_positions: list[Position] = []  #! X2
     _list_position_jump: list[Position] = []
@@ -286,24 +286,6 @@ class Level:
 
     # ! END GROUP: _set_reduced_positions
 
-    # ! GROUP: _update_climb_positions
-    # TODO under __init__
-    def _generate_climb_positions(self) -> list[Position]:
-        return [
-            position for position in self.paths if self._is_climb_position(position)
-        ]
-
-    # TODO under _set_climb_positions
-    def _is_climb_position(self, position: "Position") -> bool:
-        return (
-            utilities.get_distance_in_direction(position, "UP", self.GRID_SIZE)
-            in self.paths
-            or utilities.get_distance_in_direction(position, "DOWN", self.GRID_SIZE)
-            in self.paths
-        )
-
-    # ! END GROUP: _update_climb_positions
-
     # ! GROUP: _set_poss_path_start
     # TODO under __init__
     def _set_poss_path_start(self) -> list[Position]:
@@ -415,9 +397,3 @@ class Level:
         x = self._current_position.x + (direction.x * self.GRID_SIZE * 2)
         y = self._current_position.y + (direction.y * self.GRID_SIZE * 2)
         return Position(x, y)
-
-    # TODO positions, self.paths
-
-    # def filter_positions_above_height(self, positions: list[Position], height: float):
-    #     filtered_positions = [position for position in positions if position.y > height]
-    #     return filtered_positions
