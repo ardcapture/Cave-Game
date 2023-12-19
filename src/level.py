@@ -44,7 +44,7 @@ class Level:
 
     route = Positions()
 
-    _return_positions: list[Position] = []  #! X2
+    _return_positions = Positions()  #! X2
     _list_position_jump: list[Position] = []
     _build_path_positions: list[Position] = []
 
@@ -352,7 +352,7 @@ class Level:
 
     # TODO under _get_position_next
     def _get_return_position_next(self):
-        return self._return_positions[-1]
+        return self._return_positions.last
 
     # ! END GROUP: _get_position_next
 

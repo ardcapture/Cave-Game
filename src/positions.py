@@ -59,3 +59,10 @@ class Positions:
     @property
     def positions(self):
         return self._positions
+
+    def append(self, position: Position):
+        self._positions.append(position)
+
+    @property
+    def last(self):
+        return self._positions[-1]
