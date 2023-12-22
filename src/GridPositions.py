@@ -1,4 +1,4 @@
-from src.utilities import Position
+from src.position import Position
 
 
 class GridPositions:

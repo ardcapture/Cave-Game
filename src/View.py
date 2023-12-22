@@ -1,6 +1,7 @@
 from src.Tile import Tile
 from src.surround import Surround
-from src.utilities import BlitData, Colors, Position, Color
+from src.utilities import BlitData, Colors, Color
+from src.position import Position
 from src.window import Window
 from typing import TYPE_CHECKING
 import os

@@ -1,4 +1,3 @@
-from . import utilities
 from collections import defaultdict
 from itertools import product
 from src.GridPositions import GridPositions
@@ -6,8 +5,9 @@ from src.WaterFactory import WaterFactory
 from src.lights import Lights  #! object used 1x
 from src.nav import Nav
 from src.positions import Positions
-from src.utilities import DIRECTIONS_FOUR, Direction, Position, Color
-from src.utilities import NoPositionFound, Position, Colors
+from src.utilities import DIRECTIONS_FOUR, Direction, Color
+from src.utilities import NoPositionFound, Colors
+from src.position import Position
 import copy
 import pygame
 import random
@@ -45,8 +45,8 @@ class Level:
     route = Positions()
 
     _return_positions = Positions()  #! X2
-    _list_position_jump: list[Position] = []
-    _build_path_positions: list[Position] = []
+    _list_position_jump = Positions()
+    _build_path_positions = Positions()
 
     def __init__(self):
         self._reduced_positions = self._set_reduced_positions()
@@ -65,7 +65,8 @@ class Level:
             self._current_position = self._position_next
 
             self._build_path_positions = (
-                self._grid_positions.returnAllPositions() + self._list_position_jump
+                self._grid_positions.returnAllPositions()
+                + self._list_position_jump.positions
             )
 
         try:
@@ -95,7 +96,7 @@ class Level:
         # ! PUBLIC
         self.player_path_position: Position = random.choice(self.camp_positions)
 
-        self._combined_positions = self.paths.add_position(self.camp_positions)
+        self._combined_positions = self.paths.add_positions(self.camp_positions)
 
         # ! PUBLIC
         self.nav = Nav(self.GRID_SIZE, self._combined_positions)
@@ -346,13 +347,9 @@ class Level:
             res = self._grid_positions.get_positions_next_to(self._current_position)
             while res is None:
                 self._update_return_positions()
-                res = self._get_return_position_next()
+                res = self._return_positions.last
 
         return res
-
-    # TODO under _get_position_next
-    def _get_return_position_next(self):
-        return self._return_positions.last
 
     # ! END GROUP: _get_position_next
 

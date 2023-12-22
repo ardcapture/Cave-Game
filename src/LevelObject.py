@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pygame import Surface
-from src.utilities import Position
+from src.position import Position
 
 # TODO - complex type to class
 Rect = tuple[int, int]

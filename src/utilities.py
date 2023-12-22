@@ -2,17 +2,11 @@ from typing import Any, NamedTuple, TYPE_CHECKING
 from dataclasses import dataclass
 import pygame
 from pygame import Rect
-import copy
-import random
 from enum import Enum
+from src.position import Position
 
 if TYPE_CHECKING:
     from WaterFactory import LevelObject
-
-
-class Position(NamedTuple):
-    x: int
-    y: int
 
 
 class Direction(NamedTuple):

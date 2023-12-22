@@ -1,6 +1,7 @@
 from itertools import chain, groupby
 from operator import itemgetter
-from src.utilities import Color, Position, Light_Data, Colors
+from src.utilities import Color, Light_Data, Colors
+from src.position import Position
 from collections import defaultdict
 
 

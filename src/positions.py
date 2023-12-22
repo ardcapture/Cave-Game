@@ -1,9 +1,9 @@
-from src.utilities import Position
+from src.position import Position
 from . import utilities
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from WaterFactory import LevelObject
+    from src.LevelObject import LevelObject
 
 
 class Positions:
@@ -14,8 +14,11 @@ class Positions:
         filtered_positions = [position for position in positions if position.y > height]
         return filtered_positions
 
-    def add_position(self, positions: list[Position]):
+    def add_positions(self, positions: list[Position]) -> list[Position]:
         return self._positions + positions
+
+    def append(self, position: Position):
+        self._positions.append(position)
 
     def positions_vertical_in_distance(self, distance: int) -> list[Position]:
         return [
@@ -59,9 +62,6 @@ class Positions:
     @property
     def positions(self):
         return self._positions
-
-    def append(self, position: Position):
-        self._positions.append(position)
 
     @property
     def last(self):

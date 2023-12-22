@@ -8,11 +8,12 @@ from PIL import Image as PIL_Image
 from PIL.Image import Image
 
 
-from src.utilities import IMAGE_TYPES, LIGHTING_TILE_ROTATE, Position
+from src.utilities import IMAGE_TYPES, LIGHTING_TILE_ROTATE
+from src.position import Position
 
 if TYPE_CHECKING:
     from src.level import Level
-    from src.view import View
+    from src.View import View
 
 
 #! called by view > __init__ - 1 location

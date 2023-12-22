@@ -1,8 +1,8 @@
 import pygame
 from pygame.event import Event
 
-from src.utilities import Position, WindowEvent
-
+from src.utilities import WindowEvent
+from src.position import Position
 
 KEY_DOWN = pygame.KEYDOWN
 KEY_UP = pygame.KEYUP

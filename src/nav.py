@@ -1,4 +1,5 @@
-from src.utilities import DIRECTIONS_FOUR, Position
+from src.utilities import DIRECTIONS_FOUR
+from src.position import Position
 
 
 # TODO: types to classes

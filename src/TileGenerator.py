@@ -1,5 +1,5 @@
 import pygame
-from src.utilities import Position
+from src.position import Position
 
 from typing import TYPE_CHECKING
 

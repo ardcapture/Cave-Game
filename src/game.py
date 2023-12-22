@@ -1,6 +1,6 @@
 from src.level import Level
 from src.View import View
-from src.utilities import Position
+from src.position import Position
 import src.utilities as utilities
 import pygame
 
