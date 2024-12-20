@@ -5,8 +5,7 @@ from src.WaterFactory import WaterFactory
 from src.lights import Lights  #! object used 1x
 from src.nav import Nav
 from src.positions import Positions
-from src.utilities import DIRECTIONS_FOUR, Direction, Color
-from src.utilities import NoPositionFound, Colors
+from src.utilities import DIRECTIONS_FOUR, Direction, Color, NoPositionFound, Colors
 from src.position import Position
 import copy
 import pygame
@@ -64,10 +63,13 @@ class Level:
 
             self._current_position = self._position_next
 
-            self._build_path_positions = (
+            # positions = self._grid_positions.returnAllPositions()
+            #     + self._list_position_jump.positions
+
+            self._build_path_positions = Positions(
                 self._grid_positions.returnAllPositions()
-                + self._list_position_jump.positions
             )
+            self._build_path_positions.add_positions(self._list_position_jump.positions)
 
         try:
             self._set_start_position()
@@ -83,12 +85,14 @@ class Level:
         #     self.path_finish_position,
         # ]
 
-        paths_positions = self._build_path_positions + [
-            self.path_start_position,
-            self.path_finish_position,
-        ]
+        # paths_positions: Positions = self._build_path_positions + [
+        #     self.path_start_position,
+        #     self.path_finish_position,
+        # ]
 
-        self.paths = Positions(paths_positions)
+        self.paths = Positions(self._build_path_positions)
+        self.paths.append(self.path_start_position)
+        self.paths.append(self.path_finish_position)
 
         # ! PUBLIC
         self.camp_positions = self._set_camp_positions()
@@ -292,7 +296,7 @@ class Level:
     def _set_poss_path_start(self) -> list[Position]:
         return [
             position
-            for position in self._build_path_positions
+            for position in self._build_path_positions.positions
             if self._is_start_position(position)
         ]
 
@@ -320,7 +324,7 @@ class Level:
     def _set_poss_path_finish(self) -> list[Position]:
         return [
             position
-            for position in self._build_path_positions
+            for position in self._build_path_positions.positions
             if self._is_finish_position(position)
         ]
 

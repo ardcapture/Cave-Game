@@ -15,7 +15,8 @@ class Positions:
         return filtered_positions
 
     def add_positions(self, positions: list[Position]) -> list[Position]:
-        return self._positions + positions
+        result = self._positions + positions
+        return result
 
     def append(self, position: Position):
         self._positions.append(position)
@@ -66,3 +67,17 @@ class Positions:
     @property
     def last(self):
         return self._positions[-1]
+
+    def is_building_complete(self, position: Position) -> bool:
+        check_len = len(self._positions) > 2
+        res = not check_len or position != self._positions[0]
+        print(f"res: {res}")
+        return res
+
+    def get_positions_next_to(self, position: Position):
+        if position not in self._positions:
+            return self._positions[-1]
+
+    def get_previous_position(self, target_position: Position) -> Position:
+        index_of_target = self.positions.index(target_position)
+        return self._positions[index_of_target - 1]
